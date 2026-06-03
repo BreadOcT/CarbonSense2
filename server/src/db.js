@@ -3,8 +3,21 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Helper to strip surrounding quotes and spaces from env variables
+const cleanEnv = (val) => {
+  if (!val) return '';
+  let str = val.trim();
+  if (str.startsWith('"') && str.endsWith('"')) {
+    str = str.substring(1, str.length - 1);
+  }
+  if (str.startsWith("'") && str.endsWith("'")) {
+    str = str.substring(1, str.length - 1);
+  }
+  return str.trim();
+};
+
 let sequelize;
-const databaseUrl = process.env.DATABASE_URL;
+const databaseUrl = cleanEnv(process.env.DATABASE_URL);
 
 if (databaseUrl) {
   const isCloudDb = databaseUrl.includes('aivencloud.com') || databaseUrl.includes('ssl-mode=REQUIRED');
@@ -15,15 +28,21 @@ if (databaseUrl) {
       ssl: {
         rejectUnauthorized: false
       }
-    } : {}
+    } : {},
+    pool: {
+      max: 10,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    }
   });
 } else {
   // Support individual DB credentials
-  const host = process.env.DB_HOST?.trim() || 'localhost';
-  const port = process.env.DB_PORT?.trim() || '3306';
-  const user = process.env.DB_USER?.trim();
-  const password = process.env.DB_PASSWORD?.trim();
-  const database = process.env.DB_NAME?.trim() || 'defaultdb';
+  const host = cleanEnv(process.env.DB_HOST) || 'localhost';
+  const port = cleanEnv(process.env.DB_PORT) || '3306';
+  const user = cleanEnv(process.env.DB_USER);
+  const password = cleanEnv(process.env.DB_PASSWORD);
+  const database = cleanEnv(process.env.DB_NAME) || 'defaultdb';
 
   if (!user) {
     console.error('Neither DATABASE_URL nor DB_USER is defined in environment variables!');
@@ -41,7 +60,13 @@ if (databaseUrl) {
       ssl: {
         rejectUnauthorized: false
       }
-    } : {}
+    } : {},
+    pool: {
+      max: 10,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    }
   });
 }
 
