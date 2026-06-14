@@ -20,12 +20,31 @@ let sequelize;
 const databaseUrl = cleanEnv(process.env.DATABASE_URL);
 
 if (databaseUrl) {
-  const isCloudDb = databaseUrl.includes('aivencloud.com') || databaseUrl.includes('ssl-mode=REQUIRED');
-  sequelize = new Sequelize(databaseUrl, {
-    dialect: 'mysql',
+  const isCloudDb = databaseUrl.includes('aivencloud.com') || databaseUrl.includes('ssl-mode=REQUIRED') || databaseUrl.includes('supabase.co') || databaseUrl.includes('pooler.supabase.com') || databaseUrl.startsWith('postgres') || databaseUrl.startsWith('postgresql');
+  const dialect = (databaseUrl.startsWith('postgres') || databaseUrl.startsWith('postgresql') || databaseUrl.includes('supabase.co') || databaseUrl.includes('pooler.supabase.com')) ? 'postgres' : 'mysql';
+  
+  // Clean URL to prevent sslmode query parameter from overriding dialectOptions.ssl
+  let cleanUrl = databaseUrl;
+  if (cleanUrl.includes('?')) {
+    cleanUrl = cleanUrl.replace(/[\?&]sslmode=[^&]+/g, '').replace(/[\?&]ssl-mode=[^&]+/g, '');
+    if (cleanUrl.endsWith('?') || cleanUrl.endsWith('&')) {
+      cleanUrl = cleanUrl.slice(0, -1);
+    }
+  }
+
+  console.log('--- DB SETUP DEBUG ---');
+  console.log('process.env.DATABASE_URL:', process.env.DATABASE_URL);
+  console.log('cleanUrl:', cleanUrl);
+  console.log('isCloudDb:', isCloudDb);
+  console.log('dialect:', dialect);
+  console.log('----------------------');
+
+  sequelize = new Sequelize(cleanUrl, {
+    dialect: dialect,
     logging: false,
     dialectOptions: isCloudDb ? {
       ssl: {
+        require: true,
         rejectUnauthorized: false
       }
     } : {},
@@ -49,15 +68,17 @@ if (databaseUrl) {
     process.exit(1);
   }
 
-  const isCloudDb = host.includes('aivencloud.com');
+  const isCloudDb = host.includes('aivencloud.com') || host.includes('supabase.co') || host.includes('pooler.supabase.com');
+  const dialect = (port === '5432' || host.includes('supabase.co') || host.includes('pooler.supabase.com')) ? 'postgres' : 'mysql';
 
   sequelize = new Sequelize(database, user, password, {
     host,
     port: parseInt(port),
-    dialect: 'mysql',
+    dialect,
     logging: false,
     dialectOptions: isCloudDb ? {
       ssl: {
+        require: true,
         rejectUnauthorized: false
       }
     } : {},

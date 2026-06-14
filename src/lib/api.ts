@@ -94,6 +94,17 @@ export const api = {
       return body;
     },
 
+    async update(id: string, data: { newId?: string; userEmail?: string | null; status?: string; ppm?: string }): Promise<Device> {
+      const res = await fetch(`${API_BASE_URL}/api/devices/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || 'Gagal memperbarui perangkat.');
+      return body;
+    },
+
     async delete(id: string): Promise<{ message: string }> {
       const res = await fetch(`${API_BASE_URL}/api/devices/${id}`, {
         method: 'DELETE'
@@ -112,6 +123,26 @@ export const api = {
       const body = await res.json();
       if (!res.ok) throw new Error(body.error || 'Gagal mengirim telemetri.');
       return body;
+    }
+  },
+  users: {
+    async list(): Promise<User[]> {
+      const res = await fetch(`${API_BASE_URL}/api/users`);
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || 'Gagal memuat daftar pengguna.');
+      return body;
+    }
+  },
+  ai: {
+    async getRecommendation(data: { question?: string; profile: any; carbonLevel: number | null; type?: string }): Promise<string> {
+      const res = await fetch(`${API_BASE_URL}/api/ai/recommendation`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || 'Gagal mengambil rekomendasi AI.');
+      return body.recommendation;
     }
   }
 };

@@ -25,24 +25,10 @@ const generateToken = (user) => {
   );
 };
 
-// Seed default admin account and a few demo devices if none exist
+// Seed default devices if none exist
 const seedDatabase = async () => {
   try {
-    // 1. Seed Admin
-    const adminEmail = 'admin@carbonsense.com';
-    const existingAdmin = await User.findOne({ where: { email: adminEmail } });
-    if (!existingAdmin) {
-      const hashedPassword = await bcrypt.hash('admin123', 10);
-      await User.create({
-        username: 'Sistem Admin',
-        email: adminEmail,
-        password: hashedPassword,
-        role: 'admin'
-      });
-      console.log('Seeded default admin account: admin@carbonsense.com / admin123');
-    }
-
-    // 2. Seed default devices if database is empty
+    // Seed default devices if database is empty
     const deviceCount = await Device.count();
     if (deviceCount === 0) {
       await Device.bulkCreate([
@@ -125,38 +111,57 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// Admin Login
+// Admin Login (using ADMIN_ID and ADMIN_PASSWORD from .env)
 app.post('/api/auth/admin-login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Harap masukkan Admin ID/Email dan password.' });
+    const envAdminId = process.env.ADMIN_ID ? process.env.ADMIN_ID.trim() : '';
+    const envAdminPassword = process.env.ADMIN_PASSWORD ? process.env.ADMIN_PASSWORD.trim() : '';
+
+    if (!envAdminId || !envAdminPassword) {
+      return res.status(500).json({ error: 'Konfigurasi admin pada server tidak lengkap.' });
     }
 
-    // Support both login by username/ID (e.g. admin_1) or email
-    const user = await User.findOne({ 
-      where: { email } 
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Harap masukkan Admin ID dan password.' });
+    }
+
+    // Verify against environment variables
+    if (email.trim() !== envAdminId || password !== envAdminPassword) {
+      return res.status(401).json({ error: 'Admin ID atau Password salah.' });
+    }
+
+    // Generate JWT token with admin role
+    const token = generateToken({
+      id: 0,
+      email: envAdminId,
+      role: 'admin'
     });
 
-    if (!user || user.role !== 'admin') {
-      return res.status(403).json({ error: 'Akses ditolak. Akun bukan administrator.' });
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ error: 'Password salah.' });
-    }
-
-    const token = generateToken(user);
     res.json({
       message: 'Login Admin berhasil.',
       token,
-      user: { id: user.id, username: user.username, email: user.email, role: user.role }
+      user: { id: 0, username: 'System Admin', email: envAdminId, role: 'admin' }
     });
   } catch (error) {
     console.error('Admin Login error:', error);
     res.status(500).json({ error: 'Terjadi kesalahan pada server saat login admin.' });
+  }
+});
+
+// Get Users (Admin only)
+app.get('/api/users', async (req, res) => {
+  try {
+    const users = await User.findAll({
+      where: { role: 'user' },
+      attributes: ['id', 'username', 'email', 'createdAt'],
+      order: [['createdAt', 'DESC']]
+    });
+    res.json(users);
+  } catch (error) {
+    console.error('Get users error:', error);
+    res.status(500).json({ error: 'Gagal mengambil data pengguna.' });
   }
 });
 
@@ -167,6 +172,23 @@ app.post('/api/auth/admin-login', async (req, res) => {
 app.get('/api/devices', async (req, res) => {
   try {
     const { email } = req.query;
+    
+    // Check and update offline status for devices that haven't sent data in 5 minutes
+    const fiveMinutes = 5 * 60 * 1000;
+    const now = new Date();
+    
+    const allDevices = await Device.findAll();
+    for (const device of allDevices) {
+      if (device.status !== 'Offline' && device.status !== 'Menunggu Bind') {
+        const updatedAtTime = new Date(device.updatedAt).getTime();
+        if (now.getTime() - updatedAtTime > fiveMinutes) {
+          device.status = 'Offline';
+          device.ppm = '--';
+          device.lastActive = '5 menit yang lalu';
+          await device.save();
+        }
+      }
+    }
     
     let devices;
     if (email) {
@@ -263,6 +285,42 @@ app.post('/api/devices/telemetry', async (req, res) => {
   }
 });
 
+// Update Device Details (Admin helper)
+app.put('/api/devices/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { newId, userEmail, status, ppm } = req.body;
+    
+    let updatedId = id;
+    if (newId && newId !== id) {
+      const existing = await Device.findByPk(newId);
+      if (existing) {
+        return res.status(400).json({ error: 'Device ID baru sudah digunakan.' });
+      }
+      await Device.update({ id: newId }, { where: { id } });
+      updatedId = newId;
+    }
+
+    const device = await Device.findByPk(updatedId);
+    if (!device) {
+      return res.status(404).json({ error: 'Perangkat tidak ditemukan.' });
+    }
+    
+    if (userEmail !== undefined) {
+      device.userEmail = userEmail ? userEmail.trim() : null;
+    }
+    if (status !== undefined) device.status = status;
+    if (ppm !== undefined) device.ppm = ppm;
+    device.lastActive = 'Baru saja';
+    
+    await device.save();
+    res.json({ message: 'Perangkat berhasil diperbarui.', device });
+  } catch (error) {
+    console.error('Update device error:', error);
+    res.status(500).json({ error: 'Gagal memperbarui perangkat.' });
+  }
+});
+
 // Delete Device (Admin optional helper)
 app.delete('/api/devices/:id', async (req, res) => {
   try {
@@ -276,6 +334,99 @@ app.delete('/api/devices/:id', async (req, res) => {
   } catch (error) {
     console.error('Delete device error:', error);
     res.status(500).json({ error: 'Gagal menghapus perangkat.' });
+  }
+});
+
+// AI Recommendation Proxy Route (Keeps API key secure in backend env)
+app.post('/api/ai/recommendation', async (req, res) => {
+  try {
+    const { question, profile, carbonLevel, type } = req.body;
+    const deepseekKey = process.env.VITE_DEEPSEEK_API_KEY || process.env.DEEPSEEK_API_KEY;
+
+    if (!deepseekKey) {
+      return res.status(500).json({ error: 'API Key DeepSeek tidak terkonfigurasi di server.' });
+    }
+
+    let systemPrompt = '';
+    let userMessage = '';
+
+    if (type === 'profile_summary') {
+      systemPrompt = `Anda adalah CarbonSense AI Assistant. Tugas Anda adalah memberikan analisis singkat profil ruangan pengguna yang baru saja diatur pada onboarding.
+
+ATURAN STRUKTUR JAWABAN (WAJIB):
+1. JANGAN gunakan kalimat pembuka, kata pengantar, sapaan, ramah-tamah, atau filler pembuka (seperti "Tentu, ini adalah...", "Halo!", "Berikut adalah..."). Langsung berikan inti analisis profil ruangan.
+2. JAWABAN HARUS SINGKAT (Maksimal 3 kalimat) dan ditulis dengan bahasa Indonesia yang natural, mengalir, dan mudah dipahami.
+3. Hindari format kaku seperti template formulir yang hanya menyebutkan ulang daftar jawaban. Sebaliknya, buat analisis singkat yang menyatu secara kontekstual mengenai risiko akumulasi karbon di ruangan tersebut dan cara CarbonSense AI membantu memantaunya.
+4. Gunakan format markdown tebal (**) pada kata kunci penting.`;
+
+      userMessage = `Berikut adalah detail profil ruangan saya:
+- Lokasi: ${profile?.lokasi || 'Tidak ditentukan'}
+- Luas Ruangan: ${profile?.luas_ruang || 'Tidak ditentukan'}
+- Sirkulasi: ${profile?.sirkulasi || 'Tidak ditentukan'}
+- Hunian: ${profile?.kapasitas || 'Tidak ditentukan'}
+- Polutan Terdekat: ${profile?.polutan?.join(', ') || 'Tidak Ada'}
+- Kelompok Rentan: ${profile?.rentan || 'Tidak Ada'}
+- Detektor Tambahan: ${profile?.detektor_lain || 'Tidak Ada'}
+
+Berikan ringkasan analisis profil ruangan saya yang ramah, alami, dan tidak kaku dalam bahasa Indonesia.`;
+    } else {
+      systemPrompt = `Anda adalah CarbonSense AI Assistant, sebuah kecerdasan buatan pendeteksi karbon monoksida (CO) dan kualitas udara di dalam ruangan.
+Tugas Anda adalah menganalisis kondisi udara berdasarkan telemetri sensor PPM karbon real-time dan profil detail ruangan user, lalu memberikan rekomendasi keselamatan atau evakuasi darurat dalam bahasa Indonesia yang sangat sederhana dan ringkas.
+
+ATURAN STRUKTUR JAWABAN (WAJIB):
+1. JANGAN gunakan kalimat pembuka/kata pengantar, sapaan, ramah-tamah, atau filler pembuka (seperti "Tentu, ini adalah...", "Halo!", "Sebagai asisten...", "Berdasarkan data..."). Langsung berikan inti instruksi keselamatan atau status udara.
+2. JAWABAN HARUS SIMPEL, SINGKAT, DAN CONCISE (Maksimal 100 kata). Gunakan bahasa Indonesia yang mudah dipahami orang awam saat kondisi panik.
+3. FORMAT LANGKAH EVAKUASI / TINDAKAN DARURAT: Jika ada langkah-langkah evakuasi atau tindakan keselamatan, Anda WAJIB memformatnya menggunakan poin-poin dengan penomoran huruf kecil dan garis baru seperti contoh berikut:
+a. [Langkah 1]
+b. [Langkah 2]
+c. [Langkah 3]
+Setiap poin harus pendek, padat, langsung pada tindakan nyata, dan dipisahkan dengan baris baru. DILARANG membuat satu paragraf besar yang rumit dibaca.
+4. Sesuaikan respon secara langsung dengan data lingkungan berikut:
+- Lokasi Alat: ${profile?.lokasi || 'Tidak ditentukan'}
+- Luas Ruangan: ${profile?.luas_ruang || 'Tidak ditentukan'}
+- Pola Sirkulasi: ${profile?.sirkulasi || 'Tidak ditentukan'}
+- Hunian: ${profile?.kapasitas || 'Tidak ditentukan'}
+- Potensi Sumber Emisi: ${profile?.polutan?.join(', ') || 'Tidak Ada'}
+- Kelompok Kesehatan Rentan: ${profile?.rentan || 'Tidak Ada'}
+- Detektor Gas Lain: ${profile?.detektor_lain || 'Tidak Ada'}
+- Kadar CO Saat Ini: ${carbonLevel || 0} PPM
+
+Ambang Batas PPM:
+- <= 700: Aman & Normal. Kualitas udara baik.
+- 701 - 1200: Waspada. Kadar karbon meningkat, disarankan membuka sirkulasi.
+- > 1200: Bahaya Kritis. Kadar karbon membahayakan kesehatan, evakuasi darurat wajib dilakukan segera.`;
+
+      userMessage = question || `Berikan rekomendasi keselamatan evakuasi karena terdeteksi kadar karbon kritis sebesar ${carbonLevel} PPM!`;
+    }
+
+    const response = await fetch('https://api.deepseek.com/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${deepseekKey}`
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userMessage }
+        ],
+        temperature: 0.7,
+        max_tokens: 800
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`DeepSeek API error: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    const reply = data.choices?.[0]?.message?.content || 'Gagal menghasilkan jawaban dari AI.';
+    res.json({ recommendation: reply });
+  } catch (error) {
+    console.error('AI recommendation error:', error);
+    res.status(500).json({ error: 'Gagal menghubungi asisten AI: ' + error.message });
   }
 });
 

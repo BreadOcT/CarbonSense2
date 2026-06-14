@@ -86,7 +86,7 @@ export default function AdminLogin() {
 
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
-            <label className="block text-xs font-medium text-[var(--cs-text-dim)] uppercase tracking-wider mb-2">Admin Email / ID</label>
+            <label className="block text-xs font-medium text-[var(--cs-text-dim)] uppercase tracking-wider mb-2">Admin ID</label>
             <input 
               type="text" 
               required 
@@ -94,7 +94,7 @@ export default function AdminLogin() {
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 rounded-xl focus:outline-none transition-colors text-white border" 
               style={{ background: 'rgba(0,0,0,0.3)', borderColor: 'var(--cs-border)' }}
-              placeholder="admin@carbonsense.com" 
+              placeholder="admin_xxx" 
             />
           </div>
           <div>

@@ -8,13 +8,13 @@ import { Link } from 'react-router-dom';
    ============================================================ */
 
 const NAV_LINKS = [{
-  label: 'Home',
+  label: 'Beranda',
   href: '#home'
 }, {
-  label: 'Features',
+  label: 'Fitur',
   href: '#features'
 }, {
-  label: 'Solutions',
+  label: 'Solusi',
   href: '#solutions'
 }, {
   label: 'FAQ',
@@ -36,113 +36,113 @@ const STEPS: StepItem[] = [{
   id: 'step-deploy',
   n: '01',
   icon: Radio,
-  title: 'Deploy & Register',
-  teaser: 'Mount, power on, connect — done in 60 seconds.',
-  body: 'Mount your CarbonSense MQ-series sensor in the target area. Power on, connect to Wi-Fi, and register the device ID in the app. Sensor calibration completes automatically within 60 seconds.'
+  title: 'Pasang & Daftarkan',
+  teaser: 'Pasang, nyalakan, hubungkan — selesai dalam 60 detik.',
+  body: 'Pasang sensor CarbonSense seri MQ Anda di area target. Nyalakan, hubungkan ke Wi-Fi, dan daftarkan ID perangkat di aplikasi. Kalibrasi sensor selesai secara otomatis dalam 60 detik.'
 }, {
   id: 'step-ai-profile',
   n: '02',
   icon: BrainCircuit,
-  title: 'Configure Your AI Profile',
-  teaser: 'Answer 4 questions. The AI calibrates to your space.',
-  body: 'Before your first reading, the CarbonSense AI asks you a short setup questionnaire to calibrate its risk model to YOUR environment.'
+  title: 'Konfigurasikan Profil AI Anda',
+  teaser: 'Jawab 4 pertanyaan. AI akan mengkalibrasi sesuai ruangan Anda.',
+  body: 'Sebelum pembacaan pertama, CarbonSense AI akan menanyakan kuesioner penyiapan singkat untuk mengkalibrasi model risikonya dengan lingkungan ANDA.'
 }, {
   id: 'step-feed',
   n: '03',
   icon: Activity,
-  title: 'Live Data Feed',
-  teaser: 'Readings stream to Firebase every 15 seconds.',
-  body: 'Your MQ-series sensor streams readings to Firebase every 15 seconds. Open the CarbonSense app to see your live data dashboard — current ppm, trend graph, and zone status. All data persists in your Firebase instance.'
+  title: 'Aliran Data Langsung',
+  teaser: 'Pembacaan data dikirim ke Firebase setiap 15 detik.',
+  body: 'Sensor seri MQ Anda mengirimkan pembacaan data ke Firebase setiap 15 detik. Buka aplikasi CarbonSense untuk melihat dasbor data langsung Anda — ppm saat ini, grafik tren, dan status zona. Semua data disimpan dalam Firebase Anda.'
 }, {
   id: 'step-alert',
   n: '04',
   icon: Siren,
-  title: 'AI Alerts In-App',
-  teaser: 'Dangerous patterns flagged before they peak.',
-  body: 'When the AI detects a dangerous pattern, an alert appears inside the CarbonSense app. Open the app to see what the AI found, the confidence level, recommended action, and the spike timeline. Alerts are in-app only — no SMS or email.'
+  title: 'Peringatan AI dalam Aplikasi',
+  teaser: 'Pola berbahaya terdeteksi sebelum mencapai puncaknya.',
+  body: 'Ketika AI mendeteksi pola berbahaya, peringatan akan muncul di dalam aplikasi CarbonSense. Buka aplikasi untuk melihat temuan AI, tingkat keandalan, tindakan yang direkomendasikan, dan lini masa lonjakan data. Peringatan hanya ada di dalam aplikasi — tidak ada SMS atau email.'
 }];
 const AI_QUESTIONS = [{
   id: 'q-people',
   icon: Users,
-  label: 'How many people typically occupy the room?',
-  value: '4–8 people'
+  label: 'Berapa banyak orang yang biasanya menempati ruangan?',
+  value: '4–8 orang'
 }, {
   id: 'q-space',
   icon: Home,
-  label: 'Primary use of the space?',
-  value: 'Industrial floor'
+  label: 'Kegunaan utama ruangan?',
+  value: 'Area Industri'
 }, {
   id: 'q-combustion',
   icon: Flame,
-  label: 'Combustion appliances nearby?',
-  value: 'Gas heater (30 kW)'
+  label: 'Adakah alat pembakaran di dekatnya?',
+  value: 'Pemanas gas (30 kW)'
 }, {
   id: 'q-ventilation',
   icon: Wind,
-  label: 'Ventilation available?',
-  value: 'Mechanical — 4 ACH'
+  label: 'Apakah tersedia ventilasi?',
+  value: 'Mekanis — 4 ACH'
 }] as const;
 const TESTIMONIALS = [{
   id: 't-marcus',
-  quote: 'CarbonSense alerted us 8 minutes before CO readings would have triggered evacuation. It saved lives.',
+  quote: 'CarbonSense memperingatkan kami 8 menit sebelum pembacaan CO memicu evakuasi. Alat ini menyelamatkan nyawa.',
   name: 'Marcus T.',
-  role: 'Plant Safety Manager',
+  role: 'Manajer Keselamatan Pabrik',
   initials: 'MT'
 }, {
   id: 't-yuna',
-  quote: 'The granularity of their air quality data is unlike anything else. Our research team cut analysis time by 60%.',
+  quote: 'Detail data kualitas udara mereka tidak tertandingi. Tim riset kami memotong waktu analisis hingga 60%.',
   name: 'Dr. Yuna Park',
-  role: 'Environmental Researcher',
+  role: 'Peneliti Lingkungan',
   initials: 'YP'
 }, {
   id: 't-james',
-  quote: 'After installing CarbonSense across all 12 city zones, we reduced peak carbon exposure incidents by 73%.',
+  quote: 'Setelah memasang CarbonSense di seluruh 12 zona kota, kami mengurangi insiden paparan karbon puncak sebesar 73%.',
   name: 'James Oduya',
-  role: 'City Environmental Director',
+  role: 'Direktur Lingkungan Kota',
   initials: 'JO'
 }] as const;
 const FEATURES = [{
   id: 'f-accuracy',
   icon: Gauge,
-  title: 'Military-Grade Sensor Accuracy',
-  body: '±0.3 ppm precision. Dual-sensor redundancy catches every spike — no blind spots, no missed thresholds.',
+  title: 'Akurasi Sensor Standar Militer',
+  body: 'Presisi ±0.3 ppm. Redundansi sensor ganda menangkap setiap lonjakan — tanpa titik buta, tanpa ambang batas yang terlewat.',
   kind: 'gauge'
 }, {
   id: 'f-speed',
   icon: Zap,
-  title: 'Instant Processing — Under 500ms',
-  body: 'Readings processed in real time. You see dangerous levels before they become lethal.',
+  title: 'Pemrosesan Instan — Di Bawah 500ms',
+  body: 'Pembacaan data diproses secara real-time. Anda melihat tingkat bahaya sebelum menjadi fatal.',
   kind: 'speed'
 }] as const;
 const FAQ_ITEMS = [{
   id: 'faq-what',
-  q: 'What is CarbonSense?',
-  a: 'CarbonSense is an AI-powered carbon and pollutant detection platform using IoT sensor networks for real-time air quality monitoring and hazard alerts.'
+  q: 'Apa itu CarbonSense?',
+  a: 'CarbonSense adalah platform deteksi karbon dan polutan berbasis AI menggunakan jaringan sensor IoT untuk pemantauan kualitas udara real-time dan peringatan bahaya.'
 }, {
   id: 'faq-accuracy',
-  q: 'How accurate are the sensors?',
-  a: 'Our dual-redundancy sensors achieve ±0.3 ppm CO₂ accuracy, ±0.05 ppm CO accuracy, and sub-5% error for PM2.5 and PM10.'
+  q: 'Seberapa akurat sensor tersebut?',
+  a: 'Sensor redundansi ganda kami mencapai akurasi CO₂ ±0.3 ppm, akurasi CO ±0.05 ppm, dan kesalahan di bawah 5% untuk PM2.5 dan PM10.'
 }, {
   id: 'faq-alerts',
-  q: 'What alerts does CarbonSense send?',
-  a: 'CarbonSense delivers tiered alerts via SMS, email, push notification, and on-site siren. You configure thresholds per pollutant — CO₂, CO, PM2.5, PM10 — and escalation rules per facility zone.'
+  q: 'Peringatan apa saja yang dikirimkan oleh CarbonSense?',
+  a: 'CarbonSense memberikan peringatan bertingkat melalui SMS, email, notifikasi push, dan sirene di lokasi. Anda dapat mengonfigurasi ambang batas per polutan — CO₂, CO, PM2.5, PM10 — dan aturan eskalasi per zona fasilitas.'
 }] as const;
 const FOOTER_COLUMNS = [{
   id: 'col-product',
-  title: 'Product',
-  links: ['Features', 'Live Dashboard', 'Deploy Sensors', 'Pricing']
+  title: 'Produk',
+  links: ['Fitur', 'Dasbor Langsung', 'Pasang Sensor', 'Harga']
 }, {
   id: 'col-resources',
-  title: 'Resources',
-  links: ['Case Studies', 'Blog', 'Documentation', 'Whitepapers']
+  title: 'Sumber Daya',
+  links: ['Studi Kasus', 'Blog', 'Dokumentasi', 'Whitepaper']
 }, {
   id: 'col-solutions',
-  title: 'Solutions',
-  links: ['Industrial', 'Municipal', 'Research', 'Emergency Services']
+  title: 'Solusi',
+  links: ['Industri', 'Perkotaan', 'Penelitian', 'Layanan Darurat']
 }, {
   id: 'col-legal',
-  title: 'Legal',
-  links: ['Terms of Service', 'Privacy Policy', 'Compliance Docs', 'Cookie Policy']
+  title: 'Hukum',
+  links: ['Ketentuan Layanan', 'Kebijakan Privasi', 'Dokumen Kepatuhan', 'Kebijakan Cookie']
 }] as const;
 const SOCIALS = [{
   id: 'soc-tw',
@@ -159,7 +159,7 @@ const SOCIALS = [{
 }] as const;
 const HERO_PATH = 'M0 120 L30 110 L55 118 L80 92 L105 100 L130 70 L160 82 L185 48 L210 60 L235 40 L265 58 L290 30 L320 44 L345 22 L375 36 L400 18';
 const HERO_PATH_LEN = 900;
-const CTA_STATUSES = ['MONITORING...', 'ANALYZING...', 'RISK DETECTED', 'MONITORING...'] as const;
+const CTA_STATUSES = ['MEMANTAU...', 'MENGANALISIS...', 'RISIKO TERDETEKSI', 'MEMANTAU...'] as const;
 
 /* ============================================================
    UTILITIES
@@ -263,7 +263,7 @@ function CO2Logo() {
           CARBONSENSE
         </span>
         <span className="text-[9px] uppercase tracking-[0.28em] text-[var(--cs-amber)]">
-          air integrity system
+          sistem pemantauan udara
         </span>
       </span>
     </a>;
@@ -337,11 +337,11 @@ function HeroDashboard() {
           }} />
           </span>
           <span className="text-xs font-medium uppercase tracking-[0.18em] text-[var(--cs-text-dim)]">
-            Live Monitoring · Zone B-04
+            Pemantauan Langsung · Zona B-04
           </span>
         </div>
         <span className="text-[10px] uppercase tracking-[0.2em] text-[var(--cs-text-dim)]">
-          15s refresh
+          Segarkan 15d
         </span>
       </div>
 
@@ -352,7 +352,7 @@ function HeroDashboard() {
         background: 'rgba(0,0,0,0.25)'
       }}>
           <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--cs-text-dim)]">
-            CO₂ Concentration
+            Konsentrasi CO₂
           </p>
           <div className="mt-1 flex items-end gap-2">
             <span className="text-4xl font-semibold leading-none" style={{
@@ -380,7 +380,7 @@ function HeroDashboard() {
               </defs>
               <line x1="0" y1="34" x2="400" y2="34" stroke="var(--cs-danger)" strokeWidth="1.2" strokeDasharray="4 4" opacity="0.7" />
               <text x="2" y="28" fontSize="9" fill="var(--cs-danger-text)">
-                CRITICAL 400ppm
+                KRITIS 400ppm
               </text>
               <path d={`${HERO_PATH} L400 140 L0 140 Z`} fill="url(#heroFill)" style={{
               animation: 'heroBreath 3s ease-in-out infinite'
@@ -405,7 +405,7 @@ function HeroDashboard() {
         background: 'rgba(0,0,0,0.25)'
       }}>
           <p className="mb-1 text-[11px] uppercase tracking-[0.16em] text-[var(--cs-text-dim)]">
-            Air Quality Index
+            Indeks Kualitas Udara
           </p>
           <svg width="120" height="72" viewBox="0 0 120 72">
             <defs>
@@ -426,7 +426,7 @@ function HeroDashboard() {
             168
           </span>
           <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--cs-danger-text)]">
-            Unhealthy
+            Tidak Sehat
           </span>
         </div>
       </div>
@@ -488,7 +488,7 @@ function AIProfileForm() {
         <span className="text-xs font-semibold uppercase tracking-[0.14em]" style={{
         color: 'var(--cs-amber)'
       }}>
-          AI Setup Questionnaire
+          Kuesioner Pengaturan AI
         </span>
       </div>
       <div className="space-y-3">
@@ -514,7 +514,7 @@ function AIProfileForm() {
       background: 'color-mix(in oklab, var(--cs-amber) 14%, transparent)',
       color: 'var(--cs-amber)'
     }}>
-        ✓ AI model calibrating to your environment...
+        ✓ Kalibrasi model AI ke lingkungan Anda...
       </div>
     </div>;
 }
@@ -524,7 +524,7 @@ function AIProfileForm() {
    ============================================================ */
 
 function DeployMockVisual() {
-  const SCAN_DOTS = ['Scanning for device.', 'Scanning for device..', 'Scanning for device...'];
+  const SCAN_DOTS = ['Memindai perangkat.', 'Memindai perangkat..', 'Memindai perangkat...'];
   const [scanIdx, setScanIdx] = useState(0);
   const [calibWidth, setCalibWidth] = useState(0);
   const [deviceId, setDeviceId] = useState('');
@@ -561,7 +561,7 @@ function DeployMockVisual() {
           <circle cx="20" cy="20" r="4" stroke="var(--cs-amber)" strokeWidth="1.2" fill="none" />
         </svg>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-[var(--cs-text)]">MQ-135 Sensor</p>
+          <p className="text-sm font-semibold text-[var(--cs-text)]">Sensor MQ-135</p>
           <div className="mt-0.5 flex items-center gap-1.5">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute h-2 w-2 rounded-full" style={{
@@ -581,7 +581,7 @@ function DeployMockVisual() {
       <div className="mt-3">
         <div className="flex items-center justify-between">
           <span className="text-[10px] uppercase tracking-[0.14em] text-[var(--cs-text-dim)]">
-            Calibration
+            Kalibrasi
           </span>
           <span className="text-[10px] font-semibold text-[var(--cs-amber)]">78%</span>
         </div>
@@ -604,12 +604,12 @@ function DeployMockVisual() {
       {/* Bottom — registration form */}
       <div className="space-y-2.5">
         {[{
-        k: 'Device ID',
+        k: 'ID Perangkat',
         v: deviceId,
         mono: true
       }, {
-        k: 'Location',
-        v: 'Zone B — Floor 2',
+        k: 'Lokasi',
+        v: 'Zona B — Lantai 2',
         mono: false
       }].map(row => <div key={row.k} className="flex items-center justify-between gap-3">
             <span className="text-xs text-[var(--cs-text-dim)]">{row.k}</span>
@@ -625,7 +625,7 @@ function DeployMockVisual() {
             </span>
           </div>)}
         <div className="flex items-center justify-between gap-3">
-          <span className="text-xs text-[var(--cs-text-dim)]">Alert Threshold</span>
+          <span className="text-xs text-[var(--cs-text-dim)]">Ambang Batas Peringatan</span>
           <span className="rounded-md px-2.5 py-1 text-xs font-semibold" style={{
           background: 'rgba(0,0,0,0.3)',
           border: '1px solid var(--cs-border)',
@@ -643,7 +643,7 @@ function DeployMockVisual() {
       backgroundSize: '200% 100%',
       animation: 'deployShimmer 2.2s linear infinite'
     }}>
-        Confirm Registration
+        Konfirmasi Pendaftaran
       </div>
 
       <style>{`
@@ -753,7 +753,7 @@ function FeedMockVisual() {
           <span className="text-xs font-semibold uppercase tracking-[0.2em]" style={{
           color: 'var(--cs-amber)'
         }}>
-            Live Stream
+            Aliran Langsung
           </span>
         </div>
         <span className="text-xs text-[var(--cs-text-dim)]" style={{
@@ -791,7 +791,7 @@ function FeedMockVisual() {
 
       {/* Bottom bar */}
       <div className="mt-3 text-xs text-[var(--cs-text-dim)]">
-        Last write: {lastMs} ms ago
+        Pembaruan terakhir: {lastMs} ms lalu
       </div>
 
       <style>{`
@@ -855,9 +855,9 @@ function AlertMockVisual() {
           <span className="text-xs font-bold uppercase tracking-wide" style={{
           color: 'var(--cs-danger-text)'
         }}>
-            Dangerous Level Detected
+            Tingkat Bahaya Terdeteksi
           </span>
-          <span className="ml-auto text-[10px] text-[var(--cs-text-dim)]">2 min ago</span>
+          <span className="ml-auto text-[10px] text-[var(--cs-text-dim)]">2 mnt lalu</span>
         </div>
 
         {/* Reading */}
@@ -885,12 +885,12 @@ function AlertMockVisual() {
             transition: 'width 1.5s ease-out'
           }} />
           </div>
-          <p className="mt-1.5 text-xs text-[var(--cs-text-dim)]">Danger Threshold: 85%</p>
+          <p className="mt-1.5 text-xs text-[var(--cs-text-dim)]">Ambang Batas Bahaya: 85%</p>
         </div>
 
         {/* Confidence */}
         <div className="mt-3 flex items-center justify-between">
-          <span className="text-xs text-[var(--cs-text-dim)]">AI Confidence</span>
+          <span className="text-xs text-[var(--cs-text-dim)]">Keandalan AI</span>
           <span className="text-sm font-semibold" style={{
           color: 'var(--cs-amber)'
         }}>
@@ -905,14 +905,14 @@ function AlertMockVisual() {
         borderColor: 'var(--cs-amber)',
         color: 'var(--cs-amber)'
       }}>
-          View Spike Timeline
+          Lihat Lini Masa Lonjakan
         </span>
         <span className="flex-1 rounded-lg border px-3 py-2 text-center text-xs font-medium" style={{
         borderColor: 'var(--cs-border)',
         background: 'var(--cs-surface)',
         color: 'var(--cs-text-dim)'
       }}>
-          Mark as Reviewed
+          Tandai Telah Ditinjau
         </span>
       </div>
 
@@ -958,7 +958,7 @@ function HowItWorksSection({
   }, []);
   return <div>
       <div className="mx-auto max-w-2xl text-center">
-        <AnimatedHeading text="4 Steps to Clean Air Certainty" visible={visible} className="text-4xl tracking-tight sm:text-5xl" style={{
+        <AnimatedHeading text="4 Langkah untuk Kepastian Udara Bersih" visible={visible} className="text-4xl tracking-tight sm:text-5xl" style={{
         fontFamily: 'var(--font-display)'
       }} />
         <p className="mt-3 text-[var(--cs-text-dim)]" style={{
@@ -966,7 +966,7 @@ function HowItWorksSection({
         transform: visible ? 'translateY(0)' : 'translateY(16px)',
         transition: 'opacity 0.6s ease 200ms, transform 0.6s ease 200ms'
       }}>
-          From sensor to siren — a closed loop that never sleeps.
+          Dari sensor hingga sirene — siklus tertutup yang tidak pernah tidur.
         </p>
       </div>
 
@@ -1136,21 +1136,21 @@ function TestimonialsSection({
       transition: 'opacity 0.6s ease, transform 0.6s ease'
     }}>
         <div className="max-w-xl">
-          <AnimatedHeading text="What Our Partners Say" visible={visible} className="text-4xl tracking-tight sm:text-5xl" style={{
+          <AnimatedHeading text="Apa Kata Rekanan Kami" visible={visible} className="text-4xl tracking-tight sm:text-5xl" style={{
           fontFamily: 'var(--font-display)'
         }} />
           <p className="mt-3 text-[var(--cs-text-dim)]">
-            Trusted by industrial facilities, municipalities, and research institutions.
+            Dipercaya oleh fasilitas industri, pemerintah kota, dan lembaga penelitian.
           </p>
         </div>
         <div className="flex gap-2">
-          <button aria-label="Previous testimonial" onClick={() => setCenter(p => (p - 1 + total) % total)} className="flex h-11 w-11 items-center justify-center rounded-lg border transition-colors hover:border-[var(--cs-amber)] hover:text-[var(--cs-amber)]" style={{
+          <button aria-label="Testimoni sebelumnya" onClick={() => setCenter(p => (p - 1 + total) % total)} className="flex h-11 w-11 items-center justify-center rounded-lg border transition-colors hover:border-[var(--cs-amber)] hover:text-[var(--cs-amber)]" style={{
           borderColor: 'var(--cs-border)',
           color: 'var(--cs-text)'
         }}>
             <ChevronLeft size={18} />
           </button>
-          <button aria-label="Next testimonial" onClick={() => setCenter(p => (p + 1) % total)} className="flex h-11 w-11 items-center justify-center rounded-lg border transition-colors hover:border-[var(--cs-amber)] hover:text-[var(--cs-amber)]" style={{
+          <button aria-label="Testimoni berikutnya" onClick={() => setCenter(p => (p + 1) % total)} className="flex h-11 w-11 items-center justify-center rounded-lg border transition-colors hover:border-[var(--cs-amber)] hover:text-[var(--cs-amber)]" style={{
           borderColor: 'var(--cs-border)',
           color: 'var(--cs-text)'
         }}>
@@ -1204,7 +1204,7 @@ function TestimonialsSection({
 
       {/* Dot indicators */}
       <div className="mt-6 flex items-center justify-center gap-2">
-        {TESTIMONIALS.map((item, i) => <button key={item.id} onClick={() => setCenter(i)} aria-label={`Go to testimonial ${i + 1}`} style={{
+        {TESTIMONIALS.map((item, i) => <button key={item.id} onClick={() => setCenter(i)} aria-label={`Buka testimoni ${i + 1}`} style={{
         height: '6px',
         width: i === center ? '24px' : '6px',
         borderRadius: '3px',
@@ -1275,11 +1275,11 @@ function LiveCtaDashboard() {
   }}>
       <div className="mb-4 flex items-center justify-between">
         <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--cs-text-dim)]">
-          CO Levels · Zone A-01
+          Kadar CO · Zona A-01
         </span>
         <span className="rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide" style={{
-        background: currentStatus === 'RISK DETECTED' ? 'var(--cs-danger)' : 'color-mix(in oklab, var(--cs-amber) 22%, transparent)',
-        color: currentStatus === 'RISK DETECTED' ? '#0c0a08' : 'var(--cs-amber)',
+        background: currentStatus === 'RISIKO TERDETEKSI' ? 'var(--cs-danger)' : 'color-mix(in oklab, var(--cs-amber) 22%, transparent)',
+        color: currentStatus === 'RISIKO TERDETEKSI' ? '#0c0a08' : 'var(--cs-amber)',
         opacity: statusVisible ? 1 : 0,
         transition: 'opacity 300ms ease, background 300ms ease'
       }}>
@@ -1314,7 +1314,7 @@ function LiveCtaDashboard() {
         animation: 'thresholdDrift 2s ease-in-out infinite'
       }} />
         <text x="2" y="24" fontSize="9" fill="var(--cs-danger-text)">
-          DANGER ZONE
+          ZONA BAHAYA
         </text>
 
         {/* Path A */}
@@ -1347,18 +1347,18 @@ function LiveCtaDashboard() {
           <p className="text-sm font-semibold" style={{
           color: 'var(--cs-danger-text)'
         }}>
-            212 · Hazardous
+            212 · Sangat Berbahaya
           </p>
         </div>
         <div className="rounded-lg border p-2.5" style={{
         background: 'rgba(0,0,0,0.25)',
         borderColor: 'var(--cs-border)'
       }}>
-          <p className="text-[10px] uppercase tracking-[0.12em] text-[var(--cs-text-dim)]">Trend</p>
+          <p className="text-[10px] uppercase tracking-[0.12em] text-[var(--cs-text-dim)]">Tren</p>
           <p className="text-sm font-semibold" style={{
           color: 'var(--cs-amber)'
         }}>
-            ▲ Rising fast
+            ▲ Meningkat cepat
           </p>
         </div>
       </div>
@@ -1562,7 +1562,7 @@ export function CarbonSenseLanding() {
           </ul>
 
           <div className="hidden items-center gap-3 md:flex">
-            <button aria-label="Alerts" className="relative flex h-10 w-10 items-center justify-center rounded-lg border transition-colors hover:border-[var(--cs-amber)]" style={{
+            <button aria-label="Peringatan" className="relative flex h-10 w-10 items-center justify-center rounded-lg border transition-colors hover:border-[var(--cs-amber)]" style={{
             borderColor: 'var(--cs-border)',
             color: 'var(--cs-text-dim)'
           }}>
@@ -1575,7 +1575,7 @@ export function CarbonSenseLanding() {
             background: 'var(--cs-amber)',
             boxShadow: '0 8px 24px -8px var(--cs-amber-glow)'
           }}>
-              Get Alert
+              Dapatkan Peringatan
               <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
             </Link>
           </div>
@@ -1603,7 +1603,7 @@ export function CarbonSenseLanding() {
                 <Link to="/login" className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-[#0c0a08]" style={{
               background: 'var(--cs-amber)'
             }}>
-                  <span>Get Alert</span>
+                  <span>Dapatkan Peringatan</span>
                   <ArrowRight size={16} />
                 </Link>
               </li>
@@ -1628,7 +1628,7 @@ export function CarbonSenseLanding() {
             transform: hero.visible ? 'translateY(0)' : 'translateY(28px)',
             transition: 'opacity 0.7s ease 80ms, transform 0.7s ease 80ms'
           }}>
-              DETECT CARBON
+              DETEKSI KARBON
             </span>
             <span className="block text-[15vw] tracking-tight sm:text-[80px] lg:text-[96px]" style={{
             color: 'var(--cs-amber)',
@@ -1636,7 +1636,7 @@ export function CarbonSenseLanding() {
             transform: hero.visible ? 'translateY(0)' : 'translateY(28px)',
             transition: 'opacity 0.7s ease 160ms, transform 0.7s ease 160ms'
           }}>
-              BEFORE IT KILLS
+              SEBELUM MEMATIKAN
             </span>
           </h1>
 
@@ -1645,8 +1645,8 @@ export function CarbonSenseLanding() {
           transform: hero.visible ? 'translateY(0)' : 'translateY(20px)',
           transition: 'opacity 0.6s ease 240ms, transform 0.6s ease 240ms'
         }}>
-            CarbonSense uses real-time AI sensor networks to monitor CO₂, CO, and particulate
-            matter — giving you instant alerts before dangerous concentrations build up.
+            CarbonSense menggunakan jaringan sensor AI real-time untuk memantau CO₂, CO, dan materi
+            partikulat — memberikan Anda peringatan instan sebelum konsentrasi berbahaya menumpuk.
           </p>
 
           <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row" style={{
@@ -1658,7 +1658,7 @@ export function CarbonSenseLanding() {
             background: 'var(--cs-amber)',
             boxShadow: '0 14px 36px -12px var(--cs-amber-glow)'
           }}>
-              Deploy Sensors
+              Pasang Sensor
               <ArrowRight size={17} className="transition-transform group-hover:translate-x-1" />
             </Link>
           </div>
@@ -1685,9 +1685,9 @@ export function CarbonSenseLanding() {
               <TriangleAlert size={15} style={{
               color: 'var(--cs-amber)'
             }} />
-              <span className="text-xs font-semibold text-[var(--cs-text)]">CO₂ spike detected</span>
+              <span className="text-xs font-semibold text-[var(--cs-text)]">Lonjakan CO₂ terdeteksi</span>
             </div>
-            <p className="mt-0.5 text-[10px] text-[var(--cs-text-dim)]">Zone B-04 · +52 ppm in 4m</p>
+            <p className="mt-0.5 text-[10px] text-[var(--cs-text-dim)]">Zona B-04 · +52 ppm dalam 4 mnt</p>
           </div>
 
           {/* Floating alert card — right */}
@@ -1705,10 +1705,10 @@ export function CarbonSenseLanding() {
               <span className="text-xs font-semibold" style={{
               color: 'var(--cs-danger-text)'
             }}>
-                PM2.5 high
+                PM2.5 tinggi
               </span>
             </div>
-            <p className="mt-0.5 text-[10px] text-[var(--cs-text-dim)]">88 µg/m³ · Hazardous</p>
+            <p className="mt-0.5 text-[10px] text-[var(--cs-text-dim)]">88 µg/m³ · Sangat Berbahaya</p>
           </div>
         </div>
       </section>
@@ -1741,7 +1741,7 @@ export function CarbonSenseLanding() {
     }}>
         <div ref={feats.ref} className={`cs-reveal mx-auto max-w-6xl ${feats.visible ? 'is-visible' : ''}`}>
           <div className="mx-auto max-w-2xl text-center">
-            <AnimatedHeading text="Accuracy. Speed. Reliability." visible={feats.visible} className="text-4xl tracking-tight sm:text-5xl" style={{
+            <AnimatedHeading text="Akurasi. Kecepatan. Keandalan." visible={feats.visible} className="text-4xl tracking-tight sm:text-5xl" style={{
             fontFamily: 'var(--font-display)'
           }} />
             <p className="mt-3 text-[var(--cs-text-dim)]" style={{
@@ -1749,7 +1749,7 @@ export function CarbonSenseLanding() {
             transform: feats.visible ? 'translateY(0)' : 'translateY(16px)',
             transition: 'opacity 0.6s ease 160ms, transform 0.6s ease 160ms'
           }}>
-              The three pillars every sensor network must have.
+              Tiga pilar utama yang wajib dimiliki setiap jaringan sensor.
             </p>
           </div>
 
@@ -1780,7 +1780,7 @@ export function CarbonSenseLanding() {
                   {f.kind === 'gauge' ? <div className="flex items-center justify-between">
                       <div>
                         <p className="text-[10px] uppercase tracking-[0.14em] text-[var(--cs-text-dim)]">
-                          Sensor precision
+                          Presisi sensor
                         </p>
                         <p className="text-2xl font-semibold" style={{
                     fontFamily: 'var(--font-display)',
@@ -1796,7 +1796,7 @@ export function CarbonSenseLanding() {
                     </div> : <div>
                       <div className="flex items-center justify-between">
                         <p className="text-[10px] uppercase tracking-[0.14em] text-[var(--cs-text-dim)]">
-                          Processing latency
+                          Latensi pemrosesan
                         </p>
                         <p className="text-lg font-semibold" style={{
                     fontFamily: 'var(--font-display)',
@@ -1814,7 +1814,7 @@ export function CarbonSenseLanding() {
                   }} />
                       </div>
                       <p className="mt-1.5 text-[10px] text-[var(--cs-text-dim)]">
-                        Real-time threshold breach detection
+                        Deteksi pelanggaran ambang batas secara real-time
                       </p>
                     </div>}
                 </div>
@@ -1839,28 +1839,28 @@ export function CarbonSenseLanding() {
                   }} />
                   </span>
                   <h3 className="mt-4 text-lg font-semibold text-[var(--cs-text)]">
-                    Mission-Critical Support
+                    Dukungan Kritis Utama
                   </h3>
                   <p className="mt-2 text-sm leading-relaxed text-[var(--cs-text-dim)]">
-                    24/7 engineering support for critical incidents. Our team monitors network health
-                    continuously so you never face a carbon crisis alone.
+                    Dukungan teknisi 24/7 untuk insiden kritis. Tim kami memantau kesehatan jaringan
+                    terus-menerus agar Anda tidak pernah menghadapi krisis karbon sendirian.
                   </p>
                   <a href="mailto:support@carbonsense.io" className="mt-5 inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-[#0c0a08] transition-all hover:brightness-110" style={{
                   background: 'var(--cs-amber)'
                 }}>
-                    Contact Support
+                    Hubungi Dukungan
                     <ArrowRight size={15} />
                   </a>
                 </div>
                 <div className="flex items-center gap-4">
                   {[{
-                  k: 'Uptime',
+                  k: 'Waktu Aktif',
                   v: '99.98%'
                 }, {
-                  k: 'Response',
-                  v: '<4 min'
+                  k: 'Respons',
+                  v: '<4 mnt'
                 }, {
-                  k: 'Coverage',
+                  k: 'Cakupan',
                   v: '24/7'
                 }].map(stat => <div key={stat.k} className="rounded-xl border px-4 py-3 text-center" style={{
                   background: 'rgba(0,0,0,0.3)',
@@ -1895,9 +1895,9 @@ export function CarbonSenseLanding() {
             background: 'color-mix(in oklab, var(--cs-amber) 16%, transparent)',
             color: 'var(--cs-amber)'
           }}>
-              Support &amp; Docs
+              Dukungan &amp; Dokumen
             </span>
-            <AnimatedHeading text="Frequently Asked Questions" visible={faq.visible} className="mt-4 text-4xl tracking-tight sm:text-5xl" style={{
+            <AnimatedHeading text="Pertanyaan yang Sering Diajukan" visible={faq.visible} className="mt-4 text-4xl tracking-tight sm:text-5xl" style={{
             fontFamily: 'var(--font-display)'
           }} />
           </div>
@@ -1916,15 +1916,15 @@ export function CarbonSenseLanding() {
               }} />
               </span>
               <h3 className="mt-4 text-lg font-semibold text-[var(--cs-text)]">
-                Need Technical Help?
+                Butuh Bantuan Teknis?
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-[var(--cs-text-dim)]">
-                Our engineering support team is available around the clock for critical incidents.
+                Tim dukungan teknisi kami tersedia sepanjang waktu untuk insiden kritis.
               </p>
               <button className="mt-5 inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-[#0c0a08] transition-all hover:brightness-110" style={{
               background: 'var(--cs-amber)'
             }}>
-                Contact Support
+                Hubungi Dukungan
                 <ArrowRight size={15} />
               </button>
             </div>
@@ -1977,28 +1977,28 @@ export function CarbonSenseLanding() {
               <h2 className="text-4xl leading-[0.92] tracking-tight sm:text-5xl" style={{
               fontFamily: 'var(--font-display)'
             }}>
-                Every minute of{' '}
+                Setiap menit{' '}
                 <span style={{
                 color: 'var(--cs-amber)'
-              }}>exposure</span> matters.
+              }}>paparan</span> sangat berarti.
               </h2>
               <p className="mt-4 max-w-md text-[var(--cs-text-dim)]">
-                Deploy CarbonSense today and start protecting what matters. Don't wait for a crisis
-                to act.
+                Pasang CarbonSense hari ini dan mulai lindungi apa yang berharga. Jangan menunggu krisis
+                untuk bertindak.
               </p>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <Link to="/login" className="inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3.5 text-sm font-semibold text-[#0c0a08] transition-all hover:brightness-110" style={{
                 background: 'var(--cs-amber)',
                 boxShadow: '0 14px 36px -12px var(--cs-amber-glow)'
               }}>
-                  Deploy Now — Free Trial
+                  Pasang Sekarang — Uji Coba Gratis
                   <ArrowRight size={16} />
                 </Link>
                 <button className="inline-flex items-center justify-center gap-2 rounded-lg border px-6 py-3.5 text-sm font-semibold transition-colors" style={{
                 borderColor: 'var(--cs-danger)',
                 color: 'var(--cs-danger-text)'
               }}>
-                  Talk to an Expert
+                  Hubungi Ahli Kami
                 </button>
               </div>
             </div>
@@ -2019,7 +2019,7 @@ export function CarbonSenseLanding() {
             <div className="col-span-2">
               <CO2Logo />
               <p className="mt-4 max-w-xs text-sm leading-relaxed text-[var(--cs-text-dim)]">
-                Real-time carbon detection for a safer world.
+                Deteksi karbon secara real-time untuk dunia yang lebih aman.
               </p>
               <div className="mt-6 flex gap-8">
                 <div>
@@ -2027,10 +2027,10 @@ export function CarbonSenseLanding() {
                   fontFamily: 'var(--font-display)',
                   color: 'var(--cs-amber)'
                 }}>
-                    2.1M+
+                    2,1 Jt+
                   </p>
                   <p className="text-[11px] uppercase tracking-[0.12em] text-[var(--cs-text-dim)]">
-                    Sensor Readings/Day
+                    Pembacaan Sensor/Hari
                   </p>
                 </div>
                 <div>
@@ -2038,10 +2038,10 @@ export function CarbonSenseLanding() {
                   fontFamily: 'var(--font-display)',
                   color: 'var(--cs-amber)'
                 }}>
-                    4.9 ★
+                    4,9 ★
                   </p>
                   <p className="text-[11px] uppercase tracking-[0.12em] text-[var(--cs-text-dim)]">
-                    Average Rating
+                    Peringkat Rata-rata
                   </p>
                 </div>
               </div>
@@ -2065,7 +2065,7 @@ export function CarbonSenseLanding() {
           borderColor: 'var(--cs-border)'
         }}>
             <p className="text-xs text-[var(--cs-text-dim)]">
-              © 2025 CarbonSense. All rights reserved.
+              © 2025 CarbonSense. Hak cipta dilindungi undang-undang.
             </p>
             <div className="flex items-center gap-2">
               {SOCIALS.map(s => <a key={s.id} href="#" aria-label={s.label} className="flex h-9 w-9 items-center justify-center rounded-lg border transition-colors hover:border-[var(--cs-amber)] hover:text-[var(--cs-amber)]" style={{
