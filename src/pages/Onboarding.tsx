@@ -83,11 +83,28 @@ function generateDynamicFallbackSummary(answers: any[]): string {
 
 export default function Onboarding() {
   const navigate = useNavigate();
+  const userEmail = localStorage.getItem('cs_user_email');
+  const onboardingCompleted = userEmail ? localStorage.getItem(`cs_onboarding_completed_${userEmail}`) === 'true' : false;
+
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<any[]>([]);
   const [isFinishing, setIsFinishing] = useState(false);
   const [aiSummary, setAiSummary] = useState('');
   const [loadingSummary, setLoadingSummary] = useState(false);
+
+  // Load previous answers if repeating onboarding
+  useEffect(() => {
+    if (userEmail) {
+      const savedAnswers = localStorage.getItem(`cs_onboarding_answers_${userEmail}`);
+      if (savedAnswers) {
+        try {
+          setAnswers(JSON.parse(savedAnswers));
+        } catch (e) {
+          console.error('Failed to parse saved onboarding answers:', e);
+        }
+      }
+    }
+  }, [userEmail]);
 
   useEffect(() => {
     if (currentStep === steps.length && answers.length >= steps.length) {
@@ -161,6 +178,12 @@ export default function Onboarding() {
     };
     localStorage.setItem('cs_ai_personality', JSON.stringify(profile));
     
+    if (userEmail) {
+      localStorage.setItem(`cs_onboarding_answers_${userEmail}`, JSON.stringify(answers));
+      localStorage.setItem(`cs_ai_personality_${userEmail}`, JSON.stringify(profile));
+      localStorage.setItem(`cs_onboarding_completed_${userEmail}`, 'true');
+    }
+    
     setTimeout(() => {
       navigate('/select-device');
     }, 1500);
@@ -212,16 +235,29 @@ export default function Onboarding() {
               </span>
             </span>
           </div>
-          <button 
-            onClick={() => {
-              localStorage.removeItem('cs_user_email');
-              navigate('/login');
-            }} 
-            className="text-xs uppercase tracking-widest font-semibold text-[var(--cs-text-dim)] hover:text-red-400 transition-colors border px-4 py-2 rounded-xl cursor-pointer animate-pulse" 
-            style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}
-          >
-            Keluar Sesi
-          </button>
+          <div className="flex items-center gap-3">
+            {onboardingCompleted && (
+              <button 
+                onClick={() => {
+                  navigate('/select-device');
+                }} 
+                className="text-xs uppercase tracking-widest font-semibold text-[var(--cs-text-dim)] hover:text-[var(--cs-amber)] transition-colors border px-4 py-2 rounded-xl cursor-pointer" 
+                style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}
+              >
+                Batal
+              </button>
+            )}
+            <button 
+              onClick={() => {
+                localStorage.removeItem('cs_user_email');
+                navigate('/login');
+              }} 
+              className="text-xs uppercase tracking-widest font-semibold text-[var(--cs-text-dim)] hover:text-red-400 transition-colors border px-4 py-2 rounded-xl cursor-pointer" 
+              style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}
+            >
+              Keluar Sesi
+            </button>
+          </div>
         </div>
       </header>
       <div className="fixed inset-0 pointer-events-none">

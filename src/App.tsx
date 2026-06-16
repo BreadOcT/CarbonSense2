@@ -14,10 +14,10 @@ import UserProfile from './pages/UserProfile';
 // Auth Guards (Business Flow)
 function UserGuard({ children }: { children: React.ReactNode }) {
   const userEmail = localStorage.getItem('cs_user_email');
-  const aiProfile = localStorage.getItem('cs_ai_personality');
+  const hasOnboarded = userEmail ? localStorage.getItem(`cs_onboarding_completed_${userEmail}`) === 'true' : false;
   
   if (!userEmail) return <Navigate to="/login" replace />;
-  if (!aiProfile) return <Navigate to="/onboarding" replace />;
+  if (!hasOnboarded) return <Navigate to="/onboarding" replace />;
   
   return <>{children}</>;
 }

@@ -26,10 +26,27 @@ export default function UserLogin() {
       localStorage.setItem('cs_user_email', response.user.email);
       localStorage.setItem('cs_user_token', response.token);
 
+      // Restore user-specific onboarding keys to generic keys
+      const emailVal = response.user.email;
+      const userPersonality = localStorage.getItem(`cs_ai_personality_${emailVal}`);
+      const userAnswers = localStorage.getItem(`cs_onboarding_answers_${emailVal}`);
+      const hasOnboarded = localStorage.getItem(`cs_onboarding_completed_${emailVal}`) === 'true';
+
+      if (userPersonality) {
+        localStorage.setItem('cs_ai_personality', userPersonality);
+      } else {
+        localStorage.removeItem('cs_ai_personality');
+      }
+
+      if (userAnswers) {
+        localStorage.setItem('cs_onboarding_answers', userAnswers);
+      } else {
+        localStorage.removeItem('cs_onboarding_answers');
+      }
+
       setLoading(false);
       
-      const hasPersonality = localStorage.getItem('cs_ai_personality');
-      if (hasPersonality) {
+      if (hasOnboarded) {
         navigate('/select-device');
       } else {
         navigate('/onboarding');
