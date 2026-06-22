@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>CarbonSense - Rancangan Pengujian Perangkat Lunak</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            color: #333;
+        }
+        h1 {
+            color: #d97706;
+            border-bottom: 2px solid #d97706;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #1e3a8a;
+            margin-top: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            margin-bottom: 30px;
+        }
+        th, td {
+            border: 1px solid #999;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+            font-size: 13px;
+        }
+        th {
+            background-color: #f3f4f6;
+            font-weight: bold;
+        }
+        .instructions {
+            background-color: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Rancangan & Laporan Pengujian Perangkat Lunak - CarbonSense</h1>
+    
+    <div class="instructions">
+        <strong>Petunjuk Ekspor ke Google Docs:</strong><br>
+        1. Buka file HTML ini di browser Anda (klik dua kali file <code>test_cases_export.html</code>).<br>
+        2. Tekan <strong>Ctrl + A</strong> untuk menyeleksi seluruh halaman, lalu tekan <strong>Ctrl + C</strong> untuk menyalin (copy).<br>
+        3. Buka dokumen kosong di <strong>Google Docs</strong>, lalu tekan <strong>Ctrl + V</strong> untuk menempel (paste).<br>
+        4. Tabel beserta seluruh border, warna header, dan isinya akan langsung tertata rapi di dokumen Google Docs Anda.
+    </div>
+
+    <h2>Tabel Hasil Eksekusi Pengujian Fungsionalitas</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 12%">Fungsionalitas</th>
+                <th style="width: 8%">ID Test Case</th>
+                <th style="width: 20%">Deskripsi / Skenario</th>
+                <th style="width: 12%">Pra Kondisi</th>
+                <th style="width: 18%">Langkah Pengujian</th>
+                <th style="width: 10%">Data Pengujian</th>
+                <th style="width: 15%">Hasil yang Diharapkan</th>
+                <th style="width: 15%">Hasil Aktual</th>
+                <th style="width: 10%">Status (Pass/Fail)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- LOGIN -->
+            <tr>
+                <td rowspan="3"><strong>Autentikasi (Login)</strong></td>
+                <td>TC 1.1</td>
+                <td>Pengguna tidak mengisikan email dan password</td>
+                <td>Pengguna berada pada halaman login (/login)</td>
+                <td>1. Buka halaman /login<br>2. Kosongkan email dan password<br>3. Klik tombol Login</td>
+                <td>-</td>
+                <td>Login gagal, sistem menampilkan pesan error validasi input di form.</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>TC 1.2</td>
+                <td>Pengguna mengisikan password yang salah</td>
+                <td>Pengguna berada pada halaman login (/login)</td>
+                <td>1. Masukkan email terdaftar<br>2. Masukkan password salah<br>3. Klik tombol Login</td>
+                <td>email: okto@gmail.com<br>password: salahpassword</td>
+                <td>Login gagal, muncul pesan alert "Email atau password salah!"</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>TC 1.3</td>
+                <td>Pengguna mengisikan email dan password yang benar</td>
+                <td>Pengguna berada pada halaman login (/login)</td>
+                <td>1. Masukkan email terdaftar<br>2. Masukkan password benar<br>3. Klik tombol Login</td>
+                <td>email: okto@gmail.com<br>password: password123</td>
+                <td>Login berhasil, diarahkan ke halaman /select-device.</td>
+                <td></td>
+                <td></td>
+            </tr>
+
+            <!-- REGISTRASI -->
+            <tr>
+                <td rowspan="3"><strong>Registrasi</strong></td>
+                <td>TC 2.1</td>
+                <td>Pengguna mengosongkan semua data registrasi</td>
+                <td>Pengguna berada pada halaman registrasi (/register)</td>
+                <td>1. Buka halaman /register<br>2. Klik tombol Daftar</td>
+                <td>-</td>
+                <td>Registrasi gagal, sistem menunjukkan validasi kolom wajib diisi.</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>TC 2.2</td>
+                <td>Pengguna mendaftarkan password kurang dari 6 karakter</td>
+                <td>Pengguna berada pada halaman registrasi (/register)</td>
+                <td>1. Isi nama dan email<br>2. Masukkan password &lt; 6 karakter<br>3. Klik tombol Daftar</td>
+                <td>nama: Okto<br>email: okto@gmail.com<br>password: 123</td>
+                <td>Registrasi gagal, muncul pesan error panjang minimal password.</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>TC 2.3 (Happy Path)</td>
+                <td>Pengguna mendaftarkan akun dengan data lengkap dan valid</td>
+                <td>Pengguna berada pada halaman registrasi (/register)</td>
+                <td>1. Isi nama, email, dan password valid<br>2. Klik tombol Daftar</td>
+                <td>nama: Okto<br>email: okto@gmail.com<br>password: password123</td>
+                <td>Registrasi berhasil, dialihkan ke halaman /onboarding.</td>
+                <td></td>
+                <td></td>
+            </tr>
+
+            <!-- ONBOARDING -->
+            <tr>
+                <td rowspan="3"><strong>Onboarding</strong></td>
+                <td>TC 3.1</td>
+                <td>Pengguna baru mencoba bypass paksa halaman onboarding</td>
+                <td>Pengguna belum pernah menyelesaikan onboarding</td>
+                <td>1. Ketik URL /dashboard di address bar browser<br>2. Tekan Enter</td>
+                <td>-</td>
+                <td>Pengguna dialihkan paksa kembali ke halaman /onboarding.</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>TC 3.2</td>
+                <td>Pengguna lama mengulang onboarding dan membatalkannya</td>
+                <td>Pengguna sudah berstatus onboarding komplit</td>
+                <td>1. Di dashboard, klik "Ulangi Onboarding"<br>2. Ubah jawaban kuesioner<br>3. Klik tombol "Batal"</td>
+                <td>-</td>
+                <td>Kembali ke halaman dashboard tanpa mengubah konfigurasi onboarding lama.</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>TC 3.3 (Happy Path)</td>
+                <td>Pengguna baru menyelesaikan pengisian onboarding secara sukses</td>
+                <td>Pengguna pertama kali masuk halaman onboarding setelah register</td>
+                <td>1. Isi semua kuesioner penempatan sensor<br>2. Klik "Accept &amp; Lanjutkan"</td>
+                <td>-</td>
+                <td>Sistem menyimpan jawaban onboarding ke database MySQL &amp; localStorage, lalu me-redirect pengguna ke halaman /select-device.</td>
+                <td></td>
+                <td></td>
+            </tr>
+
+            <!-- EDIT PROFIL -->
+            <tr>
+                <td rowspan="4"><strong>Edit Profil &amp; Password</strong></td>
+                <td>TC 4.1</td>
+                <td>Pengguna mengedit profil dengan mengosongkan kolom nama</td>
+                <td>Pengguna berada pada halaman profil (/profile)</td>
+                <td>1. Kosongkan kolom nama lengkap<br>2. Klik tombol Simpan</td>
+                <td>-</td>
+                <td>Profil gagal disimpan, muncul pesan peringatan/error.</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>TC 4.2</td>
+                <td>Pengguna mengubah password dengan password lama yang salah</td>
+                <td>Pengguna berada pada halaman profil (/profile)</td>
+                <td>1. Masukkan password lama yang keliru<br>2. Masukkan password baru<br>3. Klik Simpan</td>
+                <td>password lama: salah<br>password baru: baru123</td>
+                <td>Muncul pesan error "Password lama salah".</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>TC 4.3 (Happy Path)</td>
+                <td>Pengguna sukses mengedit profil username/email</td>
+                <td>Pengguna berada pada halaman profil (/profile)</td>
+                <td>1. Masukkan nama lengkap baru yang valid<br>2. Klik tombol Simpan</td>
+                <td>nama: Okto Bagas</td>
+                <td>Profil berhasil diperbarui di database SQL, muncul notifikasi sukses, dan nama baru langsung diterapkan di dashboard.</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>TC 4.4 (Happy Path)</td>
+                <td>Pengguna sukses memperbarui password akun</td>
+                <td>Pengguna berada pada halaman profil (/profile)</td>
+                <td>1. Masukkan password lama yang benar<br>2. Masukkan password baru<br>3. Klik tombol Simpan</td>
+                <td>password lama: password123<br>password baru: password456</td>
+                <td>Password berhasil diperbarui di database SQL, muncul notifikasi sukses, dan login berikutnya wajib menggunakan password baru.</td>
+                <td></td>
+                <td></td>
+            </tr>
+
+            <!-- QR CODE BINDING -->
+            <tr>
+                <td rowspan="2"><strong>Penautan Perangkat (QR Code)</strong></td>
+                <td>TC 5.1 (Happy Path)</td>
+                <td>Penautan perangkat otomatis melalui pemindaian QR Code</td>
+                <td>Pengguna memindai kode QR fisik perangkat</td>
+                <td>1. Akses URL /login?device=CS-DAPUR-01<br>2. Lakukan login sukses</td>
+                <td>-</td>
+                <td>Perangkat CS-DAPUR-01 otomatis terikat ke akun user di halaman /select-device.</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>TC 5.2 (Happy Path)</td>
+                <td>Memilih perangkat aktif dari daftar untuk masuk ke dashboard</td>
+                <td>Pengguna berada pada halaman pilih perangkat (/select-device)</td>
+                <td>1. Pilih salah satu perangkat aktif dari daftar<br>2. Klik tombol Lanjutkan</td>
+                <td>-</td>
+                <td>Dashboard berhasil dimuat untuk perangkat terpilih, menampilkan data telemetri real-time.</td>
+                <td></td>
+                <td></td>
+            </tr>
+
+            <!-- AKTIVASI & REAKTIVASI -->
+            <tr>
+                <td rowspan="3"><strong>Aktivasi &amp; Reaktivasi</strong></td>
+                <td>TC 6.1</td>
+                <td>Membuka panduan reaktivasi otomatis saat status offline</td>
+                <td>Dashboard memantau status alat Offline</td>
+                <td>1. Putus koneksi alat (Firebase status offline)</td>
+                <td>-</td>
+                <td>Popup panduan reaktivasi otomatis terbuka di layar.</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>TC 6.2 (Happy Path)</td>
+                <td>Menyelesaikan panduan reaktivasi langkah terakhir</td>
+                <td>Popup panduan reaktivasi aktif</td>
+                <td>1. Klik lanjut hingga langkah 5<br>2. Klik tombol "Saya Mengerti"</td>
+                <td>-</td>
+                <td>Popup tertutup secara instan dan halaman dashboard me-reload otomatis.</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>TC 6.3 (Happy Path)</td>
+                <td>Perangkat terdeteksi Online kembali secara otomatis</td>
+                <td>Dashboard memantau status alat Offline</td>
+                <td>1. Sambungkan kembali alat ke listrik/internet (atau kirim data PPM baru ke Firebase)</td>
+                <td>-</td>
+                <td>Dashboard mendeteksi transisi Online secara instan, status bar berganti warna hijau 'Online', dan telemetry berjalan normal.</td>
+                <td></td>
+                <td></td>
+            </tr>
+
+            <!-- AI ASSISTANT -->
+            <tr>
+                <td rowspan="3"><strong>Asisten Chat AI</strong></td>
+                <td>TC 7.1</td>
+                <td>AI menolak memberikan data palsu saat sensor sedang offline</td>
+                <td>Perangkat berstatus Offline</td>
+                <td>1. Tanyakan: "Berapa kadar PPM ruangan saya?"</td>
+                <td>-</td>
+                <td>AI menjawab bahwa sensor offline dan menyarankan reaktivasi.</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>TC 7.2 (Happy Path)</td>
+                <td>AI memproses ingatan konteks obrolan (memory)</td>
+                <td>Pengguna sedang berdialog dengan AI</td>
+                <td>1. Katakan: "Saya menaruh alat di kamar"<br>2. Tanyakan: "Di mana letak alat saya tadi?"</td>
+                <td>-</td>
+                <td>AI menjawab secara akurat bahwa alat ditaruh di kamar.</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>TC 7.3 (Happy Path)</td>
+                <td>AI memberikan panduan setup IoT secara lengkap</td>
+                <td>Pengguna sedang berdialog dengan AI</td>
+                <td>1. Tanyakan: "Bagaimana cara menyalakan alat CarbonSense dari awal?"</td>
+                <td>-</td>
+                <td>AI menjawab secara terperinci dengan langkah-langkah setup hardware, WiFi, captive portal, hingga binding akun.</td>
+                <td></td>
+                <td></td>
+            </tr>
+
+            <!-- NAVIGASI HISTORI -->
+            <tr>
+                <td rowspan="4"><strong>Navigasi Histori Tanggal</strong></td>
+                <td>TC 8.1 (Happy Path)</td>
+                <td>Dashboard memfilter data harian secara default</td>
+                <td>Pengguna pertama kali memuat dashboard</td>
+                <td>1. Masuk ke dashboard perangkat</td>
+                <td>-</td>
+                <td>Opsi filter aktif adalah "Filter Tanggal" (today) dan data grafis ter-reset bersih untuk hari ini.</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>TC 8.2 (Happy Path)</td>
+                <td>Navigasi mundur ke hari kemarin dan maju ke besok</td>
+                <td>Pengguna memantau grafik historis</td>
+                <td>1. Klik tombol "← Kemarin"<br>2. Klik tombol "Besok →"</td>
+                <td>-</td>
+                <td>1. Grafik menampilkan tanggal kemarin.<br>2. Grafik maju kembali ke hari ini.</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>TC 8.3 (Happy Path)</td>
+                <td>Memilih tanggal kustom melalui DatePicker</td>
+                <td>Pengguna memantau grafik historis</td>
+                <td>1. Klik kolom input DatePicker<br>2. Pilih tanggal tertentu</td>
+                <td>tanggal: 2026-06-15</td>
+                <td>Grafik &amp; tabel menampilkan riwayat tanggal 15 Juni 2026.</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>TC 8.4</td>
+                <td>Penayangan indikator kosong saat tidak ada data</td>
+                <td>Tanggal yang dipilih tidak memiliki rekaman telemetri</td>
+                <td>1. Navigasikan ke tanggal kosong</td>
+                <td>-</td>
+                <td>Grafik menampilkan ilustrasi kosong dengan teks "Tidak Ada Data Telemetri".</td>
+                <td></td>
+                <td></td>
+            </tr>
+
+            <!-- EKSPOR LAPORAN -->
+            <tr>
+                <td><strong>Ekspor Laporan</strong></td>
+                <td>TC 9.1 (Happy Path)</td>
+                <td>Mengunduh berkas laporan dalam format PDF dan Excel</td>
+                <td>Pengguna memantau dashboard perangkat</td>
+                <td>1. Klik "Download XLSX"<br>2. Klik "Save PDF"</td>
+                <td>-</td>
+                <td>Berkas .xlsx dan .pdf berisi daftar telemetri berhasil terunduh ke komputer.</td>
+                <td></td>
+                <td></td>
+            </tr>
+
+            <!-- PENGATURAN AI ASSISTANT -->
+            <tr>
+                <td rowspan="3"><strong>Pengaturan AI Assistant</strong></td>
+                <td>TC 10.1 (Happy Path)</td>
+                <td>Memuat konfigurasi AI dari local/Firestore</td>
+                <td>Pengguna membuka halaman Pengaturan (/settings)</td>
+                <td>1. Buka halaman /settings</td>
+                <td>-</td>
+                <td>Jawaban ruangan terisi otomatis berdasarkan profil tersimpan di Firestore/localStorage.</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>TC 10.2 (Happy Path)</td>
+                <td>Menyesuaikan parameter ruangan dan pemicu sensitivitas tinggi</td>
+                <td>Pengguna berada pada halaman profil ruangan (/settings)</td>
+                <td>1. Pilih kelompok rentan (Bayi/Balita) atau Kompor Gas<br>2. Klik Simpan Perubahan</td>
+                <td>-</td>
+                <td>Sistem menyinkronkan data, beralih secara otomatis ke "Modus Sensitivitas Tinggi" (indikator berwarna merah), dan memperbarui preferensi asisten AI.</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>TC 10.3 (Happy Path)</td>
+                <td>Menyimpan perubahan dan menutup popup keberhasilan</td>
+                <td>Muncul dialog "Profil AI Diperbarui!" di layar</td>
+                <td>1. Klik "Ke Dashboard" atau "Tutup"</td>
+                <td>-</td>
+                <td>Sistem menutup popup dan me-redirect pengguna ke halaman utama.</td>
+                <td></td>
+                <td></td>
+            </tr>
+
+            <!-- PORTAL ADMIN -->
+            <tr>
+                <td rowspan="3"><strong>Portal &amp; Autentikasi Admin</strong></td>
+                <td>TC 11.1</td>
+                <td>Login admin dengan ID/Password kosong</td>
+                <td>Pengguna membuka halaman Login Admin (/admin)</td>
+                <td>1. Buka halaman /admin<br>2. Kosongkan kolom input<br>3. Klik Akses Sistem</td>
+                <td>-</td>
+                <td>Login gagal, form memblokir submit dan meminta pengisian kolom.</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>TC 11.2</td>
+                <td>Login admin dengan kredensial salah</td>
+                <td>Pengguna membuka halaman Login Admin (/admin)</td>
+                <td>1. Masukkan Admin ID/password salah<br>2. Klik Akses Sistem</td>
+                <td>email: admin_salah<br>password: salah123</td>
+                <td>Login gagal, muncul pesan alert error "Akses ditolak."</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>TC 11.3 (Happy Path)</td>
+                <td>Login admin dengan kredensial benar</td>
+                <td>Pengguna membuka halaman Login Admin (/admin)</td>
+                <td>1. Masukkan Admin ID/password benar<br>2. Klik Akses Sistem</td>
+                <td>email: admin<br>password: admin123</td>
+                <td>Login berhasil, dialihkan ke halaman dashboard administrator (/admin/dashboard).</td>
+                <td></td>
+                <td></td>
+            </tr>
+
+            <!-- ADMIN DASHBOARD -->
+            <tr>
+                <td rowspan="5"><strong>Admin Dashboard (Manajemen Perangkat &amp; Pengguna)</strong></td>
+                <td>TC 12.1 (Happy Path)</td>
+                <td>Admin menambahkan perangkat IoT baru</td>
+                <td>Admin berada di halaman dashboard admin (/admin/dashboard)</td>
+                <td>1. Klik "+ Tambah Device"<br>2. Masukkan Device ID baru<br>3. Klik Simpan</td>
+                <td>ID: CS-DAPUR-OKTO</td>
+                <td>Perangkat terdaftar di MySQL, terinisialisasi di Firebase RTDB, dan muncul popup kode QR perangkat baru.</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>TC 12.2 (Happy Path)</td>
+                <td>Admin melakukan penautan (binding) perangkat manual ke email user</td>
+                <td>Admin berada di halaman dashboard admin (/admin/dashboard)</td>
+                <td>1. Klik "Bind ke User" pada perangkat<br>2. Masukkan/cari email user terdaftar<br>3. Klik Simpan</td>
+                <td>email: okto@gmail.com</td>
+                <td>Perangkat tertaut ke email user di database SQL dan Firebase status berubah menjadi "Online".</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>TC 12.3 (Happy Path)</td>
+                <td>Admin melihat dan menyalin C++ Source Code ESP32 firmware</td>
+                <td>Admin berada di halaman dashboard admin (/admin/dashboard)</td>
+                <td>1. Klik "Source Code" pada perangkat terpilih<br>2. Klik tombol salin</td>
+                <td>-</td>
+                <td>C++ source code C++ dengan makro ID perangkat dan parameter WiFi/Firebase tersalin lengkap.</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>TC 12.4 (Happy Path)</td>
+                <td>Admin mengedit detail perangkat</td>
+                <td>Admin berada di halaman dashboard admin (/admin/dashboard)</td>
+                <td>1. Klik edit (ikon pensil)<br>2. Ubah Device ID, email owner, atau status PPM<br>3. Klik Simpan</td>
+                <td>ID: CS-DAPUR-OKTO-EDITED</td>
+                <td>Detail perangkat diperbarui secara konsisten di tabel database SQL dan Firebase RTDB.</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>TC 12.5 (Happy Path)</td>
+                <td>Admin menghapus perangkat dari sistem</td>
+                <td>Admin berada di halaman dashboard admin (/admin/dashboard)</td>
+                <td>1. Klik hapus (ikon tempat sampah) pada perangkat<br>2. Konfirmasi penghapusan</td>
+                <td>-</td>
+                <td>Perangkat terhapus dari MySQL dan cabang Firebase RTDB perangkat tersebut dihapus sepenuhnya.</td>
+                <td></td>
+                <td></td>
+            </tr>
+
+            <!-- LOGOUT -->
+            <tr>
+                <td><strong>Autentikasi (Logout)</strong></td>
+                <td>TC 13.1 (Happy Path)</td>
+                <td>Pengguna keluar dan menghapus seluruh sesi aktif</td>
+                <td>Pengguna berada pada dashboard</td>
+                <td>1. Klik tombol Logout</td>
+                <td>-</td>
+                <td>Keluar secara sukses, seluruh data sesi lokal (localStorage) dihapus bersih.</td>
+                <td></td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+
+</body>
+</html>

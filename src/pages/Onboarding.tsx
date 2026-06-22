@@ -249,7 +249,13 @@ export default function Onboarding() {
             )}
             <button 
               onClick={() => {
+                localStorage.removeItem('cs_user');
                 localStorage.removeItem('cs_user_email');
+                localStorage.removeItem('cs_user_token');
+                localStorage.removeItem('cs_active_devices');
+                localStorage.removeItem('cs_ai_personality');
+                localStorage.removeItem('cs_onboarding_answers');
+                localStorage.removeItem('cs_purchase_status');
                 navigate('/login');
               }} 
               className="text-xs uppercase tracking-widest font-semibold text-[var(--cs-text-dim)] hover:text-red-400 transition-colors border px-4 py-2 rounded-xl cursor-pointer" 

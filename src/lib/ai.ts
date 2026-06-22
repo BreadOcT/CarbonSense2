@@ -17,30 +17,37 @@ export interface AIProfile {
 /**
  * Generates a brief recommendation text for headers or alerts.
  */
-export function generateSimpleAdvice(profile: AIProfile | null, carbonLevel: number | null): string {
+export function generateSimpleAdvice(profile: AIProfile | null, carbonLevel: number | null, isOffline: boolean): string {
   if (!profile) {
     return "Silakan lengkapi profil onboarding untuk mendapatkan rekomendasi personal dari CarbonSense AI.";
   }
   const location = profile.lokasi || "Ruangan";
+
+  if (isOffline || carbonLevel === null) {
+    return `Alat pemantau di ${location} sedang offline. Hubungkan perangkat ke WiFi & daya untuk melihat kadar karbon secara real-time.`;
+  }
+
   const currentPpm = carbonLevel;
 
-  if (currentPpm && currentPpm > 1200) {
+  if (currentPpm > 1200) {
     return `Peringatan Kritis! Kadar CO di ${location} terdeteksi sangat tinggi (${currentPpm} ppm). Lakukan protokol evakuasi darurat segera!`;
-  } else if (currentPpm && currentPpm > 700) {
+  } else if (currentPpm > 700) {
     return `Kondisi Waspada! Kadar CO di ${location} meningkat (${currentPpm} ppm). Disarankan membuka jendela untuk sirkulasi udara segar.`;
   }
-  return `Kondisi udara di ${location} terpantau normal (${currentPpm || 0} ppm). Kualitas udara terjaga dengan baik.`;
+  return `Kondisi udara di ${location} terpantau normal (${currentPpm} ppm). Kualitas udara terjaga dengan baik.`;
 }
 
 /**
- * Generates Indonesian replies. Only contacts DeepSeek via backend proxy if PPM is > 1200.
+ * Generates Indonesian replies. Contacts DeepSeek via backend proxy.
  */
 export async function generateChatResponse(
   questionText: string,
   profile: AIProfile | null,
-  carbonLevel: number | null
+  carbonLevel: number | null,
+  isOffline: boolean,
+  chatHistory: any[]
 ): Promise<string> {
-  const currentPpm = carbonLevel || 450;
+  const currentPpm = isOffline ? null : (carbonLevel || 450);
 
   // Always attempt to get a recommendation from DeepSeek AI
   try {
@@ -49,7 +56,9 @@ export async function generateChatResponse(
     const response = await api.ai.getRecommendation({
       question: questionText,
       profile,
-      carbonLevel: currentPpm
+      carbonLevel: currentPpm,
+      isOffline,
+      chatHistory
     });
     return response;
   } catch (err: any) {
@@ -57,19 +66,45 @@ export async function generateChatResponse(
     // Fallback to rules below if the API key is not configured or fails
   }
 
-  // Local Rule-Based Responses for PPM <= 1200
+  // Local Rule-Based Responses for Offline or Low/Normal PPM
   const lokasi = profile?.lokasi || "Ruangan";
   const sirkulasi = profile?.sirkulasi || "Sirkulasi Udara";
   const kapasitas = profile?.kapasitas || "1-2 Orang";
   const polutan = profile?.polutan && profile.polutan.length > 0 ? profile.polutan.join(', ') : "Tidak Ada";
   const rentan = profile?.rentan || "Tidak Ada";
   const luas = profile?.luas_ruang || "Sedang";
-  const detektor = profile?.detektor_lain || "Tidak Ada";
 
   const lowCaseText = questionText.toLowerCase();
 
-  if (lowCaseText.includes("status") || lowCaseText.includes("kualitas") || lowCaseText.includes("bagaimana")) {
-    if (currentPpm <= 700) {
+  // If device is offline, block telemetry answers and guide user to turn it on
+  if (isOffline) {
+    if (lowCaseText.includes("nyala") || lowCaseText.includes("aktif") || lowCaseText.includes("hidup") || lowCaseText.includes("cara")) {
+      return `Berikut adalah langkah menyalakan perangkat CarbonSense dari awal hingga akhir:
+a. **Catu Daya**: Hubungkan papan ESP32 ke listrik menggunakan kabel Micro-USB atau USB-C.
+b. **WiFi Hotspot**: Hubungkan HP/Laptop Anda ke WiFi "CarbonSense-AP". Portal pendaftaran WiFi akan terbuka secara otomatis di browser.
+c. **Pengaturan WiFi**: Masukkan SSID dan password WiFi rumah Anda pada portal. Perangkat akan me-reboot dan terhubung ke WiFi rumah secara mandiri.
+d. **Pre-heating (Pemanasan)**: Sensor memerlukan waktu 1-2 menit untuk kalibrasi awal sebelum data PPM stabil dikirim ke database.
+e. **Bind Device**: Daftarkan ID perangkat Anda (misal: CS-DAPUR-01) pada menu "Pilih Perangkat" di website CarbonSense agar tersinkronisasi.`;
+    }
+    return `Perangkat CarbonSense di **${lokasi}** saat ini sedang **Offline**. 
+Untuk mengetahui status udara secara real-time, harap pastikan alat Anda menyala dan terhubung ke WiFi. 
+Langkah menyalakan alat:
+a. Colokkan kabel daya ke alat ESP32.
+b. Pastikan alat terhubung ke internet.
+c. Tautkan ID alat Anda di halaman Pilih Perangkat.`;
+  }
+
+  if (lowCaseText.includes("nyala") || lowCaseText.includes("aktif") || lowCaseText.includes("hidup") || lowCaseText.includes("cara")) {
+    return `Berikut adalah langkah menyalakan perangkat CarbonSense dari awal hingga akhir:
+a. **Catu Daya**: Hubungkan papan ESP32 ke listrik menggunakan kabel Micro-USB atau USB-C.
+b. **WiFi Hotspot**: Hubungkan HP/Laptop Anda ke WiFi "CarbonSense-AP". Portal pendaftaran WiFi akan terbuka secara otomatis di browser.
+c. **Pengaturan WiFi**: Masukkan SSID dan password WiFi rumah Anda pada portal. Perangkat akan me-reboot dan terhubung ke WiFi rumah secara mandiri.
+d. **Pre-heating (Pemanasan)**: Sensor memerlukan waktu 1-2 menit untuk kalibrasi awal sebelum data PPM stabil dikirim ke database.
+e. **Bind Device**: Daftarkan ID perangkat Anda (misal: CS-DAPUR-01) pada menu "Pilih Perangkat" di website CarbonSense agar tersinkronisasi.`;
+  }
+
+  if (lowCaseText.includes("status") || lowCaseText.includes("kualitas") || lowCaseText.includes("bagaimana") || lowCaseText.includes("ppm")) {
+    if (currentPpm !== null && currentPpm <= 700) {
       return `Kadar karbon di **${lokasi}** saat ini **${currentPpm} ppm** (Aman). Sirkulasi ${sirkulasi} dan ukuran ruangan ${luas} dalam kondisi stabil.`;
     } else {
       return `Kadar karbon di **${lokasi}** saat ini **${currentPpm} ppm** (Waspada). Segera buka jendela untuk meningkatkan sirkulasi ${sirkulasi} dan mengurangi pengaruh emisi ${polutan}.`;

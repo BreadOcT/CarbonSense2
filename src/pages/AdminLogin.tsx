@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ShieldAlert } from 'lucide-react';
 import { api } from '../lib/api';
@@ -10,6 +10,11 @@ export default function AdminLogin() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    localStorage.removeItem('cs_admin_token');
+    localStorage.removeItem('cs_admin_email');
+  }, []);
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (containerRef.current) {
@@ -23,7 +28,10 @@ export default function AdminLogin() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
+    if (!email || !password) {
+      setError('Harap lengkapi semua kolom input.');
+      return;
+    }
 
     setLoading(true);
     setError('');
@@ -79,17 +87,16 @@ export default function AdminLogin() {
         </div>
 
         {error && (
-          <div className="mb-6 p-4 border rounded-xl text-sm" style={{ background: 'rgba(239, 68, 68, 0.1)', borderColor: 'var(--cs-danger)', color: 'var(--cs-danger-text)' }}>
+          <div className="mb-6 p-4 border border-red-500 rounded-xl text-sm" style={{ background: 'rgba(239, 68, 68, 0.1)', borderColor: 'var(--cs-danger)', color: 'var(--cs-danger-text)' }}>
             {error}
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-5">
+        <form onSubmit={handleLogin} className="space-y-5" noValidate>
           <div>
             <label className="block text-xs font-medium text-[var(--cs-text-dim)] uppercase tracking-wider mb-2">Admin ID</label>
             <input 
               type="text" 
-              required 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 rounded-xl focus:outline-none transition-colors text-white border" 
@@ -101,7 +108,6 @@ export default function AdminLogin() {
             <label className="block text-xs font-medium text-[var(--cs-text-dim)] uppercase tracking-wider mb-2">Password</label>
             <input 
               type="password" 
-              required 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3 rounded-xl focus:outline-none transition-colors text-white border" 

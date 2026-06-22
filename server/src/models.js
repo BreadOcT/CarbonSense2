@@ -47,7 +47,7 @@ export const Device = sequelize.define('Device', {
   },
   ppm: {
     type: DataTypes.STRING,
-    defaultValue: '--'
+    defaultValue: '0'
   },
   lastActive: {
     type: DataTypes.STRING,

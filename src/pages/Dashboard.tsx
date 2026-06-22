@@ -5,12 +5,12 @@
 
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Activity, History, AlertTriangle, Wind, Clock, ChevronDown, 
-  Trash2, ArrowLeft, Settings as SettingsIcon, Download, 
+import {
+  Activity, History, AlertTriangle, Wind, Clock, ChevronDown,
+  Trash2, ArrowLeft, Settings as SettingsIcon, Download,
   Table, Brain, LayoutDashboard, Database, ShoppingCart, Info, Clock as ClockIcon, ShieldAlert,
   Maximize2, Minimize2, User, LogOut, Cpu, Cloud, Monitor, CheckCircle, XCircle, X,
-  Sparkles, Send, MessageSquare
+  Sparkles, Send, MessageSquare, Plug, Wifi
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
@@ -34,10 +34,43 @@ export default function Dashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
   const urlDeviceId = searchParams.get('deviceId');
   const [carbonLevel, setCarbonLevel] = useState<number | null>(null);
+  const [showReactivationPopup, setShowReactivationPopup] = useState(false);
+  const [hasShownOfflinePopup, setHasShownOfflinePopup] = useState(false);
+  const lastKnownPingRef = useRef<number | null>(null);
+  const [activationStep, setActivationStep] = useState(0);
+  const activationSteps = [
+    {
+      title: "1. Sambungkan Catu Daya Perangkat",
+      desc: "Hubungkan kabel Micro-USB atau USB-C ke papan ESP32 CarbonSense Anda dan sambungkan ke adaptor daya listrik. Pastikan lampu LED indikator merah di papan menyala.",
+      icon: <Plug className="w-12 h-12 text-[var(--cs-amber)] animate-pulse" />
+    },
+    {
+      title: "2. Hubungkan HP/Laptop ke WiFi Alat",
+      desc: "Pada HP atau Laptop Anda, buka pengaturan WiFi dan sambungkan ke jaringan WiFi bernama \"CarbonSense-AP\". Jendela konfigurasi captive portal akan otomatis muncul di browser.",
+      icon: <Wifi className="w-12 h-12 text-[var(--cs-amber)] animate-pulse" />
+    },
+    {
+      title: "3. Konfigurasikan WiFi Rumah Anda",
+      desc: "Di halaman portal captive, pilih nama WiFi rumah Anda, masukkan password WiFi Anda, lalu klik \"Save\". Papan ESP32 akan reboot dan terhubung ke internet secara otomatis.",
+      icon: <SettingsIcon className="w-12 h-12 text-[var(--cs-amber)] animate-pulse" />
+    },
+    {
+      title: "4. Kalibrasi Awal & Pre-heating",
+      desc: "Tunggu 1-2 menit agar sensor gas MQ melakukan pemanasan awal agar stabil. Pada saat ini, pembacaan kadar CO akan dimulai dari angka 0 PPM terlebih dahulu sebelum stabil memantau.",
+      icon: <ClockIcon className="w-12 h-12 text-[var(--cs-amber)] animate-pulse" />
+    },
+    {
+      title: "5. Hubungkan ID Perangkat ke Akun",
+      desc: "Masuk ke menu \"Pilih Perangkat\" di website CarbonSense, masukkan ID perangkat fisik Anda (misal: CS-DAPUR-01) untuk menautkannya ke akun Anda, lalu klik Lanjutkan untuk masuk.",
+      icon: <CheckCircle className="w-12 h-12 text-emerald-450 animate-pulse" />
+    }
+  ];
   const carbonLevelRef = useRef<number | null>(null);
   useEffect(() => {
     carbonLevelRef.current = carbonLevel;
   }, [carbonLevel]);
+  const lastSyncedPpmRef = useRef<number | null>(null);
+  const lastSyncedStatusRef = useRef<string | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [aiPersonality, setAiPersonality] = useState<any>(null);
   const [chatMessages, setChatMessages] = useState<any[]>([
@@ -46,7 +79,7 @@ export default function Dashboard() {
   const [isTyping, setIsTyping] = useState(false);
   const [customQuestion, setCustomQuestion] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
-  
+
   const [consecutiveDangerCount, setConsecutiveDangerCount] = useState<number>(0);
   const [isDangerPopupOpen, setIsDangerPopupOpen] = useState<boolean>(false);
   const [dangerPopupRecommendation, setDangerPopupRecommendation] = useState<string>('');
@@ -96,29 +129,56 @@ export default function Dashboard() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages, isTyping]);
-  
+
   const [isDeviceOffline, setIsDeviceOffline] = useState(false);
   const [isDiagnosticOpen, setIsDiagnosticOpen] = useState(false);
   const [lastUpdateTime, setLastUpdateTime] = useState<number>(Date.now());
   const initialPingRef = useRef<number | null>(null);
   const isInitialCheckedRef = useRef(false);
   const diagnosticRef = useRef<HTMLDivElement>(null);
-  
+
   const [historyRegistry, setHistoryRegistry] = useState<Record<string, { timestamp: string; value: number }[]>>({});
-  
+
   const localHistory = historyRegistry[deviceId] || [];
-  
-  const [filterOption, setFilterOption] = useState<string>('30'); // '15', '30', '60', '180', 'live', 'today', 'custom'
+
+  const [filterOption, setFilterOption] = useState<string>('today'); // '15', '30', '60', '180', 'live', 'today', 'custom'
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  });
+
+  const handlePrevDay = () => {
+    const parts = selectedDate.split('-');
+    const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    d.setDate(d.getDate() - 1);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    setSelectedDate(`${year}-${month}-${day}`);
+  };
+
+  const handleNextDay = () => {
+    const parts = selectedDate.split('-');
+    const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    d.setDate(d.getDate() + 1);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    setSelectedDate(`${year}-${month}-${day}`);
+  };
   const [customStart, setCustomStart] = useState<string>(() => {
     const d = new Date(Date.now() - 60 * 60 * 1000);
     const offset = d.getTimezoneOffset();
-    const localDate = new Date(d.getTime() - (offset*60*1000));
+    const localDate = new Date(d.getTime() - (offset * 60 * 1000));
     return localDate.toISOString().substring(0, 16);
   });
   const [customEnd, setCustomEnd] = useState<string>(() => {
     const d = new Date();
     const offset = d.getTimezoneOffset();
-    const localDate = new Date(d.getTime() - (offset*60*1000));
+    const localDate = new Date(d.getTime() - (offset * 60 * 1000));
     return localDate.toISOString().substring(0, 16);
   });
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -132,7 +192,7 @@ export default function Dashboard() {
     '60': '60 Menit',
     '180': '3 Jam',
     'live': 'Live Real-time',
-    'today': 'Hari Ini',
+    'today': 'Filter Tanggal',
     'custom': 'Custom Range'
   };
 
@@ -146,7 +206,7 @@ export default function Dashboard() {
 
     if (savedUser) setUserProfile(JSON.parse(savedUser));
     if (!savedUser && email) setUserProfile({ username: email.split('@')[0], email });
-    
+
     if (storedAi) {
       try {
         setAiPersonality(JSON.parse(storedAi));
@@ -197,20 +257,26 @@ export default function Dashboard() {
   }, [isDiagnosticOpen]);
 
   // Load history when deviceId changes and fetch initial status from MySQL
+  // Load initial status from backend MySQL on device selection
   useEffect(() => {
     if (!deviceId) return;
-    
+
     // Reset initial check states
     isInitialCheckedRef.current = false;
     initialPingRef.current = null;
-    
+    lastKnownPingRef.current = null;
+
     const key = `cs_history_${deviceId}`;
     const saved = localStorage.getItem(key);
     let hist = saved ? JSON.parse(saved) : [];
-    
+
+    // Prune data older than 7 days on load to keep cache thin
+    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    hist = hist.filter((item: any) => parseInt(item.timestamp) > sevenDaysAgo);
+    localStorage.setItem(key, JSON.stringify(hist));
+
     setHistoryRegistry(prev => ({ ...prev, [deviceId]: hist }));
-    
-    // Fetch user devices from backend MySQL to get initial status
+
     const checkInitialDeviceStatus = async () => {
       try {
         const email = localStorage.getItem('cs_user_email') || '';
@@ -219,11 +285,8 @@ export default function Dashboard() {
         if (activeDev) {
           if (activeDev.status === 'Offline') {
             setIsDeviceOffline(true);
-            setCarbonLevel(null);
           } else {
             setIsDeviceOffline(false);
-            const ppmNum = activeDev.ppm !== '--' ? Number(activeDev.ppm) : null;
-            setCarbonLevel(ppmNum);
             setLastUpdateTime(Date.now());
           }
         }
@@ -241,68 +304,41 @@ export default function Dashboard() {
   useEffect(() => {
     if (!deviceId || accessDenied) return;
 
+    let isInitialLoad = true;
     const deviceRef = ref(rtdb, deviceId);
-    
+
     const unsubscribe = onValue(deviceRef, (snapshot) => {
       const data = snapshot.val();
       if (!data) return;
 
-      const ppmVal = data.nilai_ppm !== undefined ? Number(data.nilai_ppm) : null;
-      const pingVal = data.ping !== undefined ? Number(data.ping) : null;
+      const ppmVal = data.nilai_ppm !== undefined && data.nilai_ppm !== '--' ? Number(data.nilai_ppm) : null;
+      const statusVal = data.status || 'Offline';
+      const isFbOffline = statusVal === 'Offline';
 
-      // Handle offline reactivation check
-      if (isDeviceOffline) {
-        // If we are currently marked offline, we only go online if the ping counter has changed/incremented
-        if (initialPingRef.current === null) {
-          initialPingRef.current = pingVal;
-          return; // Ignore this first fire if we're marked offline, wait for it to change
-        }
+      // Automatically bring online or offline in real-time based on Firebase status parameter
+      setIsDeviceOffline(isFbOffline);
 
-        if (pingVal !== null && pingVal !== initialPingRef.current) {
-          // Heartbeat detected! Reactivate the device
-          setIsDeviceOffline(false);
-          initialPingRef.current = pingVal;
-        } else {
-          // No ping change, keep offline
-          return;
-        }
-      } else {
-        // If we're already online, update our heartbeat record
-        if (pingVal !== null) {
-          initialPingRef.current = pingVal;
-        }
+      // Always populate the initial carbonLevel from Firebase RTDB (data masuk selalu dari Firebase!)
+      if (ppmVal !== null && carbonLevelRef.current === null) {
+        setCarbonLevel(ppmVal);
       }
 
-      if (ppmVal !== null) {
-        setCarbonLevel(ppmVal);
-        setLastUpdateTime(Date.now());
-
-        // Hysteresis & Danger threshold checks
-        if (ppmVal > 1200) {
-          setConsecutiveDangerCount((c) => {
-            const nextCount = c + 1;
-            if (nextCount >= 3 && !hasTriggeredDangerRef.current) {
-              setHasTriggeredDanger(true);
-              setIsDangerPopupOpen(true);
-              loadDangerRecommendation(ppmVal);
-            }
-            return nextCount;
-          });
-        } else {
-          setConsecutiveDangerCount(0);
-          if (ppmVal < 900) {
-            setHasTriggeredDanger(false);
-          }
-        }
-
-        // Sync with MySQL DB so admin dashboard sees it
+      // If this is a subsequent telemetry write while device is offline in Firebase, immediately bring it online
+      if (!isInitialLoad && isFbOffline && ppmVal !== null) {
         api.devices.updateTelemetry({
           id: deviceId,
           ppm: ppmVal,
           status: ppmVal > 1200 ? 'Warning' : 'Online'
-        }).catch(err => console.error('Failed to sync telemetry to MySQL:', err));
+        }).catch(err => console.error('Failed to automatically transition offline device to online:', err));
+      }
 
-        // Add to historical chart registry
+      isInitialLoad = false;
+
+      // If valid telemetry value is received, update local carbonLevel and record in history
+      if (ppmVal !== null) {
+        setCarbonLevel(ppmVal);
+
+        // Record in historical cache
         setHistoryRegistry(registry => {
           const hist = registry[deviceId] || [];
           const nowStr = Date.now().toString();
@@ -311,17 +347,60 @@ export default function Dashboard() {
             return registry;
           }
           const newEntry = { timestamp: nowStr, value: ppmVal };
-          const updated = [...hist, newEntry].slice(-1000);
+
+          // Prune data older than 7 days to avoid cache bloating
+          const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+          const updated = [...hist, newEntry]
+            .filter(item => parseInt(item.timestamp) > sevenDaysAgo)
+            .slice(-5000); // capped safety limit
+
           localStorage.setItem(`cs_history_${deviceId}`, JSON.stringify(updated));
           return { ...registry, [deviceId]: updated };
         });
+
+        // If device is online, update inactivity timer, alerts, and DB sync
+        if (!isFbOffline) {
+          setLastUpdateTime(Date.now());
+
+          // Hysteresis & Danger threshold checks
+          if (ppmVal > 1200) {
+            setConsecutiveDangerCount((c) => {
+              const nextCount = c + 1;
+              if (nextCount >= 3 && !hasTriggeredDangerRef.current) {
+                setHasTriggeredDanger(true);
+                setIsDangerPopupOpen(true);
+                loadDangerRecommendation(ppmVal);
+              }
+              return nextCount;
+            });
+          } else {
+            setConsecutiveDangerCount(0);
+            if (ppmVal < 900) {
+              setHasTriggeredDanger(false);
+            }
+          }
+
+          // Sync with MySQL DB so admin dashboard sees it ONLY if values actually changed to prevent duplicate requests
+          const targetStatus = ppmVal > 1200 ? 'Warning' : 'Online';
+          if (ppmVal !== lastSyncedPpmRef.current || targetStatus !== lastSyncedStatusRef.current) {
+            lastSyncedPpmRef.current = ppmVal;
+            lastSyncedStatusRef.current = targetStatus;
+
+            api.devices.updateTelemetry({
+              id: deviceId,
+              ppm: ppmVal,
+              status: targetStatus,
+              skipFirebaseSync: true
+            }).catch(err => console.error('Failed to sync telemetry to MySQL:', err));
+          }
+        }
       }
     });
 
     return () => {
       unsubscribe();
     };
-  }, [deviceId, accessDenied, isDeviceOffline]);
+  }, [deviceId, accessDenied]);
 
   // Client-side 5-minute inactivity check (timeout to Offline)
   useEffect(() => {
@@ -332,30 +411,39 @@ export default function Dashboard() {
       if (Date.now() - lastUpdateTime > fiveMinutes) {
         // Timeout exceeded! Go offline
         setIsDeviceOffline(true);
-        setCarbonLevel(null);
-        
-        // Sync the offline status to the MySQL backend
+
+        // Sync the offline status to the MySQL backend with last known carbon level
         api.devices.updateTelemetry({
           id: deviceId,
-          ppm: '--',
+          ppm: carbonLevel !== null ? carbonLevel : 0,
           status: 'Offline'
         }).catch(err => console.error('Failed to sync offline status to MySQL:', err));
       }
     }, 10000); // Check every 10 seconds
 
     return () => clearInterval(interval);
-  }, [deviceId, accessDenied, isDeviceOffline, lastUpdateTime]);
+  }, [deviceId, accessDenied, isDeviceOffline, lastUpdateTime, carbonLevel]);
+
+  // Reactivation guide auto-open trigger
+  useEffect(() => {
+    if (isDeviceOffline && !hasShownOfflinePopup) {
+      setShowReactivationPopup(true);
+      setHasShownOfflinePopup(true);
+    } else if (!isDeviceOffline) {
+      setHasShownOfflinePopup(false);
+    }
+  }, [isDeviceOffline, hasShownOfflinePopup]);
 
   // Handling Purchase
   const handlePurchase = () => {
-     localStorage.setItem('cs_purchase_status', 'pending');
-     setPurchaseStatus('pending');
+    localStorage.setItem('cs_purchase_status', 'pending');
+    setPurchaseStatus('pending');
   };
 
   // Dynamic AI Advice text generator for the header indicator
   const aiAdvice = useMemo(() => {
-    return generateSimpleAdvice(aiPersonality, carbonLevel);
-  }, [carbonLevel, aiPersonality]);
+    return generateSimpleAdvice(aiPersonality, carbonLevel, isDeviceOffline);
+  }, [carbonLevel, aiPersonality, isDeviceOffline]);
 
   // AI LLM generator for Chat messages
   const handleAskAI = (questionText: string) => {
@@ -370,7 +458,13 @@ export default function Dashboard() {
     setTimeout(async () => {
       const currentPpm = carbonLevelRef.current;
       try {
-        const aiResponse = await generateChatResponse(questionText, aiPersonality, currentPpm);
+        const aiResponse = await generateChatResponse(
+          questionText,
+          aiPersonality,
+          currentPpm,
+          isDeviceOffline,
+          updatedMessages
+        );
         setChatMessages(prev => [...prev, { sender: 'ai', text: aiResponse }]);
       } catch (err) {
         console.error(err);
@@ -395,7 +489,7 @@ export default function Dashboard() {
   // Aggregation Logic based on dynamic Time Buckets
   const processedChartData = useMemo(() => {
     let filtered = [...localHistory];
-    
+
     let startTime = Date.now() - 30 * 60 * 1000; // default 30 mins
     let endTime = Date.now();
 
@@ -408,10 +502,11 @@ export default function Dashboard() {
     } else if (filterOption === '180') {
       startTime = Date.now() - 180 * 60 * 1000;
     } else if (filterOption === 'today') {
-      const startOfToday = new Date();
-      startOfToday.setHours(0, 0, 0, 0);
-      startTime = startOfToday.getTime();
-      endTime = Date.now();
+      const dateParts = selectedDate.split('-');
+      const dStart = new Date(Number(dateParts[0]), Number(dateParts[1]) - 1, Number(dateParts[2]), 0, 0, 0, 0);
+      const dEnd = new Date(Number(dateParts[0]), Number(dateParts[1]) - 1, Number(dateParts[2]), 23, 59, 59, 999);
+      startTime = dStart.getTime();
+      endTime = dEnd.getTime();
     } else if (filterOption === 'custom') {
       if (customStart && customEnd) {
         startTime = new Date(customStart).getTime();
@@ -453,7 +548,7 @@ export default function Dashboard() {
 
       const slotMid = slotStart + slotSize / 2;
       const d = new Date(slotMid);
-      
+
       let timeFormatted = '';
       if (isGreaterOrEqual60Min) {
         const hours = d.getHours().toString().padStart(2, '0');
@@ -480,13 +575,52 @@ export default function Dashboard() {
     }
 
     return aggregated;
-  }, [localHistory, filterOption, dataPointsLimit, isGreaterOrEqual60Min, customStart, customEnd]);
+  }, [localHistory, filterOption, dataPointsLimit, isGreaterOrEqual60Min, customStart, customEnd, selectedDate]);
 
   const displayedHistory = useMemo(() => {
-    return [...localHistory]
+    let filtered = [...localHistory];
+    let startTime = 0;
+    let endTime = Date.now();
+
+    if (filterOption === '15') {
+      startTime = Date.now() - 15 * 60 * 1000;
+    } else if (filterOption === '30') {
+      startTime = Date.now() - 30 * 60 * 1000;
+    } else if (filterOption === '60') {
+      startTime = Date.now() - 60 * 60 * 1000;
+    } else if (filterOption === '180') {
+      startTime = Date.now() - 180 * 60 * 1000;
+    } else if (filterOption === 'today') {
+      const dateParts = selectedDate.split('-');
+      const dStart = new Date(Number(dateParts[0]), Number(dateParts[1]) - 1, Number(dateParts[2]), 0, 0, 0, 0);
+      const dEnd = new Date(Number(dateParts[0]), Number(dateParts[1]) - 1, Number(dateParts[2]), 23, 59, 59, 999);
+      startTime = dStart.getTime();
+      endTime = dEnd.getTime();
+    } else if (filterOption === 'custom') {
+      if (customStart && customEnd) {
+        startTime = new Date(customStart).getTime();
+        endTime = new Date(customEnd).getTime();
+      }
+    } else if (filterOption === 'live') {
+      startTime = Date.now() - 5 * 60 * 1000; // default last 5 mins for live
+    }
+
+    filtered = filtered.filter(item => {
+      const ts = parseInt(item.timestamp);
+      return ts >= startTime && ts <= endTime;
+    });
+
+    return filtered
       .sort((a, b) => parseInt(b.timestamp) - parseInt(a.timestamp))
       .slice(0, 50);
-  }, [localHistory]);
+  }, [localHistory, filterOption, selectedDate, customStart, customEnd]);
+
+  const hasChartData = useMemo(() => {
+    if (filterOption === 'live') {
+      return processedChartData.length > 0;
+    }
+    return processedChartData.some(item => item.value !== null);
+  }, [processedChartData, filterOption]);
 
   const isAlert = carbonLevel !== null && carbonLevel > 1200;
 
@@ -509,7 +643,7 @@ export default function Dashboard() {
     // Use orange/amber (RGB: 245, 158, 11) for title header
     doc.setTextColor(245, 158, 11);
     doc.text('Laporan Monitoring CarbonSense', 14, 20);
-    
+
     doc.setFontSize(10);
     doc.setTextColor(100, 100, 100);
     doc.text(`User: ${userProfile?.username || 'Guest'}`, 14, 30);
@@ -593,13 +727,12 @@ export default function Dashboard() {
           <div className="flex items-center gap-3">
             {deviceId && !accessDenied && (
               <div ref={diagnosticRef} className="relative">
-                <button 
+                <button
                   onClick={() => setIsDiagnosticOpen(!isDiagnosticOpen)}
-                  className={`flex items-center gap-2 px-3.5 py-1.5 border rounded-full text-[10px] font-mono uppercase font-bold tracking-wider transition-all cursor-pointer select-none active:scale-95 shadow-md ${
-                    isDeviceOffline 
-                      ? 'bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20' 
+                  className={`flex items-center gap-2 px-3.5 py-1.5 border rounded-full text-[10px] font-mono uppercase font-bold tracking-wider transition-all cursor-pointer select-none active:scale-95 shadow-md ${isDeviceOffline
+                      ? 'bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20'
                       : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-450 hover:bg-emerald-500/20'
-                  }`}
+                    }`}
                 >
                   <span className={`w-2 h-2 rounded-full ${isDeviceOffline ? 'bg-red-500' : 'bg-emerald-500 animate-ping'}`} />
                   Device: {isDeviceOffline ? 'Offline' : 'Online'}
@@ -619,27 +752,26 @@ export default function Dashboard() {
                         <div className="text-[10px] font-mono text-[var(--cs-text-dim)] uppercase tracking-wider">
                           Status Koneksi Jalur Data
                         </div>
-                        
+
                         <div className="flex items-center justify-between px-2 py-4 relative">
                           {/* Background Connecting Lines */}
                           <div className="absolute left-8 right-8 top-1/2 -translate-y-1/2 h-0.5 bg-zinc-800 z-0">
                             {/* Active Line (Green if online) */}
-                            <div 
-                              className={`h-full transition-all duration-500 ${isDeviceOffline ? 'w-0' : 'w-full bg-emerald-500'}`} 
+                            <div
+                              className={`h-full transition-all duration-500 ${isDeviceOffline ? 'w-0' : 'w-full bg-emerald-500'}`}
                             />
                           </div>
 
                           {/* Node 1: Device */}
                           <div className="flex flex-col items-center gap-1.5 z-10">
-                            <div 
-                              className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all ${
-                                isDeviceOffline 
-                                  ? 'border-zinc-800 text-zinc-500' 
+                            <div
+                              className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all ${isDeviceOffline
+                                  ? 'border-zinc-800 text-zinc-500'
                                   : 'border-emerald-500 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
-                              }`}
+                                }`}
                               style={{
-                                backgroundColor: isDeviceOffline 
-                                  ? 'var(--cs-surface-2)' 
+                                backgroundColor: isDeviceOffline
+                                  ? 'var(--cs-surface-2)'
                                   : 'color-mix(in oklab, var(--cs-surface) 88%, #10b981)'
                               }}
                             >
@@ -659,15 +791,14 @@ export default function Dashboard() {
 
                           {/* Node 2: Firebase */}
                           <div className="flex flex-col items-center gap-1.5 z-10">
-                            <div 
-                              className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all ${
-                                isDeviceOffline 
-                                  ? 'border-zinc-800 text-zinc-500' 
+                            <div
+                              className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all ${isDeviceOffline
+                                  ? 'border-zinc-800 text-zinc-500'
                                   : 'border-emerald-500 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
-                              }`}
+                                }`}
                               style={{
-                                backgroundColor: isDeviceOffline 
-                                  ? 'var(--cs-surface-2)' 
+                                backgroundColor: isDeviceOffline
+                                  ? 'var(--cs-surface-2)'
                                   : 'color-mix(in oklab, var(--cs-surface) 88%, #10b981)'
                               }}
                             >
@@ -687,15 +818,14 @@ export default function Dashboard() {
 
                           {/* Node 3: Dashboard */}
                           <div className="flex flex-col items-center gap-1.5 z-10">
-                            <div 
-                              className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all ${
-                                isDeviceOffline 
-                                  ? 'border-zinc-800 text-zinc-500' 
+                            <div
+                              className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all ${isDeviceOffline
+                                  ? 'border-zinc-800 text-zinc-500'
                                   : 'border-emerald-500 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
-                              }`}
+                                }`}
                               style={{
-                                backgroundColor: isDeviceOffline 
-                                  ? 'var(--cs-surface-2)' 
+                                backgroundColor: isDeviceOffline
+                                  ? 'var(--cs-surface-2)'
                                   : 'color-mix(in oklab, var(--cs-surface) 88%, #10b981)'
                               }}
                             >
@@ -743,9 +873,15 @@ export default function Dashboard() {
             <Link to="/settings" className="p-2 hover:bg-zinc-800 rounded-lg transition-colors text-[var(--cs-text-dim)]" title="Pengaturan">
               <SettingsIcon className="w-5 h-5" />
             </Link>
-            <button 
+            <button
               onClick={() => {
+                localStorage.removeItem('cs_user');
                 localStorage.removeItem('cs_user_email');
+                localStorage.removeItem('cs_user_token');
+                localStorage.removeItem('cs_active_devices');
+                localStorage.removeItem('cs_ai_personality');
+                localStorage.removeItem('cs_onboarding_answers');
+                localStorage.removeItem('cs_purchase_status');
                 navigate('/login');
               }}
               className="p-2 hover:bg-zinc-800 text-red-400 hover:text-red-300 rounded-lg transition-colors cursor-pointer"
@@ -758,7 +894,7 @@ export default function Dashboard() {
       </nav>
 
       <main className="relative pt-24 pb-20 px-6 max-w-6xl mx-auto">
-        
+
         {/* Device Tabs */}
         {!accessDenied && activeDeviceIds.length > 1 && (
           <div className="flex gap-2 mb-8 overflow-x-auto pb-2 custom-scrollbar">
@@ -781,132 +917,279 @@ export default function Dashboard() {
         )}
 
         {accessDenied ? (
-           <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-             <motion.div 
-               initial={{ opacity: 0, scale: 0.9 }}
-               animate={{ opacity: 1, scale: 1 }}
-               className="max-w-md w-full p-10 border rounded-[2rem] shadow-2xl relative overflow-hidden"
-               style={{ background: 'color-mix(in oklab, var(--cs-danger) 5%, var(--cs-surface))', borderColor: 'color-mix(in oklab, var(--cs-danger) 30%, var(--cs-border))' }}
-             >
-               <div className="flex flex-col items-center">
-                 <div className="w-20 h-20 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center mb-6">
-                   <ShieldAlert className="w-10 h-10 text-red-500" />
-                 </div>
-                 <h2 className="text-2xl font-bold mb-3 tracking-normal text-red-500" style={{ fontFamily: 'var(--font-display)' }}>Akses Ditolak</h2>
-                 <p className="text-red-200/70 text-sm leading-relaxed mb-8">
-                   Perangkat ini tidak terdaftar pada akun Anda. Sistem keamanan memblokir akses ke ID Perangkat yang tidak sesuai dengan otorisasi Anda.
-                 </p>
-                 <button 
-                   onClick={() => setSearchParams({})}
-                   className="w-full py-4 px-6 bg-red-600 hover:bg-red-500 text-white font-bold flex items-center justify-center gap-3 rounded-xl transition-all active:scale-95 shadow-xl shadow-red-900/20 cursor-pointer"
-                 >
-                   Kembali ke Dashboard Anda
-                 </button>
-               </div>
-             </motion.div>
-           </div>
-        ) : !deviceId ? (
-           <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-             <header className="mb-12">
-               <h1 className="text-5xl sm:text-6xl lg:text-7xl uppercase font-semibold tracking-tight mb-3 leading-none" style={{ fontFamily: 'var(--font-display)' }}>Halo, {userProfile?.username || 'Pahlawan Udara'}!</h1>
-             </header>
-
-             <motion.div 
-               initial={{ opacity: 0, y: 20 }}
-               animate={{ opacity: 1, y: 0 }}
-               className="max-w-md w-full p-10 border rounded-[2rem] shadow-2xl relative overflow-hidden"
-               style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}
-             >
-               {purchaseStatus === 'pending' ? (
-                 <div className="flex flex-col items-center">
-                   <div className="w-20 h-20 bg-amber-500/10 border border-amber-500/20 rounded-full flex items-center justify-center mb-6">
-                     <ClockIcon className="w-10 h-10 text-amber-500 animate-pulse" />
-                   </div>
-                   <h2 className="text-2xl font-bold mb-3 tracking-normal" style={{ fontFamily: 'var(--font-display)' }}>Menunggu Konfirmasi Admin</h2>
-                   <p className="text-[var(--cs-text-dim)] text-sm leading-relaxed mb-6">
-                     Anda telah menyelesaikan pembelian, namun pihak Admin belum memproses pendaftaran perangkat ke dalam basis data. Mohon tunggu proses sinkronisasi selesai, atau hubungi admin.
-                   </p>
-                 </div>
-               ) : (
-                 <div className="flex flex-col items-center">
-                   <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6 border" style={{ background: 'color-mix(in oklab, var(--cs-amber) 12%, transparent)', borderColor: 'var(--cs-amber)' }}>
-                     <Info className="w-10 h-10" style={{ color: 'var(--cs-amber)' }} />
-                   </div>
-                   <h2 className="text-2xl font-bold mb-3 tracking-normal" style={{ fontFamily: 'var(--font-display)' }}>Belum Ada Perangkat</h2>
-                   <p className="text-[var(--cs-text-dim)] text-sm leading-relaxed mb-8">
-                     Sistem mendeteksi bahwa akun Anda belum memiliki relasi dengan perangkat fisik CarbonSense mana pun. Silakan melakukan pembelian alat.
-                   </p>
-                   
-                   <button 
-                     onClick={handlePurchase}
-                     className="w-full py-4 px-6 text-black font-bold flex items-center justify-center gap-3 rounded-xl transition-all active:scale-95 shadow-xl cursor-pointer hover:brightness-110"
-                     style={{ background: 'var(--cs-amber)', boxShadow: '0 8px 24px -8px var(--cs-amber-glow)' }}
-                   >
-                     <ShoppingCart className="w-5 h-5" />
-                     Beli Perangkat Sekarang
-                   </button>
-                 </div>
-               )}
-             </motion.div>
-           </div>
-         ) : (
-           /* State: Full Access (Device Bound) */
-           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-             {/* Main Visual & Stats */}
-             <div className="lg:col-span-12 xl:col-span-7 space-y-8">
-               <header>
-                 <h1 className="text-5xl sm:text-6xl lg:text-7xl uppercase font-semibold tracking-tight leading-none" style={{ fontFamily: 'var(--font-display)' }}>Halo, {userProfile?.username || 'Pahlawan Udara'}!</h1>
-                 <p className="text-[var(--cs-text-dim)] mt-2">Berikut adalah kondisi udara real-time di area monitor Anda (ID: {deviceId}).</p>
-               </header>
-
-                <motion.div 
-                   animate={isDeviceOffline ? {
-                     borderColor: ["rgba(220, 38, 38, 0.2)", "rgba(220, 38, 38, 0.4)", "rgba(220, 38, 38, 0.2)"],
-                     backgroundColor: ["rgba(24, 24, 27, 0.4)", "rgba(127, 29, 29, 0.05)", "rgba(24, 24, 27, 0.4)"]
-                   } : isAlert ? { 
-                     boxShadow: ["0 0 20px rgba(220, 38, 38, 0.1)", "0 0 60px rgba(220, 38, 38, 0.5)", "0 0 20px rgba(220, 38, 38, 0.1)"],
-                     borderColor: ["rgba(220, 38, 38, 0.2)", "rgba(220, 38, 38, 0.8)", "rgba(220, 38, 38, 0.2)"],
-                     backgroundColor: ["rgba(24, 24, 27, 0.4)", "rgba(127, 29, 29, 0.2)", "rgba(24, 24, 27, 0.4)"]
-                   } : {}}
-                   transition={{ repeat: Infinity, duration: 1.5 }}
-                   className="p-10 rounded-[3rem] border relative overflow-hidden flex flex-col items-center justify-center min-h-[350px] shadow-2xl transition-colors duration-500"
-                   style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}
+          <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="max-w-md w-full p-10 border rounded-[2rem] shadow-2xl relative overflow-hidden"
+              style={{ background: 'color-mix(in oklab, var(--cs-danger) 5%, var(--cs-surface))', borderColor: 'color-mix(in oklab, var(--cs-danger) 30%, var(--cs-border))' }}
+            >
+              <div className="flex flex-col items-center">
+                <div className="w-20 h-20 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center mb-6">
+                  <ShieldAlert className="w-10 h-10 text-red-500" />
+                </div>
+                <h2 className="text-2xl font-bold mb-3 tracking-normal text-red-500" style={{ fontFamily: 'var(--font-display)' }}>Akses Ditolak</h2>
+                <p className="text-red-200/70 text-sm leading-relaxed mb-8">
+                  Perangkat ini tidak terdaftar pada akun Anda. Sistem keamanan memblokir akses ke ID Perangkat yang tidak sesuai dengan otorisasi Anda.
+                </p>
+                <button
+                  onClick={() => setSearchParams({})}
+                  className="w-full py-4 px-6 bg-red-600 hover:bg-red-500 text-white font-bold flex items-center justify-center gap-3 rounded-xl transition-all active:scale-95 shadow-xl shadow-red-900/20 cursor-pointer"
                 >
-                  <div className="absolute top-8 left-8 flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: isDeviceOffline ? 'var(--cs-danger)' : isAlert ? 'var(--cs-danger)' : 'var(--cs-amber)' }} />
-                    <span className="text-[10px] font-bold text-[var(--cs-text-dim)] uppercase tracking-widest">
-                      {isDeviceOffline ? 'Offline Mode' : 'Active Monitoring'}
-                    </span>
+                  Kembali ke Dashboard Anda
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        ) : !deviceId ? (
+          <div className="flex flex-col items-center justify-center min-h-[60vh] text-center w-full">
+            <header className="mb-8">
+              <h1 className="text-4xl sm:text-5xl uppercase font-semibold tracking-tight mb-2 leading-none" style={{ fontFamily: 'var(--font-display)' }}>Halo, {userProfile?.username || 'Pahlawan Udara'}!</h1>
+              <p className="text-zinc-500 text-sm">Harap siapkan dan hubungkan perangkat CarbonSense Anda.</p>
+            </header>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="max-w-md w-full p-8 border rounded-[2rem] shadow-2xl relative overflow-hidden"
+              style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}
+            >
+              <div className="w-full text-left">
+                <h3 className="text-xs font-mono text-[var(--cs-amber)] uppercase tracking-[0.25em] mb-4">Panduan Menyalakan Alat</h3>
+
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activationStep}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.35 }}
+                    className="space-y-4 min-h-[160px] flex flex-col justify-between"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-2xl border bg-black/40" style={{ borderColor: 'var(--cs-border)' }}>
+                        {activationSteps[activationStep].icon}
+                      </div>
+                      <h3 className="text-sm font-bold text-white uppercase font-sans tracking-tight">
+                        {activationSteps[activationStep].title}
+                      </h3>
+                    </div>
+                    <p className="text-xs text-[var(--cs-text-dim)] leading-relaxed">
+                      {activationSteps[activationStep].desc}
+                    </p>
+                  </motion.div>
+                </AnimatePresence>
+
+                <div className="flex items-center justify-between mt-6 pt-4 border-t border-zinc-800/60">
+                  <button
+                    onClick={() => setActivationStep(prev => Math.max(0, prev - 1))}
+                    disabled={activationStep === 0}
+                    className="px-4 py-1.5 border border-zinc-800 rounded-lg text-xs font-bold text-zinc-500 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                  >
+                    Sebelumnya
+                  </button>
+                  <span className="text-[10px] font-mono text-zinc-500">
+                    Langkah {activationStep + 1} dari {activationSteps.length}
+                  </span>
+                  {activationStep < activationSteps.length - 1 ? (
+                    <button
+                      onClick={() => setActivationStep(prev => prev + 1)}
+                      className="px-4 py-1.5 bg-[var(--cs-amber)] hover:brightness-110 text-black font-bold rounded-lg text-xs transition-all active:scale-95"
+                    >
+                      Lanjut
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setActivationStep(0)}
+                      className="px-4 py-1.5 border border-[var(--cs-amber)] text-[var(--cs-amber)] hover:bg-[var(--cs-amber)] hover:text-black font-bold rounded-lg text-xs transition-all active:scale-95"
+                    >
+                      Ulangi
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="border-t border-zinc-850 mt-6 pt-6 text-center">
+                <p className="text-xs text-zinc-500 mb-4">Belum memiliki alat fisik CarbonSense?</p>
+                <button
+                  onClick={handlePurchase}
+                  className="w-full py-3 px-6 text-black font-bold flex items-center justify-center gap-3 rounded-xl transition-all active:scale-95 shadow-xl cursor-pointer hover:brightness-110"
+                  style={{ background: 'var(--cs-amber)', boxShadow: '0 8px 24px -8px var(--cs-amber-glow)' }}
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                  Beli Perangkat Sekarang
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        ) : (
+          /* State: Full Access (Device Bound) */
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Main Visual & Stats */}
+            <div className="lg:col-span-12 xl:col-span-7 space-y-8">
+              <header>
+                <h1 className="text-5xl sm:text-6xl lg:text-7xl uppercase font-semibold tracking-tight leading-none" style={{ fontFamily: 'var(--font-display)' }}>Halo, {userProfile?.username || 'Pahlawan Udara'}!</h1>
+                <p className="text-[var(--cs-text-dim)] mt-2">Berikut adalah kondisi udara real-time di area monitor Anda (ID: {deviceId}).</p>
+              </header>
+
+              <motion.div
+                animate={isDeviceOffline ? {
+                  borderColor: ["rgba(220, 38, 38, 0.2)", "rgba(220, 38, 38, 0.4)", "rgba(220, 38, 38, 0.2)"],
+                  backgroundColor: ["rgba(24, 24, 27, 0.4)", "rgba(127, 29, 29, 0.05)", "rgba(24, 24, 27, 0.4)"]
+                } : isAlert ? {
+                  boxShadow: ["0 0 20px rgba(220, 38, 38, 0.1)", "0 0 60px rgba(220, 38, 38, 0.5)", "0 0 20px rgba(220, 38, 38, 0.1)"],
+                  borderColor: ["rgba(220, 38, 38, 0.2)", "rgba(220, 38, 38, 0.8)", "rgba(220, 38, 38, 0.2)"],
+                  backgroundColor: ["rgba(24, 24, 27, 0.4)", "rgba(127, 29, 29, 0.2)", "rgba(24, 24, 27, 0.4)"]
+                } : {}}
+                transition={{ repeat: Infinity, duration: 1.5 }}
+                className="p-10 rounded-[3rem] border relative overflow-hidden flex flex-col items-center justify-center min-h-[350px] shadow-2xl transition-colors duration-500"
+                style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}
+              >
+                <div className="absolute top-8 left-8 flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: isDeviceOffline ? 'var(--cs-danger)' : isAlert ? 'var(--cs-danger)' : 'var(--cs-amber)' }} />
+                  <span className="text-[10px] font-bold text-[var(--cs-text-dim)] uppercase tracking-widest">
+                    {isDeviceOffline ? 'Offline Mode' : 'Active Monitoring'}
+                  </span>
+                </div>
+
+                <div className="text-center relative z-10">
+                  <p className="text-xs font-mono text-[var(--cs-text-dim)] uppercase tracking-[0.3em] mb-6">Carbon Level Intensity</p>
+
+                  <div className="flex items-baseline justify-center">
+                    <motion.h2
+                      key={carbonLevel}
+                      animate={isAlert ? { scale: [1, 1.1, 1], filter: ["brightness(1)", "brightness(1.5)", "brightness(1)"] } : {}}
+                      className="text-[9rem] leading-none font-black tracking-tight"
+                      style={{
+                        fontFamily: 'var(--font-display)',
+                        color: isDeviceOffline ? 'color-mix(in oklab, var(--cs-danger) 50%, var(--cs-text-dim))' : isAlert ? 'var(--cs-danger-text)' : 'var(--cs-text)'
+                      }}
+                    >
+                      {carbonLevel !== null ? carbonLevel : '0'}
+                    </motion.h2>
+                    <span className="text-2xl font-bold text-zinc-700 ml-4">ppm</span>
                   </div>
 
-                  <div className="text-center relative z-10">
-                    <p className="text-xs font-mono text-[var(--cs-text-dim)] uppercase tracking-[0.3em] mb-6">Carbon Level Intensity</p>
-                    
-                    <div className="flex items-baseline justify-center">
-                      <motion.h2 
-                        key={carbonLevel}
-                        animate={isAlert ? { scale: [1, 1.1, 1], filter: ["brightness(1)", "brightness(1.5)", "brightness(1)"] } : {}}
-                        className="text-[9rem] leading-none font-black tracking-tight"
-                        style={{ fontFamily: 'var(--font-display)', color: isDeviceOffline ? 'var(--cs-danger-text)' : isAlert ? 'var(--cs-danger-text)' : 'var(--cs-text)' }}
-                      >
-                        {carbonLevel || '--'}
-                      </motion.h2>
-                      <span className="text-2xl font-bold text-zinc-700 ml-4">ppm</span>
-                    </div>
-
-                    <div className="mt-8 flex justify-center">
-                      {isDeviceOffline ? (
+                  <div className="mt-8 flex justify-center">
+                    {isDeviceOffline ? (
+                      <div className="flex flex-col items-center gap-3">
                         <div className="px-6 py-2 bg-red-950/20 border border-red-500/30 text-red-400 rounded-full font-bold flex items-center gap-2 animate-pulse">
                           <AlertTriangle className="w-5 h-5" />
                           Status: Alat Terputus / Offline
                         </div>
-                      ) : isAlert ? (
-                        <div className="flex flex-col items-center gap-3">
-                          <div className="px-6 py-2 bg-red-600 text-white rounded-full font-bold flex items-center gap-2 animate-bounce">
-                            <AlertTriangle className="w-5 h-5" />
-                            Danger: Gas Leak Detected!
-                          </div>
-                          <button 
+                        <button
+                          type="button"
+                          onClick={() => setShowReactivationPopup(true)}
+                          className="px-4 py-1.5 bg-red-950/45 border border-red-500/35 text-red-400 hover:bg-red-900/20 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 shadow-md animate-bounce mt-1"
+                        >
+                          <Wifi className="w-3.5 h-3.5 animate-pulse text-red-400" />
+                          Buka Panduan Reaktivasi
+                        </button>
+                      </div>
+                    ) : isAlert ? (
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="px-6 py-2 bg-red-600 text-white rounded-full font-bold flex items-center gap-2 animate-bounce">
+                          <AlertTriangle className="w-5 h-5" />
+                          Danger: Gas Leak Detected!
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsDangerPopupOpen(true);
+                            if (!dangerPopupRecommendation) {
+                              loadDangerRecommendation(carbonLevel || 1200);
+                            }
+                          }}
+                          className="px-4 py-1.5 bg-red-950/40 border border-red-500/35 text-red-400 hover:bg-red-900/20 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 shadow-md"
+                        >
+                          <AlertTriangle className="w-3.5 h-3.5 animate-pulse" />
+                          Lihat Rekomendasi Evakuasi AI
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="px-6 py-2 rounded-full font-bold flex items-center gap-2 border" style={{ background: 'color-mix(in oklab, var(--cs-amber) 12%, transparent)', borderColor: 'color-mix(in oklab, var(--cs-amber) 30%, var(--cs-border))', color: 'var(--cs-amber)' }}>
+                        <Activity className="w-5 h-5 animate-pulse" />
+                        Status: Udara Aman & Terjamin
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Premium Interactive AI LLM Assistant Widget */}
+              <div className="p-6 md:p-8 rounded-[2.5rem] border relative overflow-hidden flex flex-col justify-between" style={{ background: 'linear-gradient(135deg, rgba(28,28,28,0.7) 0%, rgba(16,16,16,0.5) 100%)', borderColor: 'var(--cs-border)', minHeight: '520px' }}>
+
+                {/* Card Background Ambient Sparkles */}
+                <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                  <Brain className="w-40 h-40 text-white" />
+                </div>
+
+                {/* Card Header */}
+                <div className="flex items-center justify-between border-b pb-4 mb-4 relative z-10" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl border flex items-center justify-center" style={{ background: 'color-mix(in oklab, var(--cs-amber) 10%, transparent)', borderColor: 'var(--cs-border)' }}>
+                      <Brain className="w-5 h-5 text-[var(--cs-amber)] animate-pulse" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold uppercase tracking-wider text-sm text-white flex items-center gap-1.5">
+                        CarbonSense LLM AI Assistant
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                      </h3>
+                      <p className="text-[9px] font-mono text-[var(--cs-amber)] uppercase tracking-wider mt-0.5">Model: CarbonSensing-v2.0</p>
+                    </div>
+                  </div>
+                  {/* Risk Level Badge */}
+                  <div className="px-3 py-1 rounded-lg border text-[9px] font-black uppercase tracking-widest"
+                    style={{
+                      background: isAlert ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                      borderColor: isAlert ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)',
+                      color: isAlert ? '#f87171' : '#10b981'
+                    }}>
+                    {isAlert ? 'BAHAYA KRITIS' : carbonLevel && carbonLevel > 700 ? 'WASPADA' : 'UDARA AMAN'}
+                  </div>
+                </div>
+
+                {/* URGENT EVACUATION PROTOCOL PANEL (Active Warning Overlay if PPM > 700) */}
+                {(carbonLevel !== null && carbonLevel > 700) && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-4 rounded-2xl border mb-4 space-y-3 animate-pulse text-left"
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.08)',
+                      borderColor: 'rgba(239, 68, 68, 0.35)'
+                    }}
+                  >
+                    <div className="flex items-center gap-2 text-xs font-black text-red-400 uppercase tracking-widest">
+                      <ShieldAlert className="w-4.5 h-4.5 text-red-500 flex-shrink-0" />
+                      ⚠️ PROTOKOL KESELAMATAN & EVAKUASI AI AKTIF
+                    </div>
+                    <div className="text-[11px] text-zinc-300 space-y-2 leading-relaxed font-medium">
+                      {aiPersonality?.rentan && aiPersonality.rentan !== 'Tidak Ada' && (
+                        <div className="flex items-start gap-1.5">
+                          <span className="text-red-400 flex-shrink-0">•</span>
+                          <span><strong>Kelompok Rentan:</strong> Segera evakuasi <span className="text-white underline">{aiPersonality.rentan}</span> dari area {aiPersonality.lokasi || 'ini'} ke tempat berudara terbuka segar.</span>
+                        </div>
+                      )}
+                      <div className="flex items-start gap-1.5">
+                        <span className="text-red-400 flex-shrink-0">•</span>
+                        <span><strong>Sirkulasi:</strong> Status ventilasi saat ini '{aiPersonality?.sirkulasi || 'AC Tertutup'}'. Segera buka pintu/jendela selebar mungkin dan matikan pendingin ruangan (AC).</span>
+                      </div>
+                      {aiPersonality?.luas_ruang === 'Kecil (< 10 m²)' && (
+                        <div className="flex items-start gap-1.5">
+                          <span className="text-red-400 flex-shrink-0">•</span>
+                          <span><strong>Dimensi Ruang:</strong> Ruangan dinilai <strong>Kecil</strong>. Akumulasi gas CO terjadi 3x lebih cepat. Batasi jumlah orang ({aiPersonality?.kapasitas}) di dalam ruangan.</span>
+                        </div>
+                      )}
+                      {aiPersonality?.polutan && aiPersonality.polutan.length > 0 && aiPersonality.polutan[0] !== 'Tidak Ada' && (
+                        <div className="flex items-start gap-1.5">
+                          <span className="text-red-400 flex-shrink-0">•</span>
+                          <span><strong>Sumber Emisi:</strong> Matikan kompor gas atau jauhkan aktivitas merokok/kendaraan ({aiPersonality.polutan.join(', ')}) dari sekitar sensor.</span>
+                        </div>
+                      )}
+                      {carbonLevel !== null && carbonLevel > 1200 && (
+                        <div className="mt-3 border-t border-red-900/30 pt-3">
+                          <button
                             type="button"
                             onClick={() => {
                               setIsDangerPopupOpen(true);
@@ -914,555 +1197,635 @@ export default function Dashboard() {
                                 loadDangerRecommendation(carbonLevel || 1200);
                               }
                             }}
-                            className="px-4 py-1.5 bg-red-950/40 border border-red-500/35 text-red-400 hover:bg-red-900/20 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 shadow-md"
+                            className="w-full py-2 bg-red-950/30 hover:bg-red-900/20 border border-red-500/30 text-red-400 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-98"
                           >
                             <AlertTriangle className="w-3.5 h-3.5 animate-pulse" />
-                            Lihat Rekomendasi Evakuasi AI
+                            Buka Kembali Popup Evakuasi AI
                           </button>
-                        </div>
-                      ) : (
-                        <div className="px-6 py-2 rounded-full font-bold flex items-center gap-2 border" style={{ background: 'color-mix(in oklab, var(--cs-amber) 12%, transparent)', borderColor: 'color-mix(in oklab, var(--cs-amber) 30%, var(--cs-border))', color: 'var(--cs-amber)' }}>
-                          <Activity className="w-5 h-5 animate-pulse" />
-                          Status: Udara Aman & Terjamin
                         </div>
                       )}
                     </div>
-                  </div>
-                </motion.div>
+                  </motion.div>
+                )}
 
-               {/* Premium Interactive AI LLM Assistant Widget */}
-               <div className="p-6 md:p-8 rounded-[2.5rem] border relative overflow-hidden flex flex-col justify-between" style={{ background: 'linear-gradient(135deg, rgba(28,28,28,0.7) 0%, rgba(16,16,16,0.5) 100%)', borderColor: 'var(--cs-border)', minHeight: '520px' }}>
-                 
-                 {/* Card Background Ambient Sparkles */}
-                 <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-                   <Brain className="w-40 h-40 text-white" />
-                 </div>
-
-                 {/* Card Header */}
-                 <div className="flex items-center justify-between border-b pb-4 mb-4 relative z-10" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-                   <div className="flex items-center gap-3">
-                     <div className="p-2 rounded-xl border flex items-center justify-center" style={{ background: 'color-mix(in oklab, var(--cs-amber) 10%, transparent)', borderColor: 'var(--cs-border)' }}>
-                       <Brain className="w-5 h-5 text-[var(--cs-amber)] animate-pulse" />
-                     </div>
-                     <div>
-                       <h3 className="font-bold uppercase tracking-wider text-sm text-white flex items-center gap-1.5">
-                         CarbonSense LLM AI Assistant
-                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                       </h3>
-                       <p className="text-[9px] font-mono text-[var(--cs-amber)] uppercase tracking-wider mt-0.5">Model: CarbonSensing-v2.0</p>
-                     </div>
-                   </div>
-                   {/* Risk Level Badge */}
-                   <div className="px-3 py-1 rounded-lg border text-[9px] font-black uppercase tracking-widest"
-                        style={{
-                          background: isAlert ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)',
-                          borderColor: isAlert ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)',
-                          color: isAlert ? '#f87171' : '#10b981'
-                        }}>
-                     {isAlert ? 'BAHAYA KRITIS' : carbonLevel && carbonLevel > 700 ? 'WASPADA' : 'UDARA AMAN'}
-                   </div>
-                 </div>
-
-                 {/* URGENT EVACUATION PROTOCOL PANEL (Active Warning Overlay if PPM > 700) */}
-                 {(carbonLevel !== null && carbonLevel > 700) && (
-                   <motion.div 
-                     initial={{ opacity: 0, y: -10 }}
-                     animate={{ opacity: 1, y: 0 }}
-                     className="p-4 rounded-2xl border mb-4 space-y-3 animate-pulse text-left"
-                     style={{ 
-                       background: 'rgba(239, 68, 68, 0.08)', 
-                       borderColor: 'rgba(239, 68, 68, 0.35)' 
-                     }}
-                   >
-                     <div className="flex items-center gap-2 text-xs font-black text-red-400 uppercase tracking-widest">
-                       <ShieldAlert className="w-4.5 h-4.5 text-red-500 flex-shrink-0" />
-                       ⚠️ PROTOKOL KESELAMATAN & EVAKUASI AI AKTIF
-                     </div>
-                     <div className="text-[11px] text-zinc-300 space-y-2 leading-relaxed font-medium">
-                       {aiPersonality?.rentan && aiPersonality.rentan !== 'Tidak Ada' && (
-                         <div className="flex items-start gap-1.5">
-                           <span className="text-red-400 flex-shrink-0">•</span>
-                           <span><strong>Kelompok Rentan:</strong> Segera evakuasi <span className="text-white underline">{aiPersonality.rentan}</span> dari area {aiPersonality.lokasi || 'ini'} ke tempat berudara terbuka segar.</span>
-                         </div>
-                       )}
-                       <div className="flex items-start gap-1.5">
-                         <span className="text-red-400 flex-shrink-0">•</span>
-                         <span><strong>Sirkulasi:</strong> Status ventilasi saat ini '{aiPersonality?.sirkulasi || 'AC Tertutup'}'. Segera buka pintu/jendela selebar mungkin dan matikan pendingin ruangan (AC).</span>
-                       </div>
-                        {aiPersonality?.luas_ruang === 'Kecil (< 10 m²)' && (
-                          <div className="flex items-start gap-1.5">
-                            <span className="text-red-400 flex-shrink-0">•</span>
-                            <span><strong>Dimensi Ruang:</strong> Ruangan dinilai <strong>Kecil</strong>. Akumulasi gas CO terjadi 3x lebih cepat. Batasi jumlah orang ({aiPersonality?.kapasitas}) di dalam ruangan.</span>
+                {/* Message Window */}
+                <div className="flex-1 overflow-y-auto max-h-[220px] mb-4 space-y-3.5 pr-2 custom-scrollbar text-left relative z-10" style={{ minHeight: '160px' }}>
+                  {chatMessages.map((msg, idx) => {
+                    const isAi = msg.sender === 'ai';
+                    return (
+                      <div key={idx} className={`flex items-start gap-2.5 ${isAi ? 'justify-start' : 'justify-end'}`}>
+                        {isAi && (
+                          <div className="w-8 h-8 rounded-lg border flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.1)' }}>
+                            <Brain className="w-4 h-4 text-[var(--cs-amber)]" />
                           </div>
                         )}
-                       {aiPersonality?.polutan && aiPersonality.polutan.length > 0 && aiPersonality.polutan[0] !== 'Tidak Ada' && (
-                         <div className="flex items-start gap-1.5">
-                           <span className="text-red-400 flex-shrink-0">•</span>
-                           <span><strong>Sumber Emisi:</strong> Matikan kompor gas atau jauhkan aktivitas merokok/kendaraan ({aiPersonality.polutan.join(', ')}) dari sekitar sensor.</span>
-                         </div>
-                       )}
-                       {carbonLevel !== null && carbonLevel > 1200 && (
-                         <div className="mt-3 border-t border-red-900/30 pt-3">
-                           <button
-                             type="button"
-                             onClick={() => {
-                               setIsDangerPopupOpen(true);
-                               if (!dangerPopupRecommendation) {
-                                 loadDangerRecommendation(carbonLevel || 1200);
-                               }
-                             }}
-                             className="w-full py-2 bg-red-950/30 hover:bg-red-900/20 border border-red-500/30 text-red-400 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-98"
-                           >
-                             <AlertTriangle className="w-3.5 h-3.5 animate-pulse" />
-                             Buka Kembali Popup Evakuasi AI
-                           </button>
-                         </div>
-                       )}
-                     </div>
-                   </motion.div>
-                 )}
+                        <div
+                          className="p-3.5 rounded-2xl text-xs max-w-[85%] leading-relaxed font-medium"
+                          style={{
+                            background: isAi ? 'var(--cs-surface-2)' : 'color-mix(in oklab, var(--cs-amber) 15%, var(--cs-surface-2))',
+                            border: isAi ? '1px solid rgba(255,255,255,0.04)' : '1px solid var(--cs-amber)',
+                            color: isAi ? 'rgba(255,255,255,0.9)' : '#fff',
+                            borderRadius: isAi ? '0px 16px 16px 16px' : '16px 0px 16px 16px'
+                          }}
+                          dangerouslySetInnerHTML={{ __html: msg.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }}
+                        />
+                        {!isAi && (
+                          <div className="w-8 h-8 rounded-lg border flex items-center justify-center flex-shrink-0" style={{ background: 'color-mix(in oklab, var(--cs-amber) 10%, transparent)', borderColor: 'var(--cs-amber)' }}>
+                            <User className="w-4 h-4 text-[var(--cs-amber)]" />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
 
-                 {/* Message Window */}
-                 <div className="flex-1 overflow-y-auto max-h-[220px] mb-4 space-y-3.5 pr-2 custom-scrollbar text-left relative z-10" style={{ minHeight: '160px' }}>
-                   {chatMessages.map((msg, idx) => {
-                     const isAi = msg.sender === 'ai';
-                     return (
-                       <div key={idx} className={`flex items-start gap-2.5 ${isAi ? 'justify-start' : 'justify-end'}`}>
-                         {isAi && (
-                           <div className="w-8 h-8 rounded-lg border flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.1)' }}>
-                             <Brain className="w-4 h-4 text-[var(--cs-amber)]" />
-                           </div>
-                         )}
-                         <div 
-                           className="p-3.5 rounded-2xl text-xs max-w-[85%] leading-relaxed font-medium"
-                           style={{
-                             background: isAi ? 'var(--cs-surface-2)' : 'color-mix(in oklab, var(--cs-amber) 15%, var(--cs-surface-2))',
-                             border: isAi ? '1px solid rgba(255,255,255,0.04)' : '1px solid var(--cs-amber)',
-                             color: isAi ? 'rgba(255,255,255,0.9)' : '#fff',
-                             borderRadius: isAi ? '0px 16px 16px 16px' : '16px 0px 16px 16px'
-                           }}
-                           dangerouslySetInnerHTML={{ __html: msg.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }}
-                         />
-                         {!isAi && (
-                           <div className="w-8 h-8 rounded-lg border flex items-center justify-center flex-shrink-0" style={{ background: 'color-mix(in oklab, var(--cs-amber) 10%, transparent)', borderColor: 'var(--cs-amber)' }}>
-                             <User className="w-4 h-4 text-[var(--cs-amber)]" />
-                           </div>
-                         )}
-                       </div>
-                     );
-                   })}
-                   
-                   {/* Typing Indicator */}
-                   {isTyping && (
-                     <div className="flex items-start gap-2.5 justify-start">
-                       <div className="w-8 h-8 rounded-lg border flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.1)' }}>
-                         <Brain className="w-4 h-4 text-[var(--cs-amber)] animate-spin" />
-                       </div>
-                       <div className="p-3.5 rounded-2xl bg-zinc-900 border border-zinc-800 text-[10px] font-mono text-[var(--cs-amber)] flex items-center gap-1.5 rounded-tl-none animate-pulse">
-                         Asisten sedang menganalisis kondisi udara...
-                       </div>
-                     </div>
-                   )}
-                   <div ref={chatEndRef} />
-                 </div>
+                  {/* Typing Indicator */}
+                  {isTyping && (
+                    <div className="flex items-start gap-2.5 justify-start">
+                      <div className="w-8 h-8 rounded-lg border flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.1)' }}>
+                        <Brain className="w-4 h-4 text-[var(--cs-amber)] animate-spin" />
+                      </div>
+                      <div className="p-3.5 rounded-2xl bg-zinc-900 border border-zinc-800 text-[10px] font-mono text-[var(--cs-amber)] flex items-center gap-1.5 rounded-tl-none animate-pulse">
+                        Asisten sedang menganalisis kondisi udara...
+                      </div>
+                    </div>
+                  )}
+                  <div ref={chatEndRef} />
+                </div>
 
-                 {/* Quick Chips Row */}
-                 <div className="mb-4 relative z-10 text-left">
-                   <div className="text-[9px] uppercase font-mono tracking-widest text-zinc-500 mb-2 flex items-center gap-1">
-                     <Sparkles className="w-3 h-3 text-[var(--cs-amber)]" /> Rekomendasi Pertanyaan Cepat:
-                   </div>
-                   <div className="flex flex-wrap gap-1.5">
-                     {[
-                       { text: '📊 Kualitas Udara Saat Ini', label: 'Bagaimana status kelayakan udara saat ini?' },
-                       { text: '👶 Analisis Kelompok Rentan', label: 'Adakah kelompok rentan yang perlu diwaspadai di ruangan ini?' },
-                       { text: '🚨 Panduan Kebocoran Gas', label: 'Apa tindakan yang harus saya lakukan jika terdeteksi kebocoran gas?' },
-                       { text: '📐 Dampak Luas & Ventilasi', label: 'Bagaimana pengaruh ventilasi dan luas ruangan terhadap gas karbon?' }
-                     ].map((chip) => (
-                       <button
-                         type="button"
-                         key={chip.text}
-                         onClick={() => handleAskAI(chip.label)}
-                         disabled={isTyping}
-                         className="px-3 py-1.5 rounded-full border text-[10px] font-semibold text-zinc-400 hover:text-white hover:border-[var(--cs-amber)] hover:bg-zinc-800/40 transition-all cursor-pointer disabled:opacity-50"
-                         style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}
-                       >
-                         {chip.text}
-                       </button>
-                     ))}
-                   </div>
-                 </div>
+                {/* Quick Chips Row */}
+                <div className="mb-4 relative z-10 text-left">
+                  <div className="text-[9px] uppercase font-mono tracking-widest text-zinc-500 mb-2 flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-[var(--cs-amber)]" /> Rekomendasi Pertanyaan Cepat:
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      { text: '📊 Kualitas Udara Saat Ini', label: 'Bagaimana status kelayakan udara saat ini?' },
+                      { text: '👶 Analisis Kelompok Rentan', label: 'Adakah kelompok rentan yang perlu diwaspadai di ruangan ini?' },
+                      { text: '🚨 Panduan Kebocoran Gas', label: 'Apa tindakan yang harus saya lakukan jika terdeteksi kebocoran gas?' },
+                      { text: '📐 Dampak Luas & Ventilasi', label: 'Bagaimana pengaruh ventilasi dan luas ruangan terhadap gas karbon?' }
+                    ].map((chip) => (
+                      <button
+                        type="button"
+                        key={chip.text}
+                        onClick={() => handleAskAI(chip.label)}
+                        disabled={isTyping}
+                        className="px-3 py-1.5 rounded-full border text-[10px] font-semibold text-zinc-400 hover:text-white hover:border-[var(--cs-amber)] hover:bg-zinc-800/40 transition-all cursor-pointer disabled:opacity-50"
+                        style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}
+                      >
+                        {chip.text}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-                 {/* Input form */}
-                 <div className="flex gap-2 relative z-10">
-                   <input
-                     type="text"
-                     placeholder="Tanyakan sesuatu ke asisten AI..."
-                     value={customQuestion}
-                     onChange={(e) => setCustomQuestion(e.target.value)}
-                     onKeyDown={(e) => {
-                       if (e.key === 'Enter') {
-                         handleAskAI(customQuestion);
-                         setCustomQuestion('');
-                       }
-                     }}
-                     disabled={isTyping}
-                     className="flex-1 bg-black/40 border px-4 py-3 rounded-xl text-xs font-semibold focus:outline-none focus:border-[var(--cs-amber)] text-white focus:ring-1 focus:ring-[var(--cs-amber-glow)] transition-all disabled:opacity-50"
-                     style={{ borderColor: 'var(--cs-border)' }}
-                   />
-                   <button
-                     type="button"
-                     onClick={() => {
-                       handleAskAI(customQuestion);
-                       setCustomQuestion('');
-                     }}
-                     disabled={isTyping || !customQuestion.trim()}
-                     className="px-4 py-3 rounded-xl text-black font-black flex items-center justify-center transition-all cursor-pointer hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100"
-                     style={{ background: 'var(--cs-amber)' }}
-                   >
-                     <Send className="w-4 h-4" />
-                   </button>
-                 </div>
-               </div>
-             </div>
+                {/* Input form */}
+                <div className="flex gap-2 relative z-10">
+                  <input
+                    type="text"
+                    placeholder="Tanyakan sesuatu ke asisten AI..."
+                    value={customQuestion}
+                    onChange={(e) => setCustomQuestion(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleAskAI(customQuestion);
+                        setCustomQuestion('');
+                      }
+                    }}
+                    disabled={isTyping}
+                    className="flex-1 bg-black/40 border px-4 py-3 rounded-xl text-xs font-semibold focus:outline-none focus:border-[var(--cs-amber)] text-white focus:ring-1 focus:ring-[var(--cs-amber-glow)] transition-all disabled:opacity-50"
+                    style={{ borderColor: 'var(--cs-border)' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleAskAI(customQuestion);
+                      setCustomQuestion('');
+                    }}
+                    disabled={isTyping || !customQuestion.trim()}
+                    className="px-4 py-3 rounded-xl text-black font-black flex items-center justify-center transition-all cursor-pointer hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100"
+                    style={{ background: 'var(--cs-amber)' }}
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
 
-             {/* Controls & History */}
-             <div className="lg:col-span-12 xl:col-span-5 space-y-6">
-               
-               {/* Action Bar */}
-               <div className="grid grid-cols-2 gap-4">
-                 {/* Dropdown Periods */}
-                 <div className="relative">
-                   <button 
-                     onClick={() => setIsHistoryDropdownOpen(!isHistoryDropdownOpen)}
-                     className="w-full flex items-center justify-between p-4 rounded-2xl hover:bg-zinc-800 transition-colors text-xs text-left border cursor-pointer"
-                     style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}
-                   >
-                     <span className="flex items-center gap-2 text-[var(--cs-text-dim)]"><Clock className="w-4 h-4"/> Rentang:</span>
-                     <span className="font-bold truncate max-w-[80px]" style={{ color: 'var(--cs-amber)' }}>{filterOptionLabels[filterOption]}</span>
-                     <ChevronDown className={`w-3 h-3 text-zinc-600 flex-shrink-0 transition-transform ${isHistoryDropdownOpen ? 'rotate-180' : ''}`} />
-                   </button>
-                   <AnimatePresence>
-                     {isHistoryDropdownOpen && (
-                       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="absolute top-full left-0 right-0 mt-2 border rounded-xl overflow-hidden shadow-2xl z-50" style={{ background: '#121212', borderColor: 'var(--cs-border)' }}>
-                         {Object.entries(filterOptionLabels).map(([key, label]) => (
-                           <button key={key} onClick={() => { setFilterOption(key); setIsHistoryDropdownOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors text-xs border-b last:border-0 font-medium cursor-pointer" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-                             {label}
-                           </button>
-                         ))}
-                       </motion.div>
-                     )}
-                   </AnimatePresence>
-                 </div>
+            {/* Controls & History */}
+            <div className="lg:col-span-12 xl:col-span-5 space-y-6">
 
-                 {/* Dropdown Points */}
-                 <div className="relative">
-                   <button 
-                     onClick={() => setIsPointsDropdownOpen(!isPointsDropdownOpen)}
-                     className="w-full flex items-center justify-between p-4 rounded-2xl hover:bg-zinc-800 transition-colors text-xs text-left border cursor-pointer"
-                     style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}
-                   >
-                     <span className="flex items-center gap-2 text-[var(--cs-text-dim)]"><Activity className="w-4 h-4"/> Titik:</span>
-                     <span className="font-bold" style={{ color: 'var(--cs-amber)' }}>{dataPointsLimit}</span>
-                     <ChevronDown className={`w-3 h-3 text-zinc-600 flex-shrink-0 transition-transform ${isPointsDropdownOpen ? 'rotate-180' : ''}`} />
-                   </button>
-                   <AnimatePresence>
-                     {isPointsDropdownOpen && (
-                       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="absolute top-full left-0 right-0 mt-2 border rounded-xl overflow-hidden shadow-2xl z-50" style={{ background: '#121212', borderColor: 'var(--cs-border)' }}>
-                         {[5, 10, 20, 50, 100].map(p => (
-                           <button key={p} onClick={() => { setDataPointsLimit(p); setIsPointsDropdownOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors text-xs border-b last:border-0 font-medium cursor-pointer" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-                             Tampilkan {p} Titik Data
-                           </button>
-                         ))}
-                       </motion.div>
-                     )}
-                   </AnimatePresence>
-                 </div>
+              {/* Action Bar */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* Dropdown Periods */}
+                <div className="relative">
+                  <button
+                    onClick={() => setIsHistoryDropdownOpen(!isHistoryDropdownOpen)}
+                    className="w-full flex items-center justify-between p-4 rounded-2xl hover:bg-zinc-800 transition-colors text-xs text-left border cursor-pointer"
+                    style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}
+                  >
+                    <span className="flex items-center gap-2 text-[var(--cs-text-dim)]"><Clock className="w-4 h-4" /> Rentang:</span>
+                    <span className="font-bold truncate max-w-[80px]" style={{ color: 'var(--cs-amber)' }}>{filterOptionLabels[filterOption]}</span>
+                    <ChevronDown className={`w-3 h-3 text-zinc-600 flex-shrink-0 transition-transform ${isHistoryDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  <AnimatePresence>
+                    {isHistoryDropdownOpen && (
+                      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="absolute top-full left-0 right-0 mt-2 border rounded-xl overflow-hidden shadow-2xl z-50" style={{ background: '#121212', borderColor: 'var(--cs-border)' }}>
+                        {Object.entries(filterOptionLabels).map(([key, label]) => (
+                          <button key={key} onClick={() => { setFilterOption(key); setIsHistoryDropdownOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors text-xs border-b last:border-0 font-medium cursor-pointer" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+                            {label}
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
 
-                 {/* Reports */}
-                 <button onClick={exportToExcel} className="p-4 border rounded-2xl hover:brightness-110 transition-all text-xs font-bold flex items-center justify-center gap-2 cursor-pointer" style={{ background: 'color-mix(in oklab, var(--cs-amber) 12%, transparent)', borderColor: 'color-mix(in oklab, var(--cs-amber) 20%, var(--cs-border))', color: 'var(--cs-amber)' }}>
-                   <Table className="w-4 h-4" /> Download XLSX
-                 </button>
-                 <button onClick={exportToPDF} className="p-4 rounded-2xl hover:bg-zinc-800 border transition-all text-xs font-bold flex items-center justify-center gap-2 cursor-pointer" style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)', color: 'var(--cs-text)' }}>
-                   <Download className="w-4 h-4" /> Save PDF
-                 </button>
-               </div>
+                {/* Dropdown Points */}
+                <div className="relative">
+                  <button
+                    onClick={() => setIsPointsDropdownOpen(!isPointsDropdownOpen)}
+                    className="w-full flex items-center justify-between p-4 rounded-2xl hover:bg-zinc-800 transition-colors text-xs text-left border cursor-pointer"
+                    style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}
+                  >
+                    <span className="flex items-center gap-2 text-[var(--cs-text-dim)]"><Activity className="w-4 h-4" /> Titik:</span>
+                    <span className="font-bold" style={{ color: 'var(--cs-amber)' }}>{dataPointsLimit}</span>
+                    <ChevronDown className={`w-3 h-3 text-zinc-600 flex-shrink-0 transition-transform ${isPointsDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  <AnimatePresence>
+                    {isPointsDropdownOpen && (
+                      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="absolute top-full left-0 right-0 mt-2 border rounded-xl overflow-hidden shadow-2xl z-50" style={{ background: '#121212', borderColor: 'var(--cs-border)' }}>
+                        {[5, 10, 20, 50, 100].map(p => (
+                          <button key={p} onClick={() => { setDataPointsLimit(p); setIsPointsDropdownOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors text-xs border-b last:border-0 font-medium cursor-pointer" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+                            Tampilkan {p} Titik Data
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
 
-               {/* Custom Datetime Input Fields */}
-               {filterOption === 'custom' && (
-                 <div className="p-5 border rounded-2xl space-y-3" style={{ background: 'rgba(25, 25, 25, 0.6)', borderColor: 'var(--cs-border)' }}>
-                   <p className="text-xs font-bold text-[var(--cs-text-dim)] uppercase tracking-wider">Pilih Rentang Waktu Kustom</p>
-                   <div className="grid grid-cols-2 gap-3">
-                     <div>
-                       <label className="block text-[10px] text-zinc-500 font-bold uppercase mb-1">Mulai</label>
-                       <input 
-                         type="datetime-local"
-                         value={customStart}
-                         onChange={(e) => setCustomStart(e.target.value)}
-                         className="w-full bg-black/40 border px-3 py-2 rounded-xl text-xs font-semibold focus:outline-none focus:border-[var(--cs-amber)] text-white"
-                         style={{ borderColor: 'var(--cs-border)' }}
-                       />
-                     </div>
-                     <div>
-                       <label className="block text-[10px] text-zinc-500 font-bold uppercase mb-1">Hingga</label>
-                       <input 
-                         type="datetime-local"
-                         value={customEnd}
-                         onChange={(e) => setCustomEnd(e.target.value)}
-                         className="w-full bg-black/40 border px-3 py-2 rounded-xl text-xs font-semibold focus:outline-none focus:border-[var(--cs-amber)] text-white"
-                         style={{ borderColor: 'var(--cs-border)' }}
-                       />
-                     </div>
-                   </div>
-                 </div>
-               )}
+                {/* Reports */}
+                <button onClick={exportToExcel} className="p-4 border rounded-2xl hover:brightness-110 transition-all text-xs font-bold flex items-center justify-center gap-2 cursor-pointer" style={{ background: 'color-mix(in oklab, var(--cs-amber) 12%, transparent)', borderColor: 'color-mix(in oklab, var(--cs-amber) 20%, var(--cs-border))', color: 'var(--cs-amber)' }}>
+                  <Table className="w-4 h-4" /> Download XLSX
+                </button>
+                <button onClick={exportToPDF} className="p-4 rounded-2xl hover:bg-zinc-800 border transition-all text-xs font-bold flex items-center justify-center gap-2 cursor-pointer" style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)', color: 'var(--cs-text)' }}>
+                  <Download className="w-4 h-4" /> Save PDF
+                </button>
+              </div>
 
-               {/* Chart Area */}
-               <div className="p-6 border rounded-[2rem]" style={{ background: 'rgba(25, 25, 25, 0.4)', borderColor: 'var(--cs-border)' }}>
-                 <div className="flex items-center justify-between mb-8">
-                   <div className="flex items-center gap-2">
-                      <History className="w-4 h-4 animate-pulse" style={{ color: 'var(--cs-amber)' }} />
-                      <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500">Live Historical Data</h3>
-                   </div>
-                   <div className="flex items-center gap-2">
-                     <button 
-                       onClick={() => setIsFullscreen(true)}
-                       className="text-zinc-500 hover:text-[var(--cs-amber)] p-1.5 hover:bg-zinc-800 rounded-lg transition-all cursor-pointer"
-                       title="Lihat Fullscreen"
-                     >
-                       <Maximize2 className="w-4 h-4" />
-                     </button>
-                     <button onClick={() => setHistoryRegistry(prev => ({ ...prev, [deviceId]: [] }))} className="text-zinc-600 hover:text-red-400 transition-colors cursor-pointer">
-                       <Trash2 className="w-4 h-4"/>
-                     </button>
-                   </div>
-                 </div>
-                 
-                 <div className="h-64 w-full">
-                   <ResponsiveContainer width="100%" height="100%">
-                     <LineChart data={processedChartData}>
-                       <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
-                       <XAxis 
-                         dataKey="timeFormatted" 
-                         stroke="#4b5563" 
-                         fontSize={10} 
-                         axisLine={false} 
-                         tickLine={false} 
-                         tickMargin={10}
-                       />
-                       <YAxis 
-                         stroke="#4b5563" 
-                         fontSize={10} 
-                         axisLine={false} 
-                         tickLine={false}
-                       />
-                       <Tooltip 
-                         contentStyle={{ backgroundColor: '#000', border: '1px solid var(--cs-border)', borderRadius: '12px' }}
-                         itemStyle={{ color: '#fbbf24', fontWeight: 'bold' }} // Using gold hex fallback for tooltip text
-                       />
-                       <Line 
-                         type="monotone" 
-                         dataKey="value" 
-                         connectNulls={true}
-                         stroke="#fbbf24" // Using gold hex fallback for line stroke
-                         strokeWidth={4} 
-                         dot={{ r: 4, fill: '#fbbf24', strokeWidth: 0 }}
-                         activeDot={{ r: 6, stroke: '#000', strokeWidth: 2 }}
-                       />
-                     </LineChart>
-                   </ResponsiveContainer>
-                 </div>
-               </div>
+              {/* Custom Datetime Input Fields */}
+              {filterOption === 'custom' && (
+                <div className="p-5 border rounded-2xl space-y-3" style={{ background: 'rgba(25, 25, 25, 0.6)', borderColor: 'var(--cs-border)' }}>
+                  <p className="text-xs font-bold text-[var(--cs-text-dim)] uppercase tracking-wider">Pilih Rentang Waktu Kustom</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[10px] text-zinc-500 font-bold uppercase mb-1">Mulai</label>
+                      <input
+                        type="datetime-local"
+                        value={customStart}
+                        onChange={(e) => setCustomStart(e.target.value)}
+                        className="w-full bg-black/40 border px-3 py-2 rounded-xl text-xs font-semibold focus:outline-none focus:border-[var(--cs-amber)] text-white"
+                        style={{ borderColor: 'var(--cs-border)' }}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-zinc-500 font-bold uppercase mb-1">Hingga</label>
+                      <input
+                        type="datetime-local"
+                        value={customEnd}
+                        onChange={(e) => setCustomEnd(e.target.value)}
+                        className="w-full bg-black/40 border px-3 py-2 rounded-xl text-xs font-semibold focus:outline-none focus:border-[var(--cs-amber)] text-white"
+                        style={{ borderColor: 'var(--cs-border)' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
-               {/* Recent Log Table */}
-               <div className="p-6 border rounded-[2rem]" style={{ background: 'rgba(25, 25, 25, 0.4)', borderColor: 'var(--cs-border)' }}>
-                 <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-4">Aktivitas Terakhir</h3>
-                 <div className="space-y-2 max-h-[180px] overflow-y-auto pr-2 custom-scrollbar">
-                   {displayedHistory.map((item, idx) => (
-                     <div key={idx} className="flex items-center justify-between p-3 border rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.05)' }}>
-                       <span className="text-[10px] font-mono text-zinc-500">{new Date(parseInt(item.timestamp)).toLocaleTimeString()}</span>
-                       <span className="text-sm font-black" style={{ color: item.value > 1200 ? 'var(--cs-danger)' : 'var(--cs-amber)' }}>
-                         {item.value} <span className="text-[10px] font-normal text-zinc-600">ppm</span>
-                       </span>
-                     </div>
-                   ))}
-                 </div>
-               </div>
-             </div>
+              {/* Date Navigation Controls for Daily Filter */}
+              {filterOption === 'today' && (
+                <div className="p-5 border rounded-2xl space-y-3" style={{ background: 'rgba(25, 25, 25, 0.6)', borderColor: 'var(--cs-border)' }}>
+                  <p className="text-xs font-bold text-[var(--cs-text-dim)] uppercase tracking-wider">Navigasi Tanggal Histori</p>
+                  <div className="flex items-center justify-between gap-3">
+                    <button
+                      onClick={handlePrevDay}
+                      className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer border"
+                      style={{ borderColor: 'var(--cs-border)' }}
+                    >
+                      ← Kemarin
+                    </button>
+                    <input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      className="bg-black/40 border px-3 py-2 rounded-xl text-xs font-semibold focus:outline-none focus:border-[var(--cs-amber)] text-white text-center flex-1 cursor-pointer"
+                      style={{ borderColor: 'var(--cs-border)' }}
+                    />
+                    <button
+                      onClick={handleNextDay}
+                      className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer border"
+                      style={{ borderColor: 'var(--cs-border)' }}
+                    >
+                      Besok →
+                    </button>
+                  </div>
+                </div>
+              )}
 
-           </div>
-         )}
-       </main>
+              {/* Chart Area */}
+              <div className="p-6 border rounded-[2rem]" style={{ background: 'rgba(25, 25, 25, 0.4)', borderColor: 'var(--cs-border)' }}>
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-2">
+                    <History className="w-4 h-4 animate-pulse" style={{ color: 'var(--cs-amber)' }} />
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500">Live Historical Data</h3>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setIsFullscreen(true)}
+                      className="text-zinc-500 hover:text-[var(--cs-amber)] p-1.5 hover:bg-zinc-800 rounded-lg transition-all cursor-pointer"
+                      title="Lihat Fullscreen"
+                    >
+                      <Maximize2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
 
-       {/* Fullscreen Chart Modal */}
-       <AnimatePresence>
-         {isFullscreen && (
-           <motion.div 
-             initial={{ opacity: 0 }}
-             animate={{ opacity: 1 }}
-             exit={{ opacity: 0 }}
-             className="fixed inset-0 bg-[#070707]/95 backdrop-blur-md z-[1000] p-6 md:p-10 flex flex-col justify-between"
-           >
-             <div className="flex items-center justify-between border-b pb-4 mb-6" style={{ borderColor: 'var(--cs-border)' }}>
-               <div>
-                 <h3 className="text-xl font-black tracking-normal text-white flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
-                   <Activity className="w-5 h-5 animate-pulse" style={{ color: 'var(--cs-amber)' }} />
-                   Grafik Monitor Historis Fullscreen — {deviceId}
-                 </h3>
-                 <p className="text-xs text-zinc-400 mt-1">
-                   Rentang: <span className="font-bold" style={{ color: 'var(--cs-amber)' }}>{filterOptionLabels[filterOption]}</span> | {processedChartData.length} sampel titik data | {filterOption === 'live' ? 'Data Asli Real-time' : 'Nilai Rata-rata Interval'}
-                 </p>
-               </div>
-               <button 
-                 onClick={() => setIsFullscreen(false)}
-                 className="p-3 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-xl transition-all font-bold flex items-center gap-2 text-sm active:scale-95 border cursor-pointer"
-                 style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}
-               >
-                 <Minimize2 className="w-4 h-4" /> Tutup Fullscreen
-               </button>
-             </div>
+                <div className="h-64 w-full">
+                  {!hasChartData ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center border border-dashed rounded-2xl bg-black/20" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+                      <Wind className="w-10 h-10 text-zinc-650 animate-pulse mb-3" />
+                      <p className="text-xs font-bold text-zinc-400">Tidak Ada Data Telemetri</p>
+                      <p className="text-[11px] text-zinc-500 mt-1">
+                        {filterOption === 'today'
+                          ? (() => {
+                              const parts = selectedDate.split('-');
+                              const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+                              return `Belum ada riwayat masuk pada ${d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+                            })()
+                          : 'Coba pilih rentang waktu atau tanggal lainnya'}
+                      </p>
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={processedChartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
+                        <XAxis
+                          dataKey="timeFormatted"
+                          stroke="#4b5563"
+                          fontSize={10}
+                          axisLine={false}
+                          tickLine={false}
+                          tickMargin={10}
+                        />
+                        <YAxis
+                          stroke="#4b5563"
+                          fontSize={10}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <Tooltip
+                          contentStyle={{ backgroundColor: '#000', border: '1px solid var(--cs-border)', borderRadius: '12px' }}
+                          itemStyle={{ color: '#fbbf24', fontWeight: 'bold' }} // Using gold hex fallback for tooltip text
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="value"
+                          connectNulls={true}
+                          stroke="#fbbf24" // Using gold hex fallback for line stroke
+                          strokeWidth={4}
+                          dot={{ r: 4, fill: '#fbbf24', strokeWidth: 0 }}
+                          activeDot={{ r: 6, stroke: '#000', strokeWidth: 2 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
+              </div>
 
-             <div className="flex-1 w-full flex items-center justify-center border rounded-3xl p-6 min-h-0" style={{ background: 'rgba(25, 25, 25, 0.2)', borderColor: 'var(--cs-border)' }}>
-               <div className="w-full h-full min-h-[300px]">
-                 <ResponsiveContainer width="100%" height="100%">
-                   <LineChart data={processedChartData}>
-                     <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
-                     <XAxis 
-                       dataKey="timeFormatted" 
-                       stroke="#9ca3af" 
-                       fontSize={11} 
-                       axisLine={false} 
-                       tickLine={false} 
-                       tickMargin={12}
-                     />
-                     <YAxis 
-                       stroke="#9ca3af" 
-                       fontSize={11} 
-                       axisLine={false} 
-                       tickLine={false}
-                     />
-                     <Tooltip 
-                       contentStyle={{ backgroundColor: '#000', border: '1px solid var(--cs-border)', borderRadius: '16px', padding: '12px' }}
-                       itemStyle={{ color: '#fbbf24', fontWeight: 'bold' }}
-                     />
-                     <Line 
-                       type="monotone" 
-                       dataKey="value" 
-                       connectNulls={true}
-                       stroke="#fbbf24"
-                       strokeWidth={5} 
-                       dot={{ r: 6, fill: '#fbbf24', strokeWidth: 0 }}
-                       activeDot={{ r: 8, stroke: '#000', strokeWidth: 3 }}
-                     />
-                   </LineChart>
-                 </ResponsiveContainer>
-               </div>
-             </div>
-             <div className="flex items-center justify-between text-[10px] uppercase font-mono tracking-wider text-zinc-500 mt-6 border-t pt-4" style={{ borderColor: 'var(--cs-border)' }}>
-               <span>*Tampilan dimutakhirkan secara otomatis seiring berjalan waktu</span>
-               <span>CarbonSense High Precision Visualization Engine</span>
-             </div>
-           </motion.div>
-         )}
-       </AnimatePresence>
+              {/* Recent Log Table */}
+              <div className="p-6 border rounded-[2rem]" style={{ background: 'rgba(25, 25, 25, 0.4)', borderColor: 'var(--cs-border)' }}>
+                <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-4">Aktivitas Terakhir</h3>
+                {displayedHistory.length === 0 ? (
+                  <div className="py-8 text-center flex flex-col items-center justify-center border border-dashed rounded-2xl bg-black/10" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+                    <Info className="w-6 h-6 text-zinc-650 mb-2" />
+                    <p className="text-xs text-zinc-500">Tidak ada riwayat aktivitas pada tanggal/rentang ini.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-[180px] overflow-y-auto pr-2 custom-scrollbar">
+                    {displayedHistory.map((item, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-3 border rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.05)' }}>
+                        <span className="text-[10px] font-mono text-zinc-500">{new Date(parseInt(item.timestamp)).toLocaleTimeString()}</span>
+                        <span className="text-sm font-black" style={{ color: item.value > 1200 ? 'var(--cs-danger)' : 'var(--cs-amber)' }}>
+                          {item.value} <span className="text-[10px] font-normal text-zinc-600">ppm</span>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
 
-       {/* Danger Emergency Alert Modal Popup */}
-       <AnimatePresence>
-         {isDangerPopupOpen && (
-           <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
-             {/* Blur Backdrop */}
-             <motion.div 
-               initial={{ opacity: 0 }}
-               animate={{ opacity: 1 }}
-               exit={{ opacity: 0 }}
-               className="absolute inset-0 bg-[#0c0505]/90 backdrop-blur-lg pointer-events-auto"
-             />
+          </div>
+        )}
+      </main>
 
-             {/* Warning Modal Container */}
-             <motion.div 
-               initial={{ opacity: 0, scale: 0.9, y: 30 }}
-               animate={{ opacity: 1, scale: 1, y: 0 }}
-               exit={{ opacity: 0, scale: 0.9, y: 30 }}
-               transition={{ duration: 0.35, ease: "easeOut" }}
-               className="w-full max-w-2xl border rounded-[2.5rem] p-8 md:p-10 relative overflow-hidden shadow-[0_0_60px_rgba(239,68,68,0.25)] flex flex-col justify-between"
-               style={{ 
-                 background: 'linear-gradient(145deg, #180909 0%, #0a0303 100%)', 
-                 borderColor: 'rgba(239, 68, 68, 0.4)'
-               }}
-             >
-               {/* Visual Hazard Overlay Glow */}
-               <div className="absolute -top-12 -right-12 w-64 h-64 bg-red-600 blur-[120px] rounded-full opacity-25 pointer-events-none" />
+      {/* Fullscreen Chart Modal */}
+      <AnimatePresence>
+        {isFullscreen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-[#070707]/95 backdrop-blur-md z-[1000] p-6 md:p-10 flex flex-col justify-between"
+          >
+            <div className="flex items-center justify-between border-b pb-4 mb-6" style={{ borderColor: 'var(--cs-border)' }}>
+              <div>
+                <h3 className="text-xl font-black tracking-normal text-white flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+                  <Activity className="w-5 h-5 animate-pulse" style={{ color: 'var(--cs-amber)' }} />
+                  Grafik Monitor Historis Fullscreen — {deviceId}
+                </h3>
+                <p className="text-xs text-zinc-400 mt-1">
+                  Rentang: <span className="font-bold" style={{ color: 'var(--cs-amber)' }}>{filterOptionLabels[filterOption]}</span> | {processedChartData.length} sampel titik data | {filterOption === 'live' ? 'Data Asli Real-time' : 'Nilai Rata-rata Interval'}
+                </p>
+              </div>
+              <button
+                onClick={() => setIsFullscreen(false)}
+                className="p-3 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-xl transition-all font-bold flex items-center gap-2 text-sm active:scale-95 border cursor-pointer"
+                style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}
+              >
+                <Minimize2 className="w-4 h-4" /> Tutup Fullscreen
+              </button>
+            </div>
 
-               <div className="relative z-10 space-y-6">
-                 {/* Title Bar */}
-                 <div className="flex items-center gap-3 border-b border-red-900/40 pb-4">
-                   <div className="w-12 h-12 bg-red-950/40 border border-red-500/40 rounded-2xl flex items-center justify-center flex-shrink-0">
-                     <AlertTriangle className="w-6 h-6 text-red-500 animate-pulse" />
-                   </div>
-                   <div className="text-left">
-                     <h2 className="text-xl font-black text-red-500 tracking-normal uppercase" style={{ fontFamily: 'var(--font-display)' }}>
-                       Peringatan Evakuasi Darurat
-                     </h2>
-                     <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest mt-0.5">Status: Kebocoran Karbon Monoksida</p>
-                   </div>
-                 </div>
+            <div className="flex-1 w-full flex items-center justify-center border rounded-3xl p-6 min-h-0" style={{ background: 'rgba(25, 25, 25, 0.2)', borderColor: 'var(--cs-border)' }}>
+              {!hasChartData ? (
+                <div className="flex flex-col items-center justify-center text-center">
+                  <Wind className="w-12 h-12 text-zinc-650 animate-pulse mb-4" />
+                  <h4 className="text-md font-bold text-zinc-400">Tidak Ada Data Terpantau</h4>
+                  <p className="text-xs text-zinc-500 mt-1">
+                    {filterOption === 'today'
+                      ? (() => {
+                          const parts = selectedDate.split('-');
+                          const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+                          return `Tidak ada aktivitas data pada tanggal ${d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+                        })()
+                      : 'Silakan pilih rentang waktu atau navigasi ke hari lain.'}
+                  </p>
+                </div>
+              ) : (
+                <div className="w-full h-full min-h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={processedChartData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
+                      <XAxis
+                        dataKey="timeFormatted"
+                        stroke="#9ca3af"
+                        fontSize={11}
+                        axisLine={false}
+                        tickLine={false}
+                        tickMargin={12}
+                      />
+                      <YAxis
+                        stroke="#9ca3af"
+                        fontSize={11}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: '#000', border: '1px solid var(--cs-border)', borderRadius: '16px', padding: '12px' }}
+                        itemStyle={{ color: '#fbbf24', fontWeight: 'bold' }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="value"
+                        connectNulls={true}
+                        stroke="#fbbf24"
+                        strokeWidth={5}
+                        dot={{ r: 6, fill: '#fbbf24', strokeWidth: 0 }}
+                        activeDot={{ r: 8, stroke: '#000', strokeWidth: 3 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center justify-between text-[10px] uppercase font-mono tracking-wider text-zinc-500 mt-6 border-t pt-4" style={{ borderColor: 'var(--cs-border)' }}>
+              <span>*Tampilan dimutakhirkan secara otomatis seiring berjalan waktu</span>
+              <span>CarbonSense High Precision Visualization Engine</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-                 {/* Carbon Level Display */}
-                 <div className="p-6 bg-red-950/20 border border-red-900/30 rounded-2xl flex items-center justify-between">
-                   <div className="text-left">
-                     <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">Kadar Terdeteksi (Real-time)</span>
-                     <h3 className="text-4xl font-black text-red-400 mt-1">{carbonLevel || '1200+'} <span className="text-lg font-bold text-red-700 ml-1">ppm</span></h3>
-                   </div>
-                   <div className="px-4 py-2 bg-red-600 text-white text-[10px] font-black tracking-widest uppercase rounded-lg animate-bounce">
-                     KRITIS
-                   </div>
-                 </div>
+      {/* Danger Emergency Alert Modal Popup */}
+      <AnimatePresence>
+        {isDangerPopupOpen && (
+          <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
+            {/* Blur Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-[#0c0505]/90 backdrop-blur-lg pointer-events-auto"
+            />
 
-                 {/* Recommendation Content */}
-                 <div className="space-y-4">
-                   <h4 className="text-xs font-mono text-zinc-400 uppercase tracking-widest text-left">Rekomendasi Tindakan AI (DeepSeek AI Engine):</h4>
-                   
-                   {dangerPopupLoading ? (
-                     <div className="py-12 flex flex-col items-center justify-center gap-3">
-                       <Brain className="w-10 h-10 text-red-500 animate-spin" />
-                       <span className="text-xs font-mono text-zinc-500 uppercase tracking-wider animate-pulse">Menghubungi DeepSeek AI untuk merumuskan protokol evakuasi...</span>
-                     </div>
-                   ) : (
-                     <div className="p-5 rounded-2xl border border-red-900/20 bg-black/40 max-h-[260px] overflow-y-auto custom-scrollbar text-left text-zinc-300 text-sm leading-relaxed font-medium">
-                       <p className="whitespace-pre-line" dangerouslySetInnerHTML={{ __html: dangerPopupRecommendation.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
-                     </div>
-                   )}
-                 </div>
+            {/* Warning Modal Container */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 30 }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+              className="w-full max-w-2xl border rounded-[2.5rem] p-8 md:p-10 relative overflow-hidden shadow-[0_0_60px_rgba(239,68,68,0.25)] flex flex-col justify-between"
+              style={{
+                background: 'linear-gradient(145deg, #180909 0%, #0a0303 100%)',
+                borderColor: 'rgba(239, 68, 68, 0.4)'
+              }}
+            >
+              {/* Visual Hazard Overlay Glow */}
+              <div className="absolute -top-12 -right-12 w-64 h-64 bg-red-600 blur-[120px] rounded-full opacity-25 pointer-events-none" />
 
-                 {/* Environmental Metadata Checked */}
-                 <div className="text-[10px] font-mono text-zinc-500 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-zinc-900 pt-4 text-left">
-                   <span>LOKASI: {aiPersonality?.lokasi || '—'}</span>
-                   <span>SIRKULASI: {aiPersonality?.sirkulasi || '—'}</span>
-                   <span>RISIKO: {aiPersonality?.rentan || '—'}</span>
-                   <span>LUAS: {aiPersonality?.luas_ruang || '—'}</span>
-                 </div>
-               </div>
+              <div className="relative z-10 space-y-6">
+                {/* Title Bar */}
+                <div className="flex items-center gap-3 border-b border-red-900/40 pb-4">
+                  <div className="w-12 h-12 bg-red-950/40 border border-red-500/40 rounded-2xl flex items-center justify-center flex-shrink-0">
+                    <AlertTriangle className="w-6 h-6 text-red-500 animate-pulse" />
+                  </div>
+                  <div className="text-left">
+                    <h2 className="text-xl font-black text-red-500 tracking-normal uppercase" style={{ fontFamily: 'var(--font-display)' }}>
+                      Peringatan Evakuasi Darurat
+                    </h2>
+                    <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest mt-0.5">Status: Kebocoran Karbon Monoksida</p>
+                  </div>
+                </div>
 
-               {/* Dismiss Action Button */}
-               <div className="relative z-10 mt-8 pt-4 border-t border-red-950/40">
-                 <button 
-                   type="button"
-                   onClick={() => setIsDangerPopupOpen(false)}
-                   disabled={dangerPopupLoading}
-                   className="w-full py-4 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white font-black rounded-xl transition-all shadow-xl shadow-red-950/30 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
-                 >
-                   Saya Mengerti & Mulai Evakuasi
-                 </button>
-               </div>
-             </motion.div>
-           </div>
-         )}
-       </AnimatePresence>
+                {/* Carbon Level Display */}
+                <div className="p-6 bg-red-950/20 border border-red-900/30 rounded-2xl flex items-center justify-between">
+                  <div className="text-left">
+                    <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">Kadar Terdeteksi (Real-time)</span>
+                    <h3 className="text-4xl font-black text-red-400 mt-1">{carbonLevel || '1200+'} <span className="text-lg font-bold text-red-700 ml-1">ppm</span></h3>
+                  </div>
+                  <div className="px-4 py-2 bg-red-600 text-white text-[10px] font-black tracking-widest uppercase rounded-lg animate-bounce">
+                    KRITIS
+                  </div>
+                </div>
 
-       <style>{`
+                {/* Recommendation Content */}
+                <div className="space-y-4">
+                  <h4 className="text-xs font-mono text-zinc-400 uppercase tracking-widest text-left">Rekomendasi Tindakan AI (DeepSeek AI Engine):</h4>
+
+                  {dangerPopupLoading ? (
+                    <div className="py-12 flex flex-col items-center justify-center gap-3">
+                      <Brain className="w-10 h-10 text-red-500 animate-spin" />
+                      <span className="text-xs font-mono text-zinc-500 uppercase tracking-wider animate-pulse">Menghubungi DeepSeek AI untuk merumuskan protokol evakuasi...</span>
+                    </div>
+                  ) : (
+                    <div className="p-5 rounded-2xl border border-red-900/20 bg-black/40 max-h-[260px] overflow-y-auto custom-scrollbar text-left text-zinc-300 text-sm leading-relaxed font-medium">
+                      <p className="whitespace-pre-line" dangerouslySetInnerHTML={{ __html: dangerPopupRecommendation.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+                    </div>
+                  )}
+                </div>
+
+                {/* Environmental Metadata Checked */}
+                <div className="text-[10px] font-mono text-zinc-500 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-zinc-900 pt-4 text-left">
+                  <span>LOKASI: {aiPersonality?.lokasi || '—'}</span>
+                  <span>SIRKULASI: {aiPersonality?.sirkulasi || '—'}</span>
+                  <span>RISIKO: {aiPersonality?.rentan || '—'}</span>
+                  <span>LUAS: {aiPersonality?.luas_ruang || '—'}</span>
+                </div>
+              </div>
+
+              {/* Dismiss Action Button */}
+              <div className="relative z-10 mt-8 pt-4 border-t border-red-950/40">
+                <button
+                  type="button"
+                  onClick={() => setIsDangerPopupOpen(false)}
+                  disabled={dangerPopupLoading}
+                  className="w-full py-4 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white font-black rounded-xl transition-all shadow-xl shadow-red-950/30 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
+                >
+                  Saya Mengerti & Mulai Evakuasi
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Reactivation Guide Modal Popup */}
+      <AnimatePresence>
+        {showReactivationPopup && (
+          <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
+            {/* Blur Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowReactivationPopup(false)}
+              className="absolute inset-0 bg-[#070202]/85 backdrop-blur-md pointer-events-auto"
+            />
+
+            {/* Modal Container */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 30 }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+              className="w-full max-w-md border rounded-[2.5rem] p-8 relative overflow-hidden shadow-2xl flex flex-col justify-between"
+              style={{
+                background: 'var(--cs-surface)',
+                borderColor: 'var(--cs-border)'
+              }}
+            >
+              {/* Close Button */}
+              <button
+                onClick={() => setShowReactivationPopup(false)}
+                className="absolute top-6 right-6 p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="relative z-10 space-y-6 text-left">
+                {/* Title Bar */}
+                <div className="flex items-center gap-3 border-b border-zinc-800 pb-4">
+                  <div className="w-10 h-10 bg-red-950/30 border border-red-500/30 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Wifi className="w-5 h-5 text-red-400 animate-pulse" />
+                  </div>
+                  <div>
+                    <h3 className="text-md font-bold text-white uppercase font-sans tracking-tight">
+                      Panduan Reaktivasi Alat
+                    </h3>
+                    <p className="text-[9px] font-mono text-[var(--cs-amber)] uppercase tracking-wider mt-0.5">CarbonSense Onboarding Flow</p>
+                  </div>
+                </div>
+
+                {/* Step Display */}
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activationStep}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.35 }}
+                    className="space-y-4 min-h-[150px] flex flex-col justify-between"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="p-3.5 rounded-2xl border bg-black/40" style={{ borderColor: 'var(--cs-border)' }}>
+                        {activationSteps[activationStep].icon}
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-white uppercase tracking-tight">
+                          {activationSteps[activationStep].title}
+                        </h4>
+                        <span className="text-[9px] font-mono text-zinc-500">Langkah {activationStep + 1} dari {activationSteps.length}</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-[var(--cs-text-dim)] leading-relaxed">
+                      {activationSteps[activationStep].desc}
+                    </p>
+                  </motion.div>
+                </AnimatePresence>
+
+                {/* Navigation buttons */}
+                <div className="flex items-center justify-between pt-4 border-t border-zinc-800">
+                  <button
+                    type="button"
+                    onClick={() => setActivationStep(prev => Math.max(0, prev - 1))}
+                    disabled={activationStep === 0}
+                    className="px-4 py-1.5 border border-zinc-800 rounded-lg text-xs font-bold text-zinc-500 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                  >
+                    Sebelumnya
+                  </button>
+                  {activationStep < activationSteps.length - 1 ? (
+                    <button
+                      type="button"
+                      onClick={() => setActivationStep(prev => prev + 1)}
+                      className="px-4 py-1.5 bg-[var(--cs-amber)] hover:brightness-110 text-black font-bold rounded-lg text-xs transition-all active:scale-95 cursor-pointer"
+                    >
+                      Lanjut
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowReactivationPopup(false);
+                        window.location.reload();
+                      }}
+                      className="px-4 py-1.5 bg-[var(--cs-amber)] hover:brightness-110 text-black font-bold rounded-lg text-xs transition-all active:scale-95 cursor-pointer font-sans"
+                    >
+                      Saya Mengerti
+                    </button>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <style>{`
          .custom-scrollbar::-webkit-scrollbar { width: 4px; }
          .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
          .custom-scrollbar::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
        `}</style>
-     </div>
-   );
+    </div>
+  );
 }

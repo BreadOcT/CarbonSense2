@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Bab 1 - Perencanaan Pengujian CarbonSense</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            color: #000000;
+            margin: 40px;
+            max-width: 800px;
+        }
+        h1 {
+            font-size: 14pt;
+            font-weight: bold;
+            text-align: left;
+            margin-top: 24pt;
+            margin-bottom: 12pt;
+            page-break-after: avoid;
+        }
+        h2 {
+            font-size: 12pt;
+            font-weight: bold;
+            text-align: left;
+            margin-top: 18pt;
+            margin-bottom: 6pt;
+            page-break-after: avoid;
+        }
+        h3 {
+            font-size: 12pt;
+            font-weight: bold;
+            text-align: left;
+            margin-top: 14pt;
+            margin-bottom: 6pt;
+            page-break-after: avoid;
+        }
+        p {
+            text-align: justify;
+            text-indent: 1.25cm;
+            margin-top: 0;
+            margin-bottom: 10pt;
+        }
+        p.no-indent {
+            text-indent: 0 !important;
+        }
+        ol, ul {
+            margin-top: 0;
+            margin-bottom: 10pt;
+            padding-left: 24pt;
+        }
+        li {
+            text-align: justify;
+            margin-bottom: 8pt;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 6pt;
+            margin-bottom: 18pt;
+        }
+        th, td {
+            border: 1px solid #000000;
+            padding: 6pt 8pt;
+            font-size: 11pt;
+            line-height: 1.3;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            text-align: center;
+        }
+        td {
+            text-align: left;
+            vertical-align: top;
+        }
+        .table-caption {
+            font-size: 11pt;
+            font-weight: bold;
+            margin-top: 12pt;
+            margin-bottom: 4pt;
+            text-align: left;
+        }
+        .figure-caption {
+            font-size: 11pt;
+            font-weight: bold;
+            margin-top: 4pt;
+            margin-bottom: 18pt;
+            text-align: center;
+        }
+        pre {
+            font-family: 'Consolas', 'Courier New', Courier, monospace;
+            font-size: 10pt;
+            background-color: #f7f7f7;
+            border: 1px solid #cccccc;
+            padding: 8pt;
+            margin-top: 6pt;
+            margin-bottom: 12pt;
+            white-space: pre-wrap;
+            text-indent: 0 !important;
+        }
+        code {
+            font-family: 'Consolas', 'Courier New', Courier, monospace;
+            font-size: 10pt;
+            background-color: #f7f7f7;
+            padding: 1px 3px;
+        }
+        .instruction-box {
+            background-color: #eef2ff;
+            border-left: 4px solid #4f46e5;
+            padding: 12pt;
+            margin-bottom: 20pt;
+            font-family: Arial, sans-serif;
+            font-size: 11pt;
+        }
+        .image-placeholder {
+            border: 1px dashed #777777;
+            background-color: #fafafa;
+            padding: 20px;
+            text-align: center;
+            font-style: italic;
+            font-size: 11pt;
+            color: #555555;
+            margin-top: 6pt;
+            margin-bottom: 4pt;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="instruction-box">
+        <strong>Petunjuk Salin-Tempel (Copy-Paste) ke Microsoft Word / Google Docs:</strong><br>
+        1. Buka file HTML ini di browser (klik ganda file <code>Bab1_Perencanaan_Pengujian.html</code>).<br>
+        2. Tekan <strong>Ctrl + A</strong> untuk memilih seluruh dokumen, lalu tekan <strong>Ctrl + C</strong> untuk menyalin.<br>
+        3. Buka dokumen Word atau Google Docs Anda, letakkan kursor pada posisi Bab 1, lalu tekan <strong>Ctrl + V</strong>.<br>
+        4. Seluruh format font (Times New Roman), ukuran heading, penjorokan paragraf (indent 1.25cm), tabel bergaris hitam, dan struktur daftar akan ter-copy dengan rapi dan otomatis menyesuaikan style dokumen Anda.
+    </div>
+
+    <h1>1 Perencanaan Pengujian</h1>
+    <p>Bab 1 laporan pengujian perangkat lunak ini akan menjelaskan secara rinci tahapan perencanaan pengujian yang dilakukan oleh tim penguji pada proyek <strong>CarbonSense</strong> (Sistem Pemantauan Kualitas Udara Berbasis IoT). Pada bab ini, tim penguji akan menyusun dan menyiapkan <i>Software Under Test</i> (SUT) serta perangkat lunak pendukung yang diperlukan untuk menjalankan eksekusi <i>test case</i> secara otomatis. Langkah-langkah instalasi sistem dan alat-alat pengujian akan dijabarkan secara lengkap, termasuk persiapan lingkungan pengujian dan konfigurasi yang dibutuhkan. Selain itu, cakupan pengujian yang mencakup fungsionalitas yang akan diuji, teknik pengujian yang digunakan, serta penjadwalan pelaksanaan pengujian akan menjelaskan secara komprehensif. Dengan demikian, bab ini memberikan fondasi yang kuat untuk memastikan bahwa seluruh proses pengujian berjalan sesuai rencana dan dapat menghasilkan evaluasi yang akurat dan terpercaya terhadap sistem CarbonSense yang diuji.</p>
+
+    <h2>1.1 Instalasi Sistem</h2>
+    <p>Dalam proses instalasi sistem aplikasi CarbonSense, penting bagi tim penguji untuk menetapkan dan menjelaskan kebutuhan minimum yang diperlukan untuk menjalankan sistem secara optimal. Sub bab ini akan menguraikan persyaratan perangkat lunak dan perangkat keras yang harus disediakan, memastikan bahwa semua komponen sistem dapat berfungsi dengan baik dan mendukung setiap fungsionalitas yang ditawarkan. Selain itu, sub bab ini juga akan memberikan panduan langkah demi langkah untuk proses instalasi sistem, mencakup persiapan lingkungan, instalasi komponen utama, serta konfigurasi awal yang diperlukan. Dengan mengikuti panduan ini, diharapkan proses instalasi dapat dilakukan dengan lancar dan sistem dapat berjalan sesuai dengan yang diharapkan.</p>
+
+    <h3>1.1.1 System Requirements</h3>
+
+    <div class="table-caption">Tabel 1-1 Kebutuhan Perangkat Keras</div>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 30%">Perangkat Keras</th>
+                <th style="width: 70%">Spesifikasi Minimal</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Processor</strong></td>
+                <td>Intel Core i5 / AMD Ryzen 5 (atau setara, clock speed >= 2.0 GHz)</td>
+            </tr>
+            <tr>
+                <td><strong>RAM</strong></td>
+                <td>8 GB</td>
+            </tr>
+            <tr>
+                <td><strong>Storage</strong></td>
+                <td>SSD 256 GB (sisa ruang kosong minimal 10 GB)</td>
+            </tr>
+            <tr>
+                <td><strong>Perangkat IoT (SUT pendukung)</strong></td>
+                <td>Mikrokontroler ESP32 &amp; Sensor Analog Kualitas Udara MQ135 (Simulasi atau Fisik)</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="table-caption">Tabel 1-2 Kebutuhan Perangkat Lunak</div>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 30%">Perangkat Lunak</th>
+                <th style="width: 70%">Spesifikasi Minimal</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Sistem Operasi</strong></td>
+                <td>Windows 10/11 / macOS / Linux (64-bit)</td>
+            </tr>
+            <tr>
+                <td><strong>Runtime Environment</strong></td>
+                <td>Node.js (v18.x atau lebih tinggi)</td>
+            </tr>
+            <tr>
+                <td><strong>Package Manager</strong></td>
+                <td>npm (v9.x atau lebih tinggi)</td>
+            </tr>
+            <tr>
+                <td><strong>DBMS</strong></td>
+                <td>Supabase PostgreSQL Cloud Database</td>
+            </tr>
+            <tr>
+                <td><strong>Framework Frontend</strong></td>
+                <td>React v19 &amp; TypeScript (menggunakan build tool Vite)</td>
+            </tr>
+            <tr>
+                <td><strong>Framework Backend</strong></td>
+                <td>Express.js (Node.js) dengan Sequelize ORM</td>
+            </tr>
+            <tr>
+                <td><strong>Web Browser</strong></td>
+                <td>Microsoft Edge (versi terbaru) untuk eksekusi Selenium</td>
+            </tr>
+            <tr>
+                <td><strong>Database Real-time</strong></td>
+                <td>Firebase Realtime Database (untuk sinkronisasi parameter sensor IoT)</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>1.1.2 System Deployment</h3>
+    <p>Pada sub bab ini, tim penguji perangkat lunak akan menjelaskan tahapan-tahapan yang dilakukan untuk melakukan instalasi dan penyebaran (<i>deployment</i>) sistem CarbonSense menggunakan database cloud <strong>Supabase</strong>. Penjelasan ini mencakup langkah-langkah detail yang harus diikuti, mulai dari persiapan awal, pembuatan database di Supabase, hingga konfigurasi akhir lingkungan pengujian lokal (<i>local development</i>).</p>
+
+    <pre>
++-------------------------------------------------+
+| 1. Mengunduh Source Code Aplikasi CarbonSense    |
++-------------------------------------------------+
+                        |
+                        v
++-------------------------------------------------+
+| 2. Menginstal Dependensi Node.js                |
+|    (npm install pada Root & Server)             |
++-------------------------------------------------+
+                        |
+                        v
++-------------------------------------------------+
+| 3. Membuat Proyek Baru di Supabase Dashboard    |
++-------------------------------------------------+
+                        |
+                        v
++-------------------------------------------------+
+| 4. Mengambil Kredensial Connection Pooler & API |
++-------------------------------------------------+
+                        |
+                        v
++-------------------------------------------------+
+| 5. Mengonfigurasi Berkas .env pada Server       |
++-------------------------------------------------+
+                        |
+                        v
++-------------------------------------------------+
+| 6. Menjalankan Program & Migrasi Database       |
++-------------------------------------------------+
+    </pre>
+    <div class="figure-caption">Gambar 1-1 Langkah-Langkah Instalasi Sistem</div>
+
+    <p class="no-indent" style="margin-top: 12pt; font-weight: bold;">Langkah-Langkah Deployment Sistem:</p>
+    <ol>
+        <li><strong>Mengunduh Source Code Aplikasi CarbonSense</strong><br>
+        Unduh source code proyek CarbonSense dari repositori Git proyek atau ekstrak file zip yang disediakan ke dalam direktori lokal komputer Anda, misalnya di folder <code>C:\projects\magicpath-project</code>.
+        <div class="image-placeholder">[Silakan tempel screenshot pengunduhan berkas repositori atau folder proyek lokal di sini]</div>
+        <div class="figure-caption">Gambar 1-2 Mengunduh Source Code</div>
+        </li>
+
+        <li><strong>Menginstal Dependensi Sistem Node.js</strong><br>
+        Setelah berkas proyek berada pada direktori lokal, buka aplikasi terminal (Command Prompt atau PowerShell), lalu masuk ke direktori root proyek dan jalankan perintah penginstalan paket dependensi frontend:<br>
+        <code>npm install</code><br>
+        Setelah itu, buka sub-direktori backend (<code>server</code>) dan instal paket dependensi backend Express:<br>
+        <code>cd server</code><br>
+        <code>npm install</code>
+        <div class="image-placeholder">[Silakan tempel screenshot terminal saat eksekusi 'npm install' di sini]</div>
+        <div class="figure-caption">Gambar 1-3 Menginstal Dependensi Node.js</div>
+        </li>
+
+        <li><strong>Membuat Proyek Baru di Supabase Cloud Dashboard</strong><br>
+        Akses situs resmi Supabase di <a href="https://supabase.com">https://supabase.com</a> dan masuk menggunakan akun GitHub atau akun email terdaftar Anda.
+        <div class="image-placeholder">[Silakan tempel screenshot halaman login/dashboard utama Supabase di sini]</div>
+        <div class="figure-caption">Gambar 1-4 Dashboard Supabase</div>
+        Di dashboard utama, klik tombol <strong>"New Project"</strong>, lalu pilih organisasi Anda. Lengkapi formulir pembuatan proyek baru dengan mengisi nama proyek (misalnya <code>CarbonSense-Database</code>), tentukan kata sandi database Anda (<i>Database Password</i>), pilih wilayah server terdekat (misalnya <i>Singapore</i> untuk kawasan Asia Tenggara), lalu klik <strong>"Create new project"</strong>.
+        <div class="image-placeholder">[Silakan tempel screenshot formulir pembuatan proyek baru Supabase di sini]</div>
+        <div class="figure-caption">Gambar 1-5 Membuat Proyek Baru</div>
+        </li>
+
+        <li><strong>Mengambil Kredensial Database dan API Supabase</strong><br>
+        Setelah proyek Supabase selesai dibuat, ambil kredensial koneksi PostgreSQL.
+        <ul>
+            <li>Masuk ke menu <strong>Settings</strong> (ikon gerigi di bilah navigasi kiri) -> pilih menu <strong>Database</strong>. Gulir ke bawah ke bagian <strong>Connection Pooler</strong>. Pastikan mode pooler disetel ke <i>Transaction</i>, lalu salin string koneksi URI PostgreSQL yang disediakan.</li>
+        </ul>
+        <div class="image-placeholder">[Silakan tempel screenshot halaman pengaturan Database dan bagian Connection Pooler Supabase di sini]</div>
+        <div class="figure-caption">Gambar 1-6 Menyalin Connection String</div>
+        <ul>
+            <li>Masuk ke menu <strong>Settings</strong> -> pilih menu <strong>API</strong>. Salin nilai <strong>Project URL</strong> dan <strong>Project API Keys (anon public)</strong> yang akan digunakan untuk koneksi otentikasi Supabase.</li>
+        </ul>
+        <div class="image-placeholder">[Silakan tempel screenshot halaman pengaturan API yang menampilkan URL dan Anon Key di sini]</div>
+        <div class="figure-caption">Gambar 1-7 Menyalin API URL dan Anon Key</div>
+        </li>
+
+        <li><strong>Mengonfigurasi Environment Variables di Berkas <code>.env</code></strong><br>
+        Buka editor kode Anda, lalu buat berkas baru bernama <code>.env</code> di dalam sub-direktori backend (<code>server/</code>). Tuliskan kredensial database Supabase yang telah disalin sebelumnya sebagai berikut:
+        <pre>
+PORT=5000
+JWT_SECRET=carbonsense-secret-key
+DATABASE_URL=postgresql://postgres.tobdzuwgssalzukacnea:[PASSWORD]@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres
+VITE_SUPABASE_URL=https://tobdzuwgssalzukacnea.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...</pre>
+        <p style="text-indent: 0; font-size: 11pt; font-style: italic;">Catatan: Ganti token [PASSWORD] dengan kata sandi database Supabase yang Anda buat saat langkah ke-3.</p>
+        <div class="image-placeholder">[Silakan tempel screenshot isi file .env di dalam teks editor di sini]</div>
+        <div class="figure-caption">Gambar 1-8 Konfigurasi Berkas .env</div>
+        </li>
+
+        <li><strong>Menjalankan Program dan Eksekusi Migrasi Database</strong><br>
+        Kembali ke root direktori proyek (<code>C:\projects\magicpath-project</code>) pada terminal, lalu jalankan perintah perintah concurrently berikut untuk mengaktifkan frontend dan backend secara bersamaan:<br>
+        <code>npm run dev</code><br>
+        Saat server backend Express pertama kali dijalankan, ORM Sequelize secara otomatis akan mendeteksi status database di Supabase Cloud, terhubung dengan aman, dan melakukan inisialisasi (<i>auto-migration</i>) dengan membuat seluruh tabel model seperti <code>users</code> dan <code>devices</code> secara otomatis di Supabase.
+        <div class="image-placeholder">[Silakan tempel screenshot baris log terminal yang menandakan sukses koneksi db di sini]</div>
+        <div class="figure-caption">Gambar 1-9 Inisialisasi Database Sukses</div>
+        </li>
+
+        <li><strong>Verifikasi Aplikasi pada Browser</strong><br>
+        Buka peramban Microsoft Edge dan akses URL <code>http://localhost:3000</code>. Coba gunakan fitur registrasi dan login. Apabila Anda berhasil diarahkan ke dashboard utama setelah pendaftaran akun, maka aplikasi CarbonSense dan database Supabase telah berjalan dengan sempurna.
+        <div class="image-placeholder">[Silakan tempel screenshot halaman Dashboard utama CarbonSense setelah login/register di sini]</div>
+        <div class="figure-caption">Gambar 1-10 Aplikasi Berhasil Dijalankan</div>
+        </li>
+    </ol>
+
+    <hr style="margin-top: 24pt; margin-bottom: 24pt; border: 0; border-top: 1px solid #cccccc;">
+
+    <h2>1.2 Instalasi Tools Pengujian</h2>
+    <p>Tools pengujian utama yang digunakan oleh tim penguji adalah <strong>Selenium IDE</strong>. Selenium IDE (<i>Integrated Development Environment</i>) adalah alat pengujian otomatis berbasis peramban (<i>browser extension</i>) yang sederhana, cepat, dan mudah digunakan untuk merekam aktivitas interaksi pada aplikasi web. Di samping itu, untuk pengujian berbasis kode yang lebih fleksibel, tim penguji juga menggunakan <strong>Selenium WebDriver (Python + pytest)</strong>.</p>
+    
+    <p>Berikut adalah langkah-langkah detail penginstalan dan penggunaan tools pengujian:</p>
+
+    <h3>1.2.1 Pengujian dengan Selenium IDE</h3>
+
+    <p class="no-indent" style="font-weight: bold; margin-top: 12pt;">1. Mengunduh Selenium IDE</p>
+    <ul>
+        <li>Buka browser Microsoft Edge atau Mozilla Firefox di komputer Anda.</li>
+        <li>Kunjungi halaman unduhan resmi ekstensi Selenium IDE di <strong>Edge Add-ons Store</strong> (untuk Microsoft Edge) atau <strong>Mozilla Add-ons</strong> (untuk Firefox).</li>
+    </ul>
+    <div class="image-placeholder">[Silakan tempel screenshot halaman Selenium IDE di Edge Add-ons / Chrome Web Store di sini]</div>
+    <div class="figure-caption">Gambar 1-11 Mengunduh Selenium IDE</div>
+
+    <p class="no-indent" style="font-weight: bold; margin-top: 12pt;">2. Menambahkan Ekstensi ke Browser</p>
+    <ul>
+        <li>Klik tombol <strong>"Dapatkan" (Get)</strong> pada peramban Microsoft Edge (atau tombol <strong>"Add to Firefox"</strong> untuk Firefox).</li>
+        <li>Konfirmasi pemasangan dengan mengklik tombol <strong>"Add Extension"</strong> atau <strong>"Add"</strong> pada jendela pop-up konfirmasi yang muncul.</li>
+    </ul>
+    <div class="image-placeholder">[Silakan tempel screenshot pop-up persetujuan pemasangan ekstensi browser di sini]</div>
+    <div class="figure-caption">Gambar 1-12 Menambahkan Ekstensi ke Browser</div>
+
+    <p class="no-indent" style="font-weight: bold; margin-top: 12pt;">3. Mengakses Selenium IDE</p>
+    <ul>
+        <li>Setelah proses pemasangan ekstensi berhasil diselesaikan, ikon berlogo Selenium IDE akan muncul di bilah alat (<i>toolbar</i>) bagian kanan atas peramban.</li>
+        <li>Klik ikon tersebut untuk meluncurkan jendela aplikasi Selenium IDE.</li>
+    </ul>
+    <div class="image-placeholder">[Silakan tempel screenshot tombol ekstensi Selenium IDE di toolbar browser di sini]</div>
+    <div class="figure-caption">Gambar 1-13 Mengakses Selenium IDE</div>
+
+    <p class="no-indent" style="font-weight: bold; margin-top: 12pt;">4. Merekam Tes (Recording Test)</p>
+    <ul>
+        <li>Pada jendela utama Selenium IDE yang baru terbuka, pilih opsi <strong>"Record a new test in a new project"</strong> (atau <i>"Create a new project"</i> jika ingin membuat proyek kosong).</li>
+        <li>Berikan nama untuk proyek pengujian Anda (contohnya: <code>CarbonSense Testing</code>), lalu klik **OK**.</li>
+    </ul>
+    <div class="image-placeholder">[Silakan tempel screenshot dialog pembuatan nama proyek baru di sini]</div>
+    <div class="figure-caption">Gambar 1-14 Membuat Proyek Baru</div>
+    <ul>
+        <li>Masukkan URL dasar dari aplikasi web (<i>Software Under Test</i>) yang ingin Anda uji, yaitu: <code>http://localhost:3000/</code>.</li>
+        <li>Klik tombol <strong>"Start Recording"</strong> untuk memulai sesi perekaman.</li>
+    </ul>
+    <div class="image-placeholder">[Silakan tempel screenshot kolom input URL target pengujian di sini]</div>
+    <div class="figure-caption">Gambar 1-15 Mengisi URL Target dan Mulai Merekam</div>
+    <ul>
+        <li>Selenium IDE secara otomatis akan membuka jendela penjelajah baru Microsoft Edge yang memuat halaman web tersebut, dan merekam semua interaksi fisik yang Anda lakukan (klik tombol, pengisian formulir, pemilihan menu, navigasi halaman) ke dalam skrip uji.</li>
+    </ul>
+
+    <p class="no-indent" style="font-weight: bold; margin-top: 12pt;">5. Menjalankan Tes (Running Test)</p>
+    <ul>
+        <li>Setelah selesai merekam seluruh skenario uji fungsionalitas, kembali ke jendela Selenium IDE dan klik tombol merah <strong>"Stop Recording"</strong> di pojok kanan atas.</li>
+        <li>Berikan nama untuk <i>test case</i> yang telah selesai direkam (misalnya: <code>TC 1.3 - Login Success</code>), lalu klik <strong>OK</strong>. Hasil rekaman akan ditampilkan dalam bentuk daftar langkah-langkah (<i>steps</i>) berupa perintah, target, dan nilai (<i>Command, Target, Value</i>).</li>
+        <li>Untuk menjalankan ulang tes otomatis yang telah terekam, klik tombol <strong>"Play Current Test Case"</strong> (ikon segitiga) pada bilah menu.</li>
+    </ul>
+    <div class="image-placeholder">[Silakan tempel screenshot baris-baris perintah uji beserta log warna hijau tanda sukses di sini]</div>
+    <div class="figure-caption">Gambar 1-16 Menjalankan Kasus Uji Otomatis</div>
+
+    <p class="no-indent" style="font-weight: bold; margin-top: 12pt;">6. Menyimpan dan Mengelola Proyek Tes</p>
+    <ul>
+        <li>Agar hasil rekaman skenario pengujian dapat digunakan kembali di kemudian hari, simpan proyek pengujian dengan memilih menu <strong>File</strong> -> klik <strong>Save Project</strong> (atau tekan pintasan tombol <strong>Ctrl + S</strong>).</li>
+        <li>Simpan file proyek tersebut dengan nama berkas berekstensi <code>.side</code> (contohnya: <code>CarbonSense Testing.side</code>).</li>
+        <li>Tim penguji dapat mengelola kasus uji dengan mengedit target xpath, mengubah data input (value), menambahkan langkah asersi (<i>assertions</i> seperti <code>assert text</code> atau <code>verify title</code>), serta mengelompokkan <i>test case</i> ke dalam <i>test suite</i> yang terstruktur.</li>
+    </ul>
+    <div class="image-placeholder">[Silakan tempel screenshot menu File dan dialog penyimpanan file proyek .side di sini]</div>
+    <div class="figure-caption">Gambar 1-17 Menyimpan Proyek Pengujian</div>
+    <p>Dengan menggunakan Selenium IDE, tim penguji dapat dengan cepat merekam, memverifikasi, dan menjalankan pengujian fungsionalitas secara visual serta memudahkan dalam manajemen kasus uji.</p>
+
+    <h3>1.2.2 Pengujian dengan Selenium WebDriver (Python + pytest)</h3>
+    <p>Selain perekaman visual menggunakan Selenium IDE, tim penguji juga mengonfigurasi skrip pengujian berbasis kode untuk memfasilitasi integrasi pengujian terautomasi yang lebih kompleks:</p>
+    <ol>
+        <li><strong>Instalasi Python dan Library Pendukung</strong><br>
+        Unduh dan pasang Python (minimal v3.8) dari situs resmi <a href="https://www.python.org/">python.org</a>. Jalankan perintah berikut pada terminal proyek untuk memasang library Selenium WebDriver dan framework pengujian pytest:
+        <pre>pip install selenium pytest</pre>
+        </li>
+        <li><strong>Penginstalan WebDriver Edge</strong><br>
+        Pastikan berkas penggerak <strong>Edge WebDriver (msedgedriver)</strong> yang versinya cocok dengan browser Microsoft Edge Anda telah diunduh dan diposisikan dalam direktori <i>environment PATH</i> sistem.
+        </li>
+        <li><strong>Eksekusi Pengujian Otomatis Massal</strong><br>
+        Jalankan file skrip pengujian berbasis pytest dengan mengetikkan perintah berikut pada terminal direktori root proyek:
+        <pre>pytest test_suite_selenium.py</pre>
+        Kerangka pytest akan menjalankan seluruh 38 skenario uji otomatis di latar belakang secara berurutan dan mengeluarkan visualisasi laporan log pengujian berbentuk HTML.
+        </li>
+    </ol>
+
+    <hr style="margin-top: 24pt; margin-bottom: 24pt; border: 0; border-top: 1px solid #cccccc;">
+
+    <h2>1.3 Cakupan Pengujian</h2>
+    <p>Dalam upaya untuk memastikan kualitas dan keandalan sistem aplikasi CarbonSense, tim penguji perlu secara sistematis menentukan cakupan proses pengujian. Pada sub bab ini, tim penguji akan menjelaskan secara terperinci fungsionalitas-fungsionalitas utama yang akan diuji, teknik pengujian yang diterapkan, serta jadwal pelaksanaan pengujian yang dirancang. Dengan demikian, sub bab ini memberikan gambaran menyeluruh mengenai pendekatan pengujian yang digunakan, memastikan bahwa setiap aspek penting dari sistem diuji secara komprehensif dan efisien. Pendekatan ini bertujuan untuk mengidentifikasi dan memperbaiki potensi masalah sebelum sistem diimplementasikan secara penuh, sehingga memberikan jaminan kualitas yang tinggi kepada pengguna akhir.</p>
+
+    <h3>1.3.1 Fungsionalitas Sistem</h3>
+    <p>Dalam sistem aplikasi CarbonSense ini, berbagai fungsionalitas dirancang untuk memastikan pengalaman pengguna dalam memantau kualitas udara menjadi komprehensif dan efisien. Setiap fungsionalitas memiliki peran khusus dalam mendukung operasional sistem dan melayani kebutuhan pengguna. Berikut ini adalah deskripsi singkat mengenai **13 fungsionalitas utama** yang ada dalam sistem CarbonSense yang dicakup dalam ruang lingkup pengujian perangkat lunak:</p>
+
+    <p class="no-indent" style="margin-top: 12pt; margin-bottom: 6pt;"><strong>a. Fungsionalitas Autentikasi (Login) Pengguna</strong><br>
+    Fungsionalitas login digunakan untuk memverifikasi (autentikasi) identitas pengguna agar dapat masuk ke dalam sistem. Pengguna diharuskan mengisikan email dan password terdaftar. Sistem akan membandingkan data masukan dengan data terenkripsi di database PostgreSQL Supabase. Jika email dan password cocok (TRUE), pengguna diarahkan masuk ke aplikasi. Jika kosong atau salah (FALSE), sistem menolak akses dan memunculkan pesan alert/peringatan error.</p>
+
+    <p class="no-indent" style="margin-top: 12pt; margin-bottom: 6pt;"><strong>b. Fungsionalitas Registrasi Akun Baru</strong><br>
+    Fungsionalitas registrasi digunakan untuk mendaftarkan akun pengguna baru ke dalam database sistem. Pendaftar harus mengisi nama lengkap, email, dan kata sandi. Terdapat batas minimum panjang password (minimal 6 karakter) serta validasi keunikan email. Jika masukan memenuhi syarat dan email belum terdaftar (TRUE), akun baru berhasil disimpan ke database. Jika masukan kosong, format email salah, atau password kurang dari 6 karakter (FALSE), registrasi gagal dan sistem menampilkan pesan validasi.</p>
+
+    <p class="no-indent" style="margin-top: 12pt; margin-bottom: 6pt;"><strong>c. Fungsionalitas Pengisian Onboarding (Kuesioner Kesehatan)</strong><br>
+    Fungsionalitas ini merupakan halaman kuesioner wajib bagi pengguna baru segera setelah pendaftaran akun berhasil. Kuesioner ini menanyakan kondisi kesehatan paru-paru, sensitivitas pernapasan, dan adanya anggota keluarga rentan di rumah. Jawaban disimpan ke database (TRUE) untuk menyetel parameter awal rekomendasi udara. Pengguna tidak diperbolehkan melewati halaman ini secara paksa sebelum mengirim jawaban (FALSE).</p>
+
+    <p class="no-indent" style="margin-top: 12pt; margin-bottom: 6pt;"><strong>d. Fungsionalitas Manajemen Profil Pengguna (Edit Profil)</strong><br>
+    Fungsionalitas ini memungkinkan pengguna yang telah masuk untuk memperbarui informasi profil mereka seperti nama lengkap, email, dan kata sandi baru. Sistem akan memeriksa keabsahan data input dan kecocokan password. Jika valid (TRUE), perubahan disimpan ke database dan memunculkan alert sukses. Jika data kosong (FALSE), sistem menampilkan pesan kegagalan.</p>
+
+    <p class="no-indent" style="margin-top: 12pt; margin-bottom: 6pt;"><strong>e. Fungsionalitas Penautan Perangkat (QR Code Binding)</strong><br>
+    Fungsionalitas ini memfasilitasi pengguna untuk menghubungkan perangkat IoT fisik CarbonSense dengan akun mereka secara mandiri. Penautan dilakukan dengan memindai kode QR perangkat yang menghasilkan parameter URL <code>login?device=...</code>. Halaman ini dirancang secara khusus untuk alur penautan perangkat (bukan login biasa). Sistem memverifikasi apakah kode perangkat terdaftar di database admin. Jika terdaftar (TRUE), perangkat berhasil ditautkan. Jika parameter URL berada di luar daftar perangkat resmi admin (FALSE), halaman akan dikosongkan untuk mencegah peretasan penautan.</p>
+
+    <p class="no-indent" style="margin-top: 12pt; margin-bottom: 6pt;"><strong>f. Fungsionalitas Aktivasi dan Reaktivasi Perangkat</strong><br>
+    Fungsionalitas ini mendeteksi status keaktifan perangkat sensor pemantau udara. Perangkat yang aktif akan mengirimkan data parameter kualitas udara secara berkala (Online). Apabila sensor terdeteksi mati atau mengalami kendala jaringan (Offline), pengguna dapat menekan tombol reaktivasi. Sistem akan melakukan ping koneksi (TRUE) untuk mengembalikan status perangkat menjadi Online. Jika koneksi gagal (FALSE), status tetap Offline.</p>
+
+    <p class="no-indent" style="margin-top: 12pt; margin-bottom: 6pt;"><strong>g. Fungsionalitas Konsultasi Asisten Chat AI</strong><br>
+    Fungsionalitas asisten kesehatan berbasis kecerdasan buatan (Gemini API) yang tersemat pada dashboard pengguna. Fitur ini membaca metrik PPM kualitas udara real-time saat ini untuk merumuskan jawaban anjuran kesehatan jika pengguna bertanya di kolom chat. Apabila respons AI berhasil diperoleh (TRUE), percakapan ditampilkan. Jika terkendala masalah jaringan (FALSE), obrolan ditutup dengan pemberitahuan kesalahan.</p>
+
+    <p class="no-indent" style="margin-top: 12pt; margin-bottom: 6pt;"><strong>h. Fungsionalitas Navigasi Histori Tanggal (DatePicker &amp; Button Nav)</strong><br>
+    Fungsionalitas ini memungkinkan pengguna memantau riwayat kualitas udara pada masa lampau. Pengguna dapat memilih tanggal tertentu via pemilih tanggal (<i>DatePicker</i>) atau tombol "Kemarin" dan "Besok". Sistem akan mengambil data log sensor harian dari database sesuai tanggal pilihan. Jika data log sensor pada tanggal tersebut ada (TRUE), grafik tren PPM (menggunakan Recharts) diperbarui. Jika data kosong/tidak ditemukan (FALSE), grafik akan menampilkan keterangan data nihil.</p>
+
+    <p class="no-indent" style="margin-top: 12pt; margin-bottom: 6pt;"><strong>i. Fungsionalitas Ekspor Laporan</strong><br>
+    Fungsionalitas ini memungkinkan pengguna untuk mengekspor dan mengunduh data telemetri kualitas udara historis dari dashboard. Pengguna dapat memilih mengunduh dalam format Excel (<code>.xlsx</code>) atau format dokumen ringkasan (<code>.pdf</code>). Sistem memproses data sensor yang terpilih (TRUE) untuk digenerasi menjadi file unduhan fisik pada komputer lokal. Jika terjadi kesalahan pembacaan data (FALSE), sistem membatalkan proses ekspor dengan pesan kesalahan.</p>
+
+    <p class="no-indent" style="margin-top: 12pt; margin-bottom: 6pt;"><strong>j. Fungsionalitas Pengaturan AI Assistant (Mode Sensitivitas Tinggi)</strong><br>
+    Fungsionalitas untuk menyetel mode perlindungan udara berdasarkan kerentanan anggota keluarga (seperti kategori Bayi/Balita, Lansia, atau Penderita Asma) pada menu pengaturan. Ketika salah satu kelompok rentan dipilih, sistem akan mengaktifkan "Modus Sensitivitas Tinggi". Jika pengaturan disimpan (TRUE), batas threshold peringatan PPM diturunkan (menjadi lebih protektif) dan rekomendasi kesehatan dari AI disesuaikan. Jika diabaikan (FALSE), setelan kembali ke batas normal.</p>
+
+    <p class="no-indent" style="margin-top: 12pt; margin-bottom: 6pt;"><strong>k. Fungsionalitas Portal dan Autentikasi Admin</strong><br>
+    Fungsionalitas khusus yang membatasi akses ke menu administrasi sistem. Pengguna admin harus memasukkan username dan password administrator yang sah pada halaman <code>/admin</code>. Autentikasi diverifikasi oleh database backend (TRUE) untuk membuka menu admin dashboard. Jika kredensial admin tidak tepat (FALSE), akses ditolak secara ketat.</p>
+
+    <p class="no-indent" style="margin-top: 12pt; margin-bottom: 6pt;"><strong>l. Fungsionalitas Admin Dashboard (Pendaftaran &amp; Generate QR Code Alat)</strong><br>
+    Fungsionalitas khusus admin untuk meregistrasikan Device ID baru (misal <code>CS-DAPUR-01</code>) ke dalam database Supabase. Admin memasukkan kode unik alat baru ke form pendaftaran. Jika pendaftaran sukses (TRUE), sistem memunculkan pop-up modal sukses yang berisi visualisasi QR Code untuk dicetak dan ditempel pada perangkat fisik. Jika Device ID duplikat atau kosong (FALSE), sistem memblokir pendaftaran.</p>
+
+    <p class="no-indent" style="margin-top: 12pt; margin-bottom: 6pt;"><strong>m. Fungsionalitas Autentikasi (Logout)</strong><br>
+    Fungsionalitas logout digunakan untuk mengakhiri sesi aktif pengguna atau admin secara aman. Ketika tombol logout ditekan, sistem akan menghapus seluruh data otentikasi lokal (<i>localStorage</i> seperti token sesi dan data kredensial aktif) secara bersih (TRUE) lalu mengalihkan pengguna kembali ke halaman utama login (<code>/login</code>). Jika token gagal dihapus atau terjadi kegagalan sistem (FALSE), sesi tetap aktif dan halaman tidak dialihkan.</p>
+
+    <h3>1.3.2 Teknik Pengujian</h3>
+    <p>Pendekatan yang digunakan untuk menyusun <i>test case</i> dan menentukan data pengujian dalam kegiatan ini adalah metode <strong>Black Box Testing</strong>, yang berfokus pada dua teknik utama: <strong>Boundary Value Analysis (BVA)</strong> dan <strong>Equivalence Partitioning (EP)</strong>. Black box testing adalah metode pengujian perangkat lunak yang memeriksa fungsi aplikasi tanpa melihat struktur internal atau kode sumbernya.</p>
+    <ul>
+        <li><strong>Boundary Value Analysis (BVA)</strong><br>
+        Teknik BVA diterapkan untuk mengidentifikasi nilai batas krusial pada masukan dan keluaran sistem yang rentan terhadap kesalahan (<i>bugs</i>). Dalam proyek ini, BVA diimplementasikan pada:
+        <ol>
+            <li><strong>Panjang Kata Sandi (Password):</strong> Menguji panjang input pada batas minimal 6 karakter. <i>Test case</i> dirancang menggunakan data masukan dengan panjang 5 karakter (kurang dari batas), tepat 6 karakter (pada batas), dan 7 karakter (di atas batas).</li>
+            <li><strong>Nilai Threshold MQ135 PPM:</strong> Menguji tingkat keakuratan respons sistem dan AI Assistant ketika metrik PPM sensor menyentuh titik kritis perpindahan status udara (misal batas aman 1000 PPM, menguji di 999 PPM, 1000 PPM, dan 1001 PPM).</li>
+        </ol>
+        </li>
+        <li><strong>Equivalence Partitioning (EP)</strong><br>
+        Teknik EP membagi sekumpulan data masukan ke dalam beberapa partisi kelas valid (<i>valid partition</i>) dan kelas tidak valid (<i>invalid partition</i>) untuk meminimalkan redundansi kasus uji. Dalam proyek ini, EP diterapkan pada:
+        <ol>
+            <li><strong>Format Alamat Email:</strong> Membagi input email menjadi kelas valid (memiliki pola <code>@</code> dan <code>.com</code> seperti <code>user@example.com</code>) dan kelas tidak valid (tanpa pola standar seperti <code>userexample.com</code> atau <code>user@</code>).</li>
+            <li><strong>Device ID QR Code:</strong> Membagi parameter URL alat menjadi kelas terdaftar di database admin (penautan berhasil) dan kelas tidak terdaftar/asal-asalan (halaman penautan langsung dikosongkan).</li>
+        </ol>
+        </li>
+    </ul>
+
+    <h3>1.3.3 Jadwal dan Pengawakan</h3>
+    <p>Pembuatan rancangan (<i>test case</i>) dan pelaksanaan pengujian dijadwalkan secara sistematis dan melibatkan seluruh anggota tim penguji dengan pembagian tugas yang jelas. Hal ini bertujuan agar setiap fungsionalitas sistem CarbonSense dapat diuji secara mendalam dan menyeluruh. Detail jadwal dan pembagian peran pengujian dipaparkan pada Tabel 1-3.</p>
+
+    <div class="table-caption">Tabel 1-3 Jadwal dan Pengawakan Pengujian</div>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 5%; text-align: center;">No.</th>
+                <th style="width: 20%; text-align: center;">Tanggal Pekerjaan</th>
+                <th style="width: 50%; text-align: center;">Deskripsi Pekerjaan</th>
+                <th style="width: 25%; text-align: center;">Penanggung Jawab</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="text-align: center;">1.</td>
+                <td>17 – 20 Mei 2026</td>
+                <td>Mempersiapkan repositori <i>source code</i> aplikasi CarbonSense yang akan diuji.</td>
+                <td>Ichwan Riskhi</td>
+            </tr>
+            <tr>
+                <td style="text-align: center;">2.</td>
+                <td>20 – 24 Mei 2026</td>
+                <td>Melakukan <i>local deployment</i> sistem dan konfigurasi database Supabase PostgreSQL.</td>
+                <td>Gerrard Enriheart Darondo</td>
+            </tr>
+            <tr>
+                <td style="text-align: center;">3.</td>
+                <td>24 – 28 Mei 2026</td>
+                <td>Membuat rancangan awal skenario kasus uji (<i>test cases</i>) untuk modul autentikasi (user &amp; admin).</td>
+                <td>Faisya Cahyarani Pidieanti</td>
+            </tr>
+            <tr>
+                <td style="text-align: center;">4.</td>
+                <td>28 Mei – 2 Juni 2026</td>
+                <td>Menyiapkan script skenario Selenium IDE (<code>.side</code>) dan skrip Selenium Python (<code>test_suite_selenium.py</code>).</td>
+                <td>Ichwan Riskhi</td>
+            </tr>
+            <tr>
+                <td style="text-align: center;">5.</td>
+                <td>2 – 5 Juni 2026</td>
+                <td>Mengeksekusi seluruh 38 skenario uji otomatis di browser menggunakan Selenium IDE &amp; Pytest.</td>
+                <td>Gerrard Enriheart Darondo</td>
+            </tr>
+            <tr>
+                <td style="text-align: center;">6.</td>
+                <td>5 – 7 Juni 2026</td>
+                <td>Menganalisis log kesalahan (<i>bugs</i>) dan melakukan verifikasi penyesuaian fungsionalitas (seperti batasan registrasi &amp; QR binding).</td>
+                <td>Faisya Cahyarani Pidieanti</td>
+            </tr>
+            <tr>
+                <td style="text-align: center;">7.</td>
+                <td>7 – 9 Juni 2026</td>
+                <td>Menyusun Bab 1 (Perencanaan Pengujian) pada dokumen laporan pengujian perangkat lunak.</td>
+                <td>Ichwan Riskhi</td>
+            </tr>
+            <tr>
+                <td style="text-align: center;">8.</td>
+                <td>9 – 11 Juni 2026</td>
+                <td>Menyusun Bab 2 (Perancangan Kasus Uji) dan Bab 3 (Hasil Eksekusi dan Analisis Log Pengujian).</td>
+                <td>Gerrard Enriheart Darondo</td>
+            </tr>
+            <tr>
+                <td style="text-align: center;">9.</td>
+                <td>11 – 13 Juni 2026</td>
+                <td>Mengonversi dan merapikan log pengujian ke format dokumen cetak HTML tabel (<code>test_cases_export.html</code>).</td>
+                <td>Faisya Cahyarani Pidieanti</td>
+            </tr>
+            <tr>
+                <td style="text-align: center;">10.</td>
+                <td>13 – 15 Juni 2026</td>
+                <td>Finalisasi penyusunan dokumen laporan pengujian, <i>formatting check</i>, dan penyerahan laporan.</td>
+                <td>Ichwan Riskhi</td>
+            </tr>
+        </tbody>
+    </table>
+
+</body>
+</html>

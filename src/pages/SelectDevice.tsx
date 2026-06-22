@@ -32,6 +32,8 @@ export default function SelectDevice() {
       setUsername(storedEmail.split('@')[0]);
     }
 
+    const pendingDevice = localStorage.getItem('cs_pending_bind_device');
+
     // Fetch user devices from backend MySQL
     const fetchUserDevices = async () => {
       try {
@@ -45,7 +47,19 @@ export default function SelectDevice() {
       }
     };
 
-    fetchUserDevices();
+    if (pendingDevice) {
+      api.devices.bind({ deviceId: pendingDevice, userEmail: storedEmail })
+        .then(() => {
+          localStorage.removeItem('cs_pending_bind_device');
+          fetchUserDevices();
+        })
+        .catch(err => {
+          console.error('Failed to auto-bind device from QR Code:', err);
+          fetchUserDevices();
+        });
+    } else {
+      fetchUserDevices();
+    }
   }, [navigate]);
 
   const toggleDevice = (id: string) => {
@@ -111,7 +125,13 @@ export default function SelectDevice() {
             </Link>
             <button 
               onClick={() => {
+                localStorage.removeItem('cs_user');
                 localStorage.removeItem('cs_user_email');
+                localStorage.removeItem('cs_user_token');
+                localStorage.removeItem('cs_active_devices');
+                localStorage.removeItem('cs_ai_personality');
+                localStorage.removeItem('cs_onboarding_answers');
+                localStorage.removeItem('cs_purchase_status');
                 navigate('/login');
               }} 
               className="text-xs uppercase tracking-widest font-semibold text-[var(--cs-text-dim)] hover:text-red-400 transition-colors border px-4 py-2 rounded-xl cursor-pointer" 

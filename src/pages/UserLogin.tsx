@@ -1,10 +1,47 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Activity, ShieldCheck, Wind, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { api } from '../lib/api';
 
 export default function UserLogin() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const qrDevice = searchParams.get('device');
+
+  const [deviceValid, setDeviceValid] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    // Auto-redirect if already logged in
+    const token = localStorage.getItem('cs_user_token');
+    if (token) {
+      if (qrDevice) {
+        localStorage.setItem('cs_pending_bind_device', qrDevice);
+      }
+      navigate('/select-device');
+      return;
+    }
+
+    if (qrDevice) {
+      api.devices.list()
+        .then((allDevs) => {
+          const exists = allDevs.some((d: any) => d.id === qrDevice);
+          if (exists) {
+            setDeviceValid(true);
+            localStorage.setItem('cs_pending_bind_device', qrDevice);
+          } else {
+            setDeviceValid(false);
+            localStorage.removeItem('cs_pending_bind_device');
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to verify QR device:', err);
+          setDeviceValid(false);
+        });
+    } else {
+      setDeviceValid(true);
+    }
+  }, [qrDevice, navigate]);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -13,7 +50,16 @@ export default function UserLogin() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
+    if (!email || !password) {
+      setError('Harap lengkapi semua kolom input.');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('Format email tidak valid (contoh: nama@email.com).');
+      return;
+    }
 
     setLoading(true);
     setError('');
@@ -21,6 +67,15 @@ export default function UserLogin() {
     try {
       const response = await api.auth.login({ email, password });
       
+      // Clear previous user session keys
+      localStorage.removeItem('cs_user');
+      localStorage.removeItem('cs_user_email');
+      localStorage.removeItem('cs_user_token');
+      localStorage.removeItem('cs_active_devices');
+      localStorage.removeItem('cs_ai_personality');
+      localStorage.removeItem('cs_onboarding_answers');
+      localStorage.removeItem('cs_purchase_status');
+
       // Store user details in localStorage
       localStorage.setItem('cs_user', JSON.stringify({ username: response.user.username, email: response.user.email }));
       localStorage.setItem('cs_user_email', response.user.email);
@@ -56,6 +111,10 @@ export default function UserLogin() {
       setError(err.message || 'Login gagal. Periksa kembali email dan password Anda.');
     }
   };
+
+  if (deviceValid === null || deviceValid === false) {
+    return <div className="min-h-screen" style={{ background: 'var(--cs-bg)' }} />;
+  }
 
   return (
     <div className="min-h-screen flex text-[var(--cs-text)] font-sans relative pt-16 lg:pt-0" style={{ background: 'var(--cs-bg)' }}>
@@ -156,23 +215,42 @@ export default function UserLogin() {
             </span>
           </div>
 
-          <div className="mb-10">
-            <h2 className="text-3xl font-bold tracking-tight mb-2">Masuk ke Akun</h2>
-            <p className="text-[var(--cs-text-dim)]">Gunakan email dan password Anda untuk mengakses dashboard.</p>
-          </div>
+          {qrDevice ? (
+            <div className="mb-8 p-5 rounded-2xl border flex flex-col items-center gap-3 relative overflow-hidden" style={{ background: 'rgba(245, 158, 11, 0.03)', borderColor: 'var(--cs-amber)' }}>
+              <div className="absolute top-0 right-0 w-16 h-16 bg-[radial-gradient(circle_at_center,var(--cs-amber-glow)_0,transparent_70%)] opacity-30 pointer-events-none" />
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center border bg-amber-500/10" style={{ borderColor: 'var(--cs-amber)' }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-400 animate-pulse">
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                  <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                  <line x1="12" y1="22.08" x2="12" y2="12"/>
+                </svg>
+              </div>
+              <div className="text-center">
+                <span className="text-xs uppercase tracking-widest text-[var(--cs-amber)] font-mono font-bold">Mode Penautan Alat</span>
+                <h3 className="text-xl font-bold text-white mt-1 font-mono">{qrDevice}</h3>
+                <p className="text-xs text-[var(--cs-text-dim)] mt-2">
+                  Silakan masuk untuk menyelesaikan penautan alat ke akun Anda. Belum punya akun? <Link to={`/register?device=${qrDevice}`} className="text-amber-400 hover:underline">Daftar sekarang</Link>.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="mb-10">
+              <h2 className="text-3xl font-bold tracking-tight mb-2">Masuk ke Akun</h2>
+              <p className="text-[var(--cs-text-dim)]">Gunakan email dan password Anda untuk mengakses dashboard.</p>
+            </div>
+          )}
 
           {error && (
-            <div className="mb-6 p-4 border rounded-xl text-sm" style={{ background: 'rgba(239, 68, 68, 0.1)', borderColor: 'var(--cs-danger)', color: 'var(--cs-danger-text)' }}>
+            <div className="mb-6 p-4 border border-red-500 rounded-xl text-sm" style={{ background: 'rgba(239, 68, 68, 0.1)', borderColor: 'var(--cs-danger)', color: 'var(--cs-danger-text)' }}>
               {error}
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form onSubmit={handleLogin} className="space-y-6" noValidate>
             <div>
               <label className="block text-sm font-medium text-[var(--cs-text-dim)] mb-2">Email</label>
               <input 
                 type="email" 
-                required 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 border rounded-xl focus:outline-none transition-colors" 
@@ -185,7 +263,6 @@ export default function UserLogin() {
               <div className="relative">
                 <input 
                   type={showPassword ? "text" : "password"} 
-                  required 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-4 pr-12 py-3 border rounded-xl focus:outline-none transition-colors" 
@@ -212,7 +289,7 @@ export default function UserLogin() {
             </button>
 
             <p className="text-center text-sm text-[var(--cs-text-dim)] mt-8">
-              Belum punya akun? <Link to="/register" className="hover:underline font-medium" style={{ color: 'var(--cs-amber)' }}>Daftar sekarang</Link>
+              Belum punya akun? <Link to={qrDevice ? `/register?device=${qrDevice}` : '/register'} className="hover:underline font-medium" style={{ color: 'var(--cs-amber)' }}>Daftar sekarang</Link>
             </p>
           </form>
         </div>

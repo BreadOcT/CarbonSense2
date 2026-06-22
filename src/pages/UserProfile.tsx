@@ -4,6 +4,7 @@ import {
   User, Mail, Lock, LogOut, ArrowLeft, Check, AlertCircle, Save, Key, Shield, Wind
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { api } from '../lib/api';
 
 export default function UserProfile() {
   const navigate = useNavigate();
@@ -44,7 +45,7 @@ export default function UserProfile() {
     }
   }, [navigate]);
 
-  const handleUpdateProfile = (e: React.FormEvent) => {
+  const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setProfileSuccess('');
     setProfileError('');
@@ -54,40 +55,22 @@ export default function UserProfile() {
       return;
     }
 
-    // Save profile state
-    localStorage.setItem('cs_user', JSON.stringify({ username, email }));
-
-    // Synchronize to registered-users list
+    setLoading(true);
     try {
-      const users = JSON.parse(localStorage.getItem('cs_registered_users') || '[]');
-      const existingIndex = users.findIndex((u: any) => u.email === email);
-      if (existingIndex !== -1) {
-        users[existingIndex].username = username;
-      } else {
-        users.push({ username, email });
-      }
-      localStorage.setItem('cs_registered_users', JSON.stringify(users));
-
-      // Synchronize in cs_all_devices
-      const allDevicesStr = localStorage.getItem('cs_all_devices');
-      if (allDevicesStr) {
-        let allDevices = JSON.parse(allDevicesStr);
-        allDevices = allDevices.map((d: any) => {
-          if (d.userEmail === email) {
-            return { ...d, user: username };
-          }
-          return d;
-        });
-        localStorage.setItem('cs_all_devices', JSON.stringify(allDevices));
-      }
+      const response = await api.users.updateProfile({ email, username });
+      
+      // Save profile state locally
+      localStorage.setItem('cs_user', JSON.stringify({ username: response.user.username, email: response.user.email }));
 
       setProfileSuccess('Profil Anda berhasil diperbarui!');
-    } catch (e) {
-      setProfileError('Gagal menyinkronkan profil ke database simulasi.');
+    } catch (err: any) {
+      setProfileError(err.message || 'Gagal memperbarui profil di database.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleChangePassword = (e: React.FormEvent) => {
+  const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setPwSuccess('');
     setPwError('');
@@ -107,20 +90,32 @@ export default function UserProfile() {
       return;
     }
 
-    // Save password
-    localStorage.setItem(`cs_password_${email}`, newPassword);
-    setPwSuccess('Password berhasil diubah!');
-    setOldPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
+    setLoading(true);
+    try {
+      await api.users.updatePassword({ email, oldPassword, newPassword });
+      setPwSuccess('Password berhasil diubah!');
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err: any) {
+      setPwError(err.message || 'Gagal memperbarui password di database.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLogout = () => {
     setLoading(true);
     setTimeout(() => {
+      // Clear generic keys
+      localStorage.removeItem('cs_user');
       localStorage.removeItem('cs_user_email');
+      localStorage.removeItem('cs_user_token');
       localStorage.removeItem('cs_active_devices');
-      // Keep other system attributes, but log out the user
+      localStorage.removeItem('cs_ai_personality');
+      localStorage.removeItem('cs_onboarding_answers');
+      localStorage.removeItem('cs_purchase_status');
+      
       navigate('/login');
     }, 1000);
   };

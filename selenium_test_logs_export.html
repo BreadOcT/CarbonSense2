@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>CarbonSense - Tabel Hasil Pengujian Fungsionalitas Selenium</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            color: #333;
+        }
+        h1 {
+            color: #1e3a8a;
+            border-bottom: 2px solid #1e3a8a;
+            padding-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            margin-bottom: 30px;
+        }
+        th, td {
+            border: 1px solid #999;
+            padding: 10px;
+            text-align: left;
+            vertical-align: middle;
+            font-size: 13px;
+        }
+        th {
+            background-color: #f3f4f6;
+            font-weight: bold;
+            text-align: center;
+        }
+        .code-cell {
+            font-family: Consolas, "Courier New", monospace;
+            background-color: #fafafa;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 11px;
+            color: #111;
+            padding: 8px;
+            text-align: left;
+            line-height: 1.4;
+        }
+        .center-text {
+            text-align: center;
+        }
+        .instructions {
+            background-color: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Tabel Hasil Pengujian Fungsionalitas Selenium - CarbonSense</h1>
+    
+    <div class="instructions">
+        <strong>Petunjuk Ekspor ke Google Docs:</strong><br>
+        1. Buka file HTML ini di browser Anda (klik dua kali file <code>selenium_test_logs_export.html</code>).<br>
+        2. Tekan <strong>Ctrl + A</strong> untuk menyeleksi seluruh halaman, lalu tekan <strong>Ctrl + C</strong> untuk menyalin (copy).<br>
+        3. Buka dokumen kosong di <strong>Google Docs</strong>, lalu tekan <strong>Ctrl + V</strong> untuk menempel (paste).<br>
+        4. Tabel beserta border, warna header, dan isi log Selenium akan tertata rapi di dokumen Google Docs Anda.
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 18%">Fungsionalitas</th>
+                <th style="width: 8%">ID Test Case</th>
+                <th style="width: 48%">Command</th>
+                <th style="width: 18%">Hasil Aktual</th>
+                <th style="width: 8%">Kesimpulan</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td rowspan="3"><strong>1. Autentikasi (Login)</strong></td>
+                <td class="center-text">TC 1.1</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/")
+self.driver.set_window_size(974, 1080)
+self.driver.find_element(By.LINK_TEXT, "Dapatkan Peringatan").click()
+self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
+                <td>Sistem berhasil memblokir input kosong dan menampilkan pesan error di form.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td class="center-text">TC 1.2</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/login")
+self.driver.set_window_size(974, 1080)
+self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").send_keys("okto@gmail.com")
+self.driver.find_element(By.CSS_SELECTOR, ".pl-4").click()
+self.driver.find_element(By.CSS_SELECTOR, ".pl-4").send_keys("asdasd")
+self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
+                <td>Sistem menampilkan pesan error "Email atau password salah!" saat dimasukkan password keliru.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td class="center-text">TC 1.3</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/")
+self.driver.set_window_size(974, 1080)
+self.driver.find_element(By.LINK_TEXT, "Dapatkan Peringatan").click()
+self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".pl-4").click()
+self.driver.find_element(By.CSS_SELECTOR, ".pl-4").send_keys("tester")
+self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").send_keys("okto@gmail.com")
+self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
+                <td>Sistem berhasil melakukan login dan mengarahkan pengguna ke halaman select-device.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td rowspan="3"><strong>2. Registrasi</strong></td>
+                <td class="center-text">TC 2.1</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/login")
+self.driver.set_window_size(974, 1080)
+self.driver.find_element(By.LINK_TEXT, "Daftar sekarang").click()
+self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
+                <td>Sistem memblokir pendaftaran kosong dan menampilkan pesan error kolom wajib diisi.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td class="center-text">TC 2.2</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/register")
+self.driver.set_window_size(974, 1087)
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .py-3").click()
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .py-3").send_keys("betatester")
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .px-4").click()
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .px-4").click()
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .px-4").send_keys("testerbeta@example.com")
+self.driver.find_element(By.CSS_SELECTOR, ".pl-4").click()
+self.driver.find_element(By.CSS_SELECTOR, ".pl-4").send_keys("123")
+self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
+                <td>Sistem menampilkan error "Kata sandi harus terdiri dari minimal 6 karakter" untuk password pendek.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td class="center-text">TC 2.3</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/register")
+self.driver.set_window_size(974, 1080)
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .py-3").click()
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .py-3").send_keys("betatester")
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .px-4").click()
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .px-4").send_keys("testerbeta@example.com")
+self.driver.find_element(By.CSS_SELECTOR, ".pl-4").click()
+self.driver.find_element(By.CSS_SELECTOR, ".pl-4").send_keys("123123")
+self.driver.find_element(By.CSS_SELECTOR, ".lucide > circle").click()
+self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
+                <td>Sistem sukses mendaftarkan akun baru dan mengarahkan pengguna ke halaman onboarding.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td rowspan="3"><strong>3. Onboarding</strong></td>
+                <td class="center-text">TC 3.1</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/")
+self.driver.set_window_size(974, 1080)
+self.driver.find_element(By.LINK_TEXT, "Dapatkan Peringatan").click()
+self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").send_keys("testerbeta@example.com")
+self.driver.find_element(By.CSS_SELECTOR, ".pl-4").click()
+self.driver.find_element(By.CSS_SELECTOR, ".pl-4").send_keys("123123")
+self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()
+self.driver.get("http://localhost:3000/dashboard")</td>
+                <td>Percobaan bypass /dashboard digagalkan, sistem otomatis me-redirect ke halaman /onboarding.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td class="center-text">TC 3.2</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/select-device")
+self.driver.find_element(By.CSS_SELECTOR, ".hover\3Atext-\[var\(--cs-amber\)\]").click()
+self.driver.find_element(By.CSS_SELECTOR, ".hover\3Atext-\[var\(--cs-amber\)\]").click()</td>
+                <td>Pengguna dapat mengulang onboarding lalu menekan Batal untuk kembali ke dashboard dengan aman.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td class="center-text">TC 3.3</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/onboarding")
+self.driver.find_element(By.CSS_SELECTOR, ".p-5:nth-child(1)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".p-5:nth-child(1)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".p-5:nth-child(3)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".p-5:nth-child(3)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".p-5:nth-child(1)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".p-5:nth-child(1)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".p-5:nth-child(3)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".pt-6").click()
+self.driver.find_element(By.CSS_SELECTOR, ".px-8").click()
+self.driver.find_element(By.CSS_SELECTOR, ".px-8").click()</td>
+                <td>Sistem sukses menyimpan jawaban kuesioner dan mengarahkan pengguna ke halaman pilih alat.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td rowspan="4"><strong>4. Edit Profil & Password</strong></td>
+                <td class="center-text">TC 4.1</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/profile")
+self.driver.set_window_size(974, 547)
+self.driver.find_element(By.CSS_SELECTOR, ".gap-3:nth-child(2)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".text-sm:nth-child(1)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".text-sm:nth-child(1)").send_keys("")
+self.driver.find_element(By.CSS_SELECTOR, ".text-black:nth-child(3)").click()</td>
+                <td>Sistem menolak penyimpanan profil dengan nama kosong dan memunculkan pesan error.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td class="center-text">TC 4.2</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/profile")
+self.driver.set_window_size(974, 547)
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .relative > .bg-black\/40").click()
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .relative > .bg-black\/40").send_keys("asdasd")
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .relative > .text-xs").click()
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .relative > .text-xs").send_keys("123123")
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(3) .w-full").click()
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(3) .w-full").send_keys("123123")
+self.driver.find_element(By.CSS_SELECTOR, ".h-full").click()
+self.driver.find_element(By.CSS_SELECTOR, ".mt-6").click()</td>
+                <td>Sistem menolak pembaruan password karena password lama salah dan memunculkan pesan alert.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td class="center-text">TC 4.3</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/profile")
+self.driver.set_window_size(974, 547)
+self.driver.find_element(By.CSS_SELECTOR, ".text-sm:nth-child(1)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".text-sm:nth-child(1)").send_keys("Okto")
+self.driver.find_element(By.CSS_SELECTOR, ".text-black:nth-child(3)").click()</td>
+                <td>Sistem sukses memperbarui username pengguna di database MySQL dan menayangkan notifikasi sukses.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td class="center-text">TC 4.4</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/profile")
+self.driver.set_window_size(974, 547)
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .relative > .bg-black\/40").click()
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .relative > .bg-black\/40").send_keys("tester")
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .relative > .text-xs").click()
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .relative > .text-xs").send_keys("asdasd")
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(3) .w-full").click()
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(3) .w-full").send_keys("asdasd")
+self.driver.find_element(By.CSS_SELECTOR, ".mt-6").click()</td>
+                <td>Sistem sukses mengganti password akun pengguna dan menampilkan alert notifikasi sukses.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td rowspan="2"><strong>5. Penautan Perangkat (QR Code)</strong></td>
+                <td class="center-text">TC 5.1</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/login?device=CS-DAPUR-01")
+self.driver.set_window_size(974, 547)
+self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").send_keys("okto3@gmail.com")
+self.driver.find_element(By.CSS_SELECTOR, ".pl-4").click()
+self.driver.find_element(By.CSS_SELECTOR, ".pl-4").send_keys("asdasd")
+self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
+                <td>Sistem mendeteksi parameter device dari scan QR dan menyimpannya sebagai pending device.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td class="center-text">TC 5.2</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/select-device")
+self.driver.set_window_size(974, 547)
+self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
+                <td>Pengguna berhasil memilih perangkat aktif dari daftar dan mengalihkan ke dashboard telemetri.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td rowspan="3"><strong>6. Aktivasi & Reaktivasi</strong></td>
+                <td class="center-text">TC 6.1</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/login")
+self.driver.set_window_size(974, 547)
+self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").send_keys("okto3@gmail.com")
+self.driver.find_element(By.CSS_SELECTOR, ".pl-4").click()
+self.driver.find_element(By.CSS_SELECTOR, ".pl-4").send_keys("asdasd")
+self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()
+self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()
+self.driver.find_element(By.CSS_SELECTOR, ".bg-\[var\(--cs-amber\)\]").click()
+self.driver.find_element(By.CSS_SELECTOR, ".bg-\[var\(--cs-amber\)\]").click()
+self.driver.find_element(By.CSS_SELECTOR, ".bg-\[var\(--cs-amber\)\]").click()
+self.driver.find_element(By.CSS_SELECTOR, ".bg-\[var\(--cs-amber\)\]").click()</td>
+                <td>Sistem mendeteksi status offline pada alat dan memicu pembukaan popup panduan reaktivasi.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td class="center-text">TC 6.2</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/login")
+self.driver.set_window_size(974, 547)
+self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").send_keys("okto3@gmail.com")
+self.driver.find_element(By.CSS_SELECTOR, ".pl-4").click()
+self.driver.find_element(By.CSS_SELECTOR, ".pl-4").send_keys("asdasd")
+self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()
+self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()
+self.driver.find_element(By.CSS_SELECTOR, ".bg-\[var\(--cs-amber\)\]").click()
+self.driver.find_element(By.CSS_SELECTOR, ".bg-\[var\(--cs-amber\)\]").click()
+self.driver.find_element(By.CSS_SELECTOR, ".bg-\[var\(--cs-amber\)\]").click()
+self.driver.find_element(By.CSS_SELECTOR, ".bg-\[var\(--cs-amber\)\]").click()
+self.driver.find_element(By.CSS_SELECTOR, ".bg-\[var\(--cs-amber\)\]").click()</td>
+                <td>Pengguna berhasil menutup panduan reaktivasi langkah terakhir dan dashboard me-reload.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td class="center-text">TC 6.3</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/login")
+self.driver.set_window_size(974, 547)
+self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").send_keys("okto3@gmail.com")
+self.driver.find_element(By.CSS_SELECTOR, ".pl-4").click()
+self.driver.find_element(By.CSS_SELECTOR, ".pl-4").send_keys("asdasd")
+self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()
+self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()
+self.driver.find_element(By.CSS_SELECTOR, ".bg-\[var\(--cs-amber\)\]").click()
+self.driver.find_element(By.CSS_SELECTOR, ".bg-\[var\(--cs-amber\)\]").click()
+self.driver.find_element(By.CSS_SELECTOR, ".bg-\[var\(--cs-amber\)\]").click()
+self.driver.find_element(By.CSS_SELECTOR, ".bg-\[var\(--cs-amber\)\]").click()
+self.driver.find_element(By.CSS_SELECTOR, ".bg-\[var\(--cs-amber\)\]").click()</td>
+                <td>Dashboard mendeteksi data baru dan mengganti indikator status secara otomatis menjadi Online.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td rowspan="3"><strong>7. Asisten Chat AI</strong></td>
+                <td class="center-text">TC 7.1</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")
+self.driver.set_window_size(974, 547)
+self.driver.find_element(By.CSS_SELECTOR, ".bg-\[\#070202\]\/85").click()
+self.driver.find_element(By.CSS_SELECTOR, ".focus\3Aring-1").click()
+self.driver.find_element(By.CSS_SELECTOR, ".focus\3Aring-1").send_keys("kadar ppm saya berapa?")
+self.driver.find_element(By.CSS_SELECTOR, ".lucide-send").click()</td>
+                <td>AI menolak memberikan data ppm palsu saat offline dan menyarankan reaktivasi alat.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td class="center-text">TC 7.2</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")
+self.driver.find_element(By.CSS_SELECTOR, ".bg-\[\#070202\]\/85").click()
+self.driver.find_element(By.CSS_SELECTOR, ".focus\3Aring-1").click()
+self.driver.find_element(By.CSS_SELECTOR, ".focus\3Aring-1").send_keys("sekarang saya menaruh alat di kamar mandi")
+self.driver.find_element(By.CSS_SELECTOR, ".lucide-send").click()
+self.driver.find_element(By.CSS_SELECTOR, ".focus\3Aring-1").click()
+# waitForElementEditable target=css=.focus\3Aring-1 value=30000
+self.driver.find_element(By.CSS_SELECTOR, ".focus\3Aring-1").send_keys("dimana letak alat saya tadi?")
+self.driver.find_element(By.CSS_SELECTOR, ".lucide-send").click()</td>
+                <td>AI berhasil menjawab secara kontekstual menggunakan memori dialog sebelumnya.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td class="center-text">TC 7.3</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")
+self.driver.set_window_size(974, 547)
+self.driver.find_element(By.CSS_SELECTOR, ".bg-\[\#070202\]\/85").click()
+self.driver.find_element(By.CSS_SELECTOR, ".focus\3Aring-1").click()
+self.driver.find_element(By.CSS_SELECTOR, ".focus\3Aring-1").send_keys("bagaimana cara saya menyalakan alat cs dari awal? ini saya lihat 0 terus datanya :(")
+self.driver.find_element(By.CSS_SELECTOR, ".gap-2:nth-child(5)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".text-black").click()</td>
+                <td>AI memberikan panduan instalasi firmware IoT carbonsense secara lengkap dan runtut.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td rowspan="4"><strong>8. Navigasi Histori Tanggal</strong></td>
+                <td class="center-text">TC 8.1</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")
+self.driver.set_window_size(974, 547)
+self.driver.find_element(By.CSS_SELECTOR, ".bg-\[\#070202\]\/85").click()
+# runScript target=window.scrollTo(0,1500) value=
+self.driver.find_element(By.CSS_SELECTOR, ".relative:nth-child(1) > .w-full").click()
+self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(5)").click()
+# runScript target=window.scrollTo(0,1455) value=</td>
+                <td>Halaman grafik harian berhasil menampilkan data dengan filter tanggal default 'today'.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td class="center-text">TC 8.2</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")
+self.driver.set_window_size(974, 547)
+self.driver.find_element(By.CSS_SELECTOR, ".bg-\[\#070202\]\/85").click()
+self.driver.find_element(By.CSS_SELECTOR, ".bg-zinc-800:nth-child(1)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".px-4:nth-child(3)").click()
+# runScript target=window.scrollTo(0,1500) value=</td>
+                <td>Tombol navigasi 'Kemarin' dan 'Besok' berhasil memicu perubahan tanggal grafik secara aman.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td class="center-text">TC 8.3</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")
+self.driver.set_window_size(974, 547)
+self.driver.find_element(By.CSS_SELECTOR, ".bg-\[\#070202\]\/85").click()
+self.driver.find_element(By.CSS_SELECTOR, ".bg-black\/40:nth-child(2)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".bg-black\/40:nth-child(2)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".bg-black\/40:nth-child(2)").send_keys("2026-06-15")</td>
+                <td>DatePicker dapat memilih tanggal kustom 15 Juni 2026 dan memperbarui grafik telemetri.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td class="center-text">TC 8.4</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")
+self.driver.find_element(By.CSS_SELECTOR, "input[type='date']").send_keys("2030-01-01")
+assert self.driver.find_element(By.XPATH, "//*[contains(text(), 'Tidak Ada Data Telemetri')]").is_displayed()</td>
+                <td>Sistem menayangkan ilustrasi awan kosong dengan teks 'Tidak Ada Data Telemetri' saat data kosong.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td rowspan="1"><strong>9. Ekspor Laporan</strong></td>
+                <td class="center-text">TC 9.1</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")
+self.driver.set_window_size(974, 547)
+self.driver.find_element(By.CSS_SELECTOR, ".bg-\[\#070202\]\/85").click()
+self.driver.find_element(By.CSS_SELECTOR, ".hover\3A brightness-110").click()
+self.driver.find_element(By.CSS_SELECTOR, ".p-4:nth-child(4)").click()</td>
+                <td>Unduhan berkas laporan dalam format Excel (.xlsx) dan berkas PDF berhasil disimpan ke lokal.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td rowspan="3"><strong>10. Pengaturan AI Assistant</strong></td>
+                <td class="center-text">TC 10.1</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")
+self.driver.set_window_size(974, 547)
+self.driver.find_element(By.CSS_SELECTOR, ".bg-\[\#070202\]\/85").click()
+self.driver.find_element(By.CSS_SELECTOR, ".lucide-settings > circle").click()</td>
+                <td>Formulir preferensi AI memuat konfigurasi ruangan pengguna dari local storage secara sukses.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td class="center-text">TC 10.2</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")
+self.driver.set_window_size(974, 547)
+self.driver.find_element(By.CSS_SELECTOR, ".bg-\[\#070202\]\/85").click()
+self.driver.find_element(By.CSS_SELECTOR, ".lucide-settings > circle").click()
+self.driver.find_element(By.CSS_SELECTOR, ".sm\3Agrid-cols-3 > .gap-3:nth-child(1)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".gap-4:nth-child(1)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".sm\3Agrid-cols-4 > .p-4:nth-child(2) > .text-xs").click()
+self.driver.find_element(By.CSS_SELECTOR, ".p-6:nth-child(4) .p-4:nth-child(1)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".grid-cols-2 > .text-left:nth-child(1)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".p-6:nth-child(6) .p-4:nth-child(1)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".p-6:nth-child(7) .p-4:nth-child(3)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".px-8").click()
+self.driver.find_element(By.CSS_SELECTOR, ".flex-1:nth-child(1)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".space-y-2").click()</td>
+                <td>Pilihan kelompok rentan berhasil memperbarui dan menyalakan Modus Sensitivitas Tinggi.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td class="center-text">TC 10.3</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")
+self.driver.set_window_size(974, 547)
+self.driver.find_element(By.CSS_SELECTOR, ".bg-\[\#070202\]\/85").click()
+self.driver.find_element(By.CSS_SELECTOR, ".lucide-settings > path").click()
+self.driver.find_element(By.CSS_SELECTOR, ".px-8").click()
+# runScript target=window.scrollTo(0,1622) value=
+self.driver.find_element(By.CSS_SELECTOR, ".flex-1:nth-child(2)").click()
+# runScript target=window.scrollTo(0,1622) value=
+self.driver.find_element(By.CSS_SELECTOR, ".bg-\[\#070202\]\/85").click()</td>
+                <td>Sistem sukses menyimpan perubahan dan me-redirect pengguna ke halaman dashboard utama.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td rowspan="3"><strong>11. Portal & Autentikasi Admin</strong></td>
+                <td class="center-text">TC 11.1</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/admin")
+self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
+                <td>Sistem memblokir pengiriman form masuk admin yang kosong dan meminta pengisian kolom.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td class="center-text">TC 11.2</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/admin")
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .py-3").click()
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .py-3").send_keys("asd")
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .w-full").click()
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .w-full").send_keys("asd")
+self.driver.find_element(By.CSS_SELECTOR, ".space-y-5").click()
+self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
+                <td>Sistem menampilkan alert error 'Admin ID atau Password salah.' saat kredensial salah.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td class="center-text">TC 11.3</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/admin")
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .py-3").click()
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .py-3").send_keys("asdfghgfsdasfsgfdhert")
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .w-full").click()
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .w-full").click()
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .w-full").click()
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .w-full").send_keys("sdfigjkdflqwfsdgfbvuij")
+self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
+                <td>Sistem berhasil login admin dan mengalihkan halaman ke dashboard administrator.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td rowspan="5"><strong>12. Admin Dashboard</strong></td>
+                <td class="center-text">TC 12.1</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/admin/dashboard")
+self.driver.find_element(By.CSS_SELECTOR, ".text-black").click()
+self.driver.find_element(By.CSS_SELECTOR, ".placeholder\3Atext-zinc-700").click()
+self.driver.find_element(By.CSS_SELECTOR, ".placeholder\3Atext-zinc-700").send_keys("CS-DAPUR-OKTO")
+self.driver.find_element(By.CSS_SELECTOR, ".mt-2").click()
+self.driver.find_element(By.CSS_SELECTOR, ".text-\[\#0c0a08\]").click()
+self.driver.find_element(By.CSS_SELECTOR, ".fixed").click()
+self.driver.find_element(By.CSS_SELECTOR, ".lucide-x").click()</td>
+                <td>Perangkat baru berhasil didaftarkan di sistem MySQL/Firebase dan kode QR dibuat.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td class="center-text">TC 12.2</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/admin/dashboard")
+self.driver.find_element(By.CSS_SELECTOR, ".hover\3A bg-zinc-800\/10:nth-child(1) .p-2:nth-child(1)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".p-3:nth-child(3) .text-xs").click()
+self.driver.find_element(By.CSS_SELECTOR, ".p-3:nth-child(4)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".py-3 > .lucide").click()</td>
+                <td>Perangkat berhasil terikat secara manual ke akun email user terdaftar oleh administrator.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td class="center-text">TC 12.3</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/admin/dashboard")
+self.driver.find_element(By.CSS_SELECTOR, ".hover\3A bg-zinc-800\/10:nth-child(1) .p-2:nth-child(1) > .lucide").click()
+self.driver.find_element(By.CSS_SELECTOR, ".lucide-copy").click()</td>
+                <td>Source code C++ firmware untuk device disiapkan dan berhasil disalin lengkap.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td class="center-text">TC 12.4</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/admin/dashboard")
+self.driver.find_element(By.CSS_SELECTOR, ".hover\3A bg-zinc-800\/10:nth-child(1) .p-2:nth-child(2) > .lucide").click()
+self.driver.find_element(By.CSS_SELECTOR, ".font-mono:nth-child(2)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".font-mono:nth-child(2)").click()
+# doubleClick target=css=.font-mono:nth-child(2) value=
+self.driver.find_element(By.CSS_SELECTOR, ".font-mono:nth-child(2)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".font-mono:nth-child(2)").send_keys(" CS-DAPUR-OKTO-EDITED")
+self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(4) > .w-full").click()
+self.driver.find_element(By.CSS_SELECTOR, ".text-\[\#0c0a08\]").click()</td>
+                <td>Perubahan detail perangkat (ID baru, owner baru) berhasil diperbarui ke MySQL & Firebase.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td class="center-text">TC 12.5</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/admin/dashboard")
+self.driver.find_element(By.CSS_SELECTOR, ".text-black").click()
+self.driver.find_element(By.CSS_SELECTOR, ".placeholder\3Atext-zinc-700").click()
+self.driver.find_element(By.CSS_SELECTOR, ".placeholder\3Atext-zinc-700").send_keys("test dikit")
+self.driver.find_element(By.CSS_SELECTOR, ".text-\[\#0c0a08\]").click()
+self.driver.find_element(By.CSS_SELECTOR, ".lucide-x").click()
+# chooseOkOnNextConfirmation target= value=
+self.driver.find_element(By.CSS_SELECTOR, ".hover\3A bg-zinc-800\/10:nth-child(1) .p-2:nth-child(5) > .lucide").click()
+# assertConfirmation target=Apakah Anda yakin ingin menghapus perangkat test dikit? value=
+# webdriverChooseOkOnVisibleConfirmation target= value=</td>
+                <td>Perangkat terhapus secara permanen dari tabel database MySQL dan cabang Firebase RTDB.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+            <tr>
+                <td rowspan="1"><strong>13. Autentikasi (Logout)</strong></td>
+                <td class="center-text">TC 13.1</td>
+                <td class="code-cell">self.driver.get("http://localhost:3000/login")
+self.driver.set_window_size(974, 547)
+self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").click()
+self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").send_keys("okto3@gmail.com")
+self.driver.find_element(By.CSS_SELECTOR, ".pl-4").click()
+self.driver.find_element(By.CSS_SELECTOR, ".pl-4").send_keys("asdasd")
+self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()
+self.driver.find_element(By.CSS_SELECTOR, ".min-h-screen").click()
+self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()
+self.driver.find_element(By.CSS_SELECTOR, ".bg-\[\#070202\]\/85").click()
+self.driver.find_element(By.CSS_SELECTOR, ".lucide-log-out").click()</td>
+                <td>Sesi terhapus bersih dari browser localStorage dan dialihkan kembali ke halaman utama.</td>
+                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>

@@ -34,7 +34,7 @@ const seedDatabase = async () => {
       await Device.bulkCreate([
         { id: 'CS-DAPUR-01', userEmail: 'budi@example.com', status: 'Online', ppm: '450', lastActive: 'Baru saja' },
         { id: 'CS-KAMAR-02', userEmail: 'siti@example.com', status: 'Online', ppm: '800', lastActive: '2 mnt lalu' },
-        { id: 'CS-RUANG-03', userEmail: 'rahman@example.com', status: 'Offline', ppm: '--', lastActive: '5 jam lalu' },
+        { id: 'CS-RUANG-03', userEmail: 'rahman@example.com', status: 'Offline', ppm: '0', lastActive: '5 jam lalu' },
         { id: 'CS-DAPUR-04', userEmail: 'warung@example.com', status: 'Warning', ppm: '1250', lastActive: 'Baru saja' },
       ]);
       console.log('Seeded initial mock devices for testing.');
@@ -58,6 +58,10 @@ app.post('/api/auth/register', async (req, res) => {
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
       return res.status(400).json({ error: 'Email sudah terdaftar. Gunakan email lain.' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Kata sandi harus terdiri dari minimal 6 karakter.' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -172,11 +176,11 @@ app.get('/api/users', async (req, res) => {
 app.get('/api/devices', async (req, res) => {
   try {
     const { email } = req.query;
-    
+
     // Check and update offline status for devices that haven't sent data in 5 minutes
     const fiveMinutes = 5 * 60 * 1000;
     const now = new Date();
-    
+
     const allDevices = await Device.findAll();
     for (const device of allDevices) {
       if (device.status !== 'Offline' && device.status !== 'Menunggu Bind') {
@@ -189,14 +193,14 @@ app.get('/api/devices', async (req, res) => {
         }
       }
     }
-    
+
     let devices;
     if (email) {
       devices = await Device.findAll({ where: { userEmail: email }, order: [['createdAt', 'DESC']] });
     } else {
       devices = await Device.findAll({ order: [['createdAt', 'DESC']] });
     }
-    
+
     res.json(devices);
   } catch (error) {
     console.error('Get devices error:', error);
@@ -220,7 +224,7 @@ app.post('/api/devices', async (req, res) => {
 
     const device = await Device.create({
       id,
-      status: status || 'Online',
+      status: status || 'Offline',
       ppm: '--',
       lastActive: 'Belum Aktif'
     });
@@ -249,8 +253,27 @@ app.post('/api/devices/bind', async (req, res) => {
     // Set ownership and status
     device.userEmail = userEmail;
     device.status = 'Online';
+    device.ppm = '0';
     device.lastActive = 'Baru saja';
     await device.save();
+
+    // Sync to Firebase RTDB via REST API
+    try {
+      const dbUrl = "https://carbonsense-iot-default-rtdb.asia-southeast1.firebasedatabase.app";
+      await fetch(`${dbUrl}/${deviceId}.json`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userEmail: userEmail,
+          status: 'Online',
+          nilai_ppm: 0,
+          lastActive: 'Baru saja'
+        })
+      });
+      console.log(`Successfully synced bind for ${deviceId} to Firebase RTDB.`);
+    } catch (fbErr) {
+      console.error('Failed to sync bind to Firebase RTDB REST:', fbErr.message);
+    }
 
     res.json({ message: 'Perangkat berhasil ditautkan.', device });
   } catch (error) {
@@ -262,7 +285,7 @@ app.post('/api/devices/bind', async (req, res) => {
 // Telemetry Endpoint (e.g. for IoT devices or web simulation to push data)
 app.post('/api/devices/telemetry', async (req, res) => {
   try {
-    const { id, ppm, status } = req.body;
+    const { id, ppm, status, skipFirebaseSync } = req.body;
 
     if (!id) {
       return res.status(400).json({ error: 'Device ID wajib dikirim.' });
@@ -273,11 +296,80 @@ app.post('/api/devices/telemetry', async (req, res) => {
       return res.status(404).json({ error: 'Perangkat tidak terdaftar.' });
     }
 
-    if (ppm !== undefined) device.ppm = String(ppm);
+    if (ppm !== undefined) {
+      device.ppm = String(ppm);
+      // If the device is currently Offline and a new PPM comes in, bring it online automatically
+      if (device.status === 'Offline' && status !== 'Offline') {
+        device.status = Number(ppm) > 1200 ? 'Warning' : 'Online';
+      }
+    }
     if (status !== undefined) device.status = status;
     device.lastActive = 'Baru saja';
-    
+
     await device.save();
+
+    // Sync to Firebase RTDB via REST API so that front-end receives it in real-time!
+    if (!skipFirebaseSync) {
+      try {
+        const dbUrl = "https://carbonsense-iot-default-rtdb.asia-southeast1.firebasedatabase.app";
+        
+        // Fetch current data from Firebase RTDB to check for changes
+        const currentRes = await fetch(`${dbUrl}/${id}.json`);
+        let fbPpm = null;
+        let fbStatus = null;
+        let fbPing = 0;
+        
+        if (currentRes.ok) {
+          const fbData = await currentRes.json();
+          if (fbData) {
+            fbPpm = fbData.nilai_ppm !== undefined && fbData.nilai_ppm !== '--' ? Number(fbData.nilai_ppm) : null;
+            fbStatus = fbData.status !== undefined ? fbData.status : null;
+            fbPing = fbData.ping !== undefined ? Number(fbData.ping) : 0;
+          }
+        }
+
+        const ppmVal = ppm !== undefined && ppm !== '--' ? Number(ppm) : 0;
+        const finalPpm = isNaN(ppmVal) ? 0 : ppmVal;
+        const targetStatus = status || device.status || 'Online';
+
+        // Check if the values in Firebase are already identical to the incoming values
+        const isIdentical = (fbPpm === finalPpm && fbStatus === targetStatus);
+
+        if (isIdentical) {
+          console.log(`Skipped syncing telemetry to Firebase RTDB for ${id} (values are already identical: PPM=${finalPpm}, Status=${targetStatus}).`);
+        } else if (status === 'Offline') {
+          // Just update status to Offline in Firebase, do not increment ping and do not overwrite nilai_ppm
+          await fetch(`${dbUrl}/${id}.json`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              status: 'Offline',
+              lastActive: '5 menit yang lalu'
+            })
+          });
+          console.log(`Successfully synced offline status for ${id} to Firebase RTDB via REST API.`);
+        } else {
+          const payload = {
+            nilai_ppm: finalPpm,
+            status: targetStatus,
+            lastActive: 'Baru saja',
+            ping: fbPing + 1
+          };
+
+          await fetch(`${dbUrl}/${id}.json`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          console.log(`Successfully synced telemetry for ${id} to Firebase RTDB via REST API. Ping incremented to ${fbPing + 1}.`);
+        }
+      } catch (fbErr) {
+        console.error('Failed to sync telemetry to Firebase RTDB REST:', fbErr.message);
+      }
+    } else {
+      console.log(`Skipped syncing telemetry to Firebase RTDB for device ${id} (skipFirebaseSync is true).`);
+    }
+
     res.json({ message: 'Telemetry berhasil diperbarui.', device });
   } catch (error) {
     console.error('Update telemetry error:', error);
@@ -290,7 +382,7 @@ app.put('/api/devices/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { newId, userEmail, status, ppm } = req.body;
-    
+
     let updatedId = id;
     if (newId && newId !== id) {
       const existing = await Device.findByPk(newId);
@@ -305,14 +397,14 @@ app.put('/api/devices/:id', async (req, res) => {
     if (!device) {
       return res.status(404).json({ error: 'Perangkat tidak ditemukan.' });
     }
-    
+
     if (userEmail !== undefined) {
       device.userEmail = userEmail ? userEmail.trim() : null;
     }
     if (status !== undefined) device.status = status;
     if (ppm !== undefined) device.ppm = ppm;
     device.lastActive = 'Baru saja';
-    
+
     await device.save();
     res.json({ message: 'Perangkat berhasil diperbarui.', device });
   } catch (error) {
@@ -340,7 +432,7 @@ app.delete('/api/devices/:id', async (req, res) => {
 // AI Recommendation Proxy Route (Keeps API key secure in backend env)
 app.post('/api/ai/recommendation', async (req, res) => {
   try {
-    const { question, profile, carbonLevel, type } = req.body;
+    const { question, profile, carbonLevel, type, isOffline, chatHistory } = req.body;
     const deepseekKey = process.env.VITE_DEEPSEEK_API_KEY || process.env.DEEPSEEK_API_KEY;
 
     if (!deepseekKey) {
@@ -370,33 +462,56 @@ ATURAN STRUKTUR JAWABAN (WAJIB):
 
 Berikan ringkasan analisis profil ruangan saya yang ramah, alami, dan tidak kaku dalam bahasa Indonesia.`;
     } else {
-      systemPrompt = `Anda adalah CarbonSense AI Assistant, sebuah kecerdasan buatan pendeteksi karbon monoksida (CO) dan kualitas udara di dalam ruangan.
-Tugas Anda adalah menganalisis kondisi udara berdasarkan telemetri sensor PPM karbon real-time dan profil detail ruangan user, lalu memberikan rekomendasi keselamatan atau evakuasi darurat dalam bahasa Indonesia yang sangat sederhana dan ringkas.
+      systemPrompt = `Anda adalah CarbonSense AI Assistant, kecerdasan buatan terintegrasi untuk pendeteksian gas karbon monoksida (CO) dan kualitas udara dalam ruangan.
+Tugas Anda adalah memantau, mendiagnosis, memberikan rekomendasi pencegahan, keselamatan, serta instruksi evakuasi darurat dalam bahasa Indonesia yang ringkas, ramah, dan solutif.
 
-ATURAN STRUKTUR JAWABAN (WAJIB):
-1. JANGAN gunakan kalimat pembuka/kata pengantar, sapaan, ramah-tamah, atau filler pembuka (seperti "Tentu, ini adalah...", "Halo!", "Sebagai asisten...", "Berdasarkan data..."). Langsung berikan inti instruksi keselamatan atau status udara.
-2. JAWABAN HARUS SIMPEL, SINGKAT, DAN CONCISE (Maksimal 100 kata). Gunakan bahasa Indonesia yang mudah dipahami orang awam saat kondisi panik.
-3. FORMAT LANGKAH EVAKUASI / TINDAKAN DARURAT: Jika ada langkah-langkah evakuasi atau tindakan keselamatan, Anda WAJIB memformatnya menggunakan poin-poin dengan penomoran huruf kecil dan garis baru seperti contoh berikut:
-a. [Langkah 1]
-b. [Langkah 2]
-c. [Langkah 3]
-Setiap poin harus pendek, padat, langsung pada tindakan nyata, dan dipisahkan dengan baris baru. DILARANG membuat satu paragraf besar yang rumit dibaca.
-4. Sesuaikan respon secara langsung dengan data lingkungan berikut:
+INFORMASI PENTING TENTANG PROYEK CARBONSENSE:
+- CarbonSense adalah sistem pemantau kualitas udara terintegrasi berbasis IoT (ESP32) dengan sensor gas (MQ-7/MQ-9), database real-time (Firebase & PostgreSQL/MySQL melalui Supabase), serta asisten AI pintar.
+- Ambang batas PPM:
+  * <= 700 PPM: Aman & Normal (Kualitas udara baik).
+  * 701 - 1200 PPM: Waspada (Kadar karbon meningkat, buka sirkulasi).
+  * > 1200 PPM: Bahaya Kritis (Kadar membahayakan kesehatan, wajib evakuasi segera).
+
+PANDUAN AKTIVASI / MENYALAKAN ALAT CARBONSENSE DARI AWAL HINGGA AKHIR:
+a. Hubungkan Perangkat ke Listrik: Pasang kabel Micro-USB atau USB-C ke papan ESP32 CarbonSense dan colokkan ke adaptor daya.
+b. Hubungkan ke WiFi (Konfigurasi Pertama): Hubungkan HP/laptop ke WiFi Hotspot bernama "CarbonSense-AP". Portal web (Captive Portal) akan terbuka. Masukkan SSID dan password WiFi rumah Anda agar alat bisa online.
+c. Kalibrasi Awal (Pre-heating): Tunggu 1-2 menit agar sensor MQ melakukan pemanasan awal agar pembacaan data PPM stabil.
+d. Tautkan Perangkat: Masuk ke website CarbonSense, buka menu "Pilih Perangkat", dan masukkan ID Perangkat Anda (contoh: CS-DAPUR-01) agar terikat ke akun Anda.
+e. Selesai: Buka Dashboard Anda di browser Edge, indikator status alat akan berubah menjadi "Online", dan grafik pemantauan karbon akan mulai terisi secara dinamis.
+
+STATUS PERANGKAT SAAT INI:
 - Lokasi Alat: ${profile?.lokasi || 'Tidak ditentukan'}
 - Luas Ruangan: ${profile?.luas_ruang || 'Tidak ditentukan'}
 - Pola Sirkulasi: ${profile?.sirkulasi || 'Tidak ditentukan'}
-- Hunian: ${profile?.kapasitas || 'Tidak ditentukan'}
+- Hunian Rata-rata: ${profile?.kapasitas || 'Tidak ditentukan'}
 - Potensi Sumber Emisi: ${profile?.polutan?.join(', ') || 'Tidak Ada'}
-- Kelompok Kesehatan Rentan: ${profile?.rentan || 'Tidak Ada'}
+- Kelompok Rentan: ${profile?.rentan || 'Tidak Ada'}
 - Detektor Gas Lain: ${profile?.detektor_lain || 'Tidak Ada'}
-- Kadar CO Saat Ini: ${carbonLevel || 0} PPM
+- Status Koneksi: ${isOffline ? 'OFFLINE' : 'ONLINE'}
+- Kadar CO Saat Ini: ${isOffline ? 'TIDAK TERSEDIA (OFFLINE)' : `${carbonLevel || 0} PPM`}
 
-Ambang Batas PPM:
-- <= 700: Aman & Normal. Kualitas udara baik.
-- 701 - 1200: Waspada. Kadar karbon meningkat, disarankan membuka sirkulasi.
-- > 1200: Bahaya Kritis. Kadar karbon membahayakan kesehatan, evakuasi darurat wajib dilakukan segera.`;
+ATURAN KHUSUS STATUS OFFLINE (WAJIB):
+Jika perangkat sedang OFFLINE, Anda harus menolak memberikan data angka PPM saat ini. Katakan dengan jelas bahwa perangkat sedang offline dan pengguna harus mengaktifkannya terlebih dahulu mengikuti langkah panduan aktivasi di atas agar asisten AI mengetahui kadar PPM terakhir yang masuk. Jangan pernah berhalusinasi menyatakan kadar PPM saat ini (misalnya 450 PPM) jika perangkat sedang offline!
+
+ATURAN STRUKTUR RESPON Q&A:
+1. JAWABAN HARUS SIMPEL DAN RINGKAS (Maksimal 120 kata). Gunakan bahasa Indonesia yang mudah dipahami orang awam.
+2. Jika memberikan langkah-langkah, gunakan format poin berpenomoran huruf kecil seperti a., b., c. dan dipisah dengan baris baru agar mudah dibaca.
+3. Jawab pertanyaan pengguna dengan tepat sasaran berdasarkan sejarah percakapan dan konteks ruangan.`;
 
       userMessage = question || `Berikan rekomendasi keselamatan evakuasi karena terdeteksi kadar karbon kritis sebesar ${carbonLevel} PPM!`;
+    }
+
+    let messages = [{ role: 'system', content: systemPrompt }];
+
+    if (chatHistory && Array.isArray(chatHistory) && chatHistory.length > 0) {
+      chatHistory.slice(-10).forEach(msg => {
+        messages.push({
+          role: msg.sender === 'user' ? 'user' : 'assistant',
+          content: msg.text
+        });
+      });
+    } else {
+      messages.push({ role: 'user', content: userMessage });
     }
 
     const response = await fetch('https://api.deepseek.com/chat/completions', {
@@ -407,10 +522,7 @@ Ambang Batas PPM:
       },
       body: JSON.stringify({
         model: 'deepseek-chat',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userMessage }
-        ],
+        messages,
         temperature: 0.7,
         max_tokens: 800
       })
@@ -430,12 +542,59 @@ Ambang Batas PPM:
   }
 });
 
+// Update User Profile (username)
+app.put('/api/users/profile', async (req, res) => {
+  try {
+    const { email, username } = req.body;
+    if (!email || !username) {
+      return res.status(400).json({ error: 'Harap kirim email dan nama lengkap yang baru.' });
+    }
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      return res.status(404).json({ error: 'Pengguna tidak ditemukan.' });
+    }
+    user.username = username.trim();
+    await user.save();
+    res.json({ message: 'Profil berhasil diperbarui.', user: { id: user.id, username: user.username, email: user.email, role: user.role } });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ error: 'Terjadi kesalahan pada server saat memperbarui profil.' });
+  }
+});
+
+// Update User Password
+app.put('/api/users/password', async (req, res) => {
+  try {
+    const { email, oldPassword, newPassword } = req.body;
+    if (!email || !newPassword) {
+      return res.status(400).json({ error: 'Harap kirim email dan password baru.' });
+    }
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      return res.status(404).json({ error: 'Pengguna tidak ditemukan.' });
+    }
+    if (oldPassword) {
+      const isMatch = await bcrypt.compare(oldPassword, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ error: 'Password lama yang dimasukkan salah.' });
+      }
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+    res.json({ message: 'Password berhasil diperbarui.' });
+  } catch (error) {
+    console.error('Update password error:', error);
+    res.status(500).json({ error: 'Terjadi kesalahan pada server saat memperbarui password.' });
+  }
+});
+
 // Start Fullstack Backend Server
 const startServer = async () => {
   try {
     // Initialize Database (Connection & Auto Migration)
     await initDb();
-    
+
     // Seed essential data
     await seedDatabase();
 

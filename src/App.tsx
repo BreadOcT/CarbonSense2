@@ -29,12 +29,43 @@ function OnboardingGuard({ children }: { children: React.ReactNode }) {
 }
 
 function AdminGuard({ children }: { children: React.ReactNode }) {
-  const isAdmin = localStorage.getItem('cs_admin_token'); // Mock admin token
-  if (!isAdmin) return <Navigate to="/admin" replace />;
+  const token = localStorage.getItem('cs_admin_token');
+  
+  if (!token) {
+    return <Navigate to="/admin" replace />;
+  }
+
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      throw new Error('Format token tidak valid');
+    }
+    const payloadBase64 = parts[1];
+    // Base64url decoding
+    const payloadJson = atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/'));
+    const payload = JSON.parse(payloadJson);
+    
+    if (payload.role !== 'admin') {
+      throw new Error('Peran bukan admin');
+    }
+  } catch (error) {
+    console.error('Verifikasi admin gagal:', error);
+    localStorage.removeItem('cs_admin_token');
+    localStorage.removeItem('cs_admin_email');
+    return <Navigate to="/admin" replace />;
+  }
+
   return <>{children}</>;
 }
 
 export default function App() {
+  // Normalize pathnames with double slashes (e.g. //login -> /login)
+  if (window.location.pathname.includes('//')) {
+    const cleanPath = window.location.pathname.replace(/\/+/g, '/');
+    window.location.replace(cleanPath + window.location.search);
+    return null;
+  }
+
   return (
     <BrowserRouter>
       <Routes>
@@ -51,9 +82,12 @@ export default function App() {
         {/* Protected User Routes */}
         <Route path="/onboarding" element={<OnboardingGuard><Onboarding /></OnboardingGuard>} />
         <Route path="/select-device" element={<UserGuard><SelectDevice /></UserGuard>} />
-        <Route path="/dashboard" element={<UserGuard><Dashboard /></UserGuard>} /> {/* Redirecting to Select Device if dashboard is accessed directly without device, or UserGuard handles it */}
+        <Route path="/dashboard" element={<UserGuard><Dashboard /></UserGuard>} />
         <Route path="/settings" element={<UserGuard><Settings /></UserGuard>} />
         <Route path="/profile" element={<UserGuard><UserProfile /></UserGuard>} />
+
+        {/* Fallback Wildcard Route */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

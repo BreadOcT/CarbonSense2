@@ -114,7 +114,7 @@ export const api = {
       return body;
     },
 
-    async updateTelemetry(data: { id: string; ppm?: string | number; status?: string }): Promise<Device> {
+    async updateTelemetry(data: { id: string; ppm?: string | number; status?: string; skipFirebaseSync?: boolean }): Promise<Device> {
       const res = await fetch(`${API_BASE_URL}/api/devices/telemetry`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -131,10 +131,30 @@ export const api = {
       const body = await res.json();
       if (!res.ok) throw new Error(body.error || 'Gagal memuat daftar pengguna.');
       return body;
+    },
+    async updateProfile(data: { email: string; username: string }): Promise<{ message: string; user: User }> {
+      const res = await fetch(`${API_BASE_URL}/api/users/profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || 'Gagal memperbarui profil.');
+      return body;
+    },
+    async updatePassword(data: { email: string; oldPassword?: string; newPassword: string }): Promise<{ message: string }> {
+      const res = await fetch(`${API_BASE_URL}/api/users/password`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || 'Gagal memperbarui password.');
+      return body;
     }
   },
   ai: {
-    async getRecommendation(data: { question?: string; profile: any; carbonLevel: number | null; type?: string }): Promise<string> {
+    async getRecommendation(data: { question?: string; profile: any; carbonLevel: number | null; type?: string; isOffline?: boolean; chatHistory?: any[] }): Promise<string> {
       const res = await fetch(`${API_BASE_URL}/api/ai/recommendation`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
