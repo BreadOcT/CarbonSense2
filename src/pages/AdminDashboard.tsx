@@ -1,17 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Activity, Cpu, Users, ArrowLeft, Plus, Code, QrCode, X, Copy, CheckCircle2, UserPlus, Search, Trash2, Edit } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-interface Device {
-  id: string;
-  user: string;
-  userEmail?: string;
-  status: string;
-  ppm: number | string;
-  lastActive: string;
-}
+import { api } from '../lib/api';
+import { ref, set, update, onValue } from 'firebase/database';
+import { rtdb } from '../lib/firebase';
 
 const TEMPLATE_SOURCE_CODE = `#include <WiFi.h>
 #include <Firebase_ESP_Client.h>
@@ -135,15 +129,11 @@ void loop() {
 }
 `;
 
-import { api } from '../lib/api';
-import { ref, set, update, onValue } from 'firebase/database';
-import { rtdb } from '../lib/firebase';
-
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const [devices, setDevices] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [firebaseData, setFirebaseData] = useState<Record<string, any>>({});
 
   const handleLogout = () => {
@@ -154,14 +144,18 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const rootRef = ref(rtdb);
-    const unsubscribe = onValue(rootRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        setFirebaseData(data);
+    const unsubscribe = onValue(
+      rootRef,
+      (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          setFirebaseData(data);
+        }
+      },
+      (err) => {
+        console.error('Firebase listen error:', err);
       }
-    }, (err) => {
-      console.error('Firebase listen error:', err);
-    });
+    );
     return () => unsubscribe();
   }, []);
 
@@ -184,15 +178,11 @@ export default function AdminDashboard() {
     }
     return dev.ppm || '--';
   };
+
   const [currentView, setCurrentView] = useState<'devices' | 'users' | 'warning_devices'>('devices');
-
-  // Search query inside the user selector of Bind Modal
   const [userSearchQuery, setUserSearchQuery] = useState('');
-
-  // Global search query for tables
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Clear global search query when switching views
   useEffect(() => {
     setSearchQuery('');
   }, [currentView]);
@@ -238,7 +228,6 @@ export default function AdminDashboard() {
   const [editStatus, setEditStatus] = useState('Online');
   const [editPpm, setEditPpm] = useState('--');
 
-  // Clear query and selection on modal open/close
   useEffect(() => {
     if (!showBindModal) {
       setUserSearchQuery('');
@@ -256,7 +245,6 @@ export default function AdminDashboard() {
         status: newDeviceStatus
       });
 
-      // Initialize in Firebase Realtime Database ONLY if it doesn't already exist there
       try {
         const fbDev = firebaseData[newDeviceId];
         if (!fbDev) {
@@ -272,14 +260,12 @@ export default function AdminDashboard() {
         console.error('Failed to initialize device in Firebase RTDB:', fbErr);
       }
 
-      // Reload dashboard data
       await fetchData();
 
       setShowAddModal(false);
       setSelectedDevice(newDev);
       setShowQRModal(true);
 
-      // Reset form
       setNewDeviceId('');
       setNewDeviceStatus('Offline');
     } catch (err: any) {
@@ -297,7 +283,6 @@ export default function AdminDashboard() {
         userEmail: bindUserEmail
       });
 
-      // Update in Firebase Realtime Database
       try {
         await update(ref(rtdb, selectedDevice.id), {
           userEmail: bindUserEmail,
@@ -308,7 +293,6 @@ export default function AdminDashboard() {
         console.error('Failed to update device userEmail in Firebase RTDB:', fbErr);
       }
 
-      // Reload dashboard data
       await fetchData();
 
       setBindSuccess(true);
@@ -327,7 +311,6 @@ export default function AdminDashboard() {
     try {
       await api.devices.delete(id);
 
-      // Delete from Firebase Realtime Database
       try {
         const { ref: fbRef, remove } = await import('firebase/database');
         await remove(fbRef(rtdb, id));
@@ -351,14 +334,12 @@ export default function AdminDashboard() {
         ppm: editPpm
       });
 
-      // Update Firebase Realtime Database as well
       try {
         const { ref: fbRef, update: fbUpdate, remove: fbRemove, set: fbSet } = await import('firebase/database');
         const ppmVal = editPpm !== '--' ? Number(editPpm) : 0;
         const finalPpm = isNaN(ppmVal) ? 0 : ppmVal;
 
         if (newEditDeviceId && newEditDeviceId.trim() !== editDeviceId) {
-          // Move node to new Device ID
           const oldData = firebaseData[editDeviceId] || {};
           const newData = {
             ...oldData,
@@ -371,7 +352,6 @@ export default function AdminDashboard() {
           await fbSet(fbRef(rtdb, newEditDeviceId.trim()), newData);
           await fbRemove(fbRef(rtdb, editDeviceId));
         } else {
-          // Regular update
           await fbUpdate(fbRef(rtdb, editDeviceId), {
             userEmail: editUserEmail ? editUserEmail.trim() : '',
             status: editStatus,
@@ -400,21 +380,26 @@ export default function AdminDashboard() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const filteredUsers = users.filter(u =>
-    u.email.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
-    u.username.toLowerCase().includes(userSearchQuery.toLowerCase())
+  const filteredUsers = users.filter(
+    u =>
+      u.email.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+      u.username.toLowerCase().includes(userSearchQuery.toLowerCase())
   );
 
   const displayedUsers = users.filter(u => {
     const searchLower = searchQuery.toLowerCase();
-    const matchesUser = u.email.toLowerCase().includes(searchLower) || u.username.toLowerCase().includes(searchLower);
-    const matchesDevice = devices.some(d => d.userEmail === u.email && d.id.toLowerCase().includes(searchLower));
+    const matchesUser =
+      u.email.toLowerCase().includes(searchLower) || u.username.toLowerCase().includes(searchLower);
+    const matchesDevice = devices.some(
+      d => d.userEmail === u.email && d.id.toLowerCase().includes(searchLower)
+    );
     return matchesUser || matchesDevice;
   });
 
-  const displayedDevices = (currentView === 'warning_devices'
-    ? devices.filter(d => getDeviceStatus(d) === 'Warning')
-    : devices
+  const displayedDevices = (
+    currentView === 'warning_devices'
+      ? devices.filter(d => getDeviceStatus(d) === 'Warning')
+      : devices
   ).filter(d => {
     const searchLower = searchQuery.toLowerCase();
     const deviceId = d.id.toLowerCase();
@@ -432,116 +417,96 @@ export default function AdminDashboard() {
   });
 
   return (
-    <div className="min-h-screen text-[var(--cs-text)] font-sans p-6 md:p-12 relative" style={{ background: 'var(--cs-bg)' }}>
+    <div className="min-h-screen bg-[#F0F9FF] text-[#0F172A] font-sans p-4 sm:p-8 md:p-12 relative">
       <div className="max-w-6xl mx-auto">
-        <header className="flex items-center justify-between mb-12">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
           <div>
-            <h1 className="text-3xl font-bold tracking-wide uppercase mb-2" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>Admin Dashboard</h1>
-            <p className="text-[var(--cs-text-dim)]">Manajemen Perangkat CarbonSense</p>
+            <span className="text-[10px] font-mono uppercase tracking-widest text-[#0284C7] font-bold">
+              PANEL ADMINISTRATOR
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] mt-0.5">
+              Admin Dashboard CarbonSense
+            </h1>
+            <p className="text-xs text-[#475569]">
+              Manajemen Perangkat IoT ESP32, Penautan Pengguna, &amp; Kode Firmware
+            </p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setShowAddModal(true)}
-              className="px-4 py-2 text-black rounded-lg text-sm font-bold transition-all cursor-pointer flex items-center gap-2 hover:brightness-110 shadow-md"
-              style={{ background: 'var(--cs-amber)', boxShadow: '0 4px 15px -4px var(--cs-amber-glow)' }}
+              className="px-4 py-2.5 bg-[#0284C7] hover:bg-[#0369A1] text-white rounded-xl text-xs font-extrabold transition-all cursor-pointer flex items-center gap-2 shadow-md shadow-[#0284C7]/25"
             >
-              <Plus className="w-4 h-4" /> Tambah Device
+              <Plus className="w-4 h-4" /> Tambah Device Baru
             </button>
-            <button 
-              onClick={handleLogout} 
-              className="px-4 py-2 rounded-lg text-sm transition-all flex items-center gap-2 border cursor-pointer" 
-              style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)', color: 'var(--cs-text)' }}
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border border-slate-300 bg-white hover:border-[#DC2626] text-[#475569] hover:text-[#DC2626] cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" /> Keluar
             </button>
           </div>
         </header>
 
-        {/* Dynamic Metric Cards with Framer Motion Animations */}
-        <div className="grid md:grid-cols-3 gap-6 mb-12">
+        {/* Dynamic Metric Cards */}
+        <div className="grid md:grid-cols-3 gap-6 mb-10">
           <motion.div
-            whileHover={{ scale: 1.03, y: -6, boxShadow: '0 25px 30px -10px rgba(251,191,36,0.15)' }}
-            whileTap={{ scale: 0.97 }}
+            whileHover={{ scale: 1.02, y: -4 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => setCurrentView('devices')}
-            className={`p-6 border rounded-2xl cursor-pointer transition-all duration-300 relative overflow-hidden`}
-            style={{
-              background: 'var(--cs-surface)',
-              borderColor: currentView === 'devices' ? 'var(--cs-amber)' : 'var(--cs-border)'
-            }}
+            className={`p-6 bg-white border-2 rounded-3xl cursor-pointer transition-all relative overflow-hidden shadow-sm ${
+              currentView === 'devices' ? 'border-[#0284C7]' : 'border-slate-200'
+            }`}
           >
-            <div className="absolute top-0 right-0 w-24 h-24 bg-[radial-gradient(circle_at_center,var(--cs-amber-glow)_0,transparent_70%)] opacity-30 pointer-events-none" />
-            <Cpu className="w-6 h-6 mb-4" style={{ color: 'var(--cs-amber)' }} />
-            <motion.p
-              key={devices.length}
-              initial={{ scale: 0.7, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="text-3xl font-bold"
-              style={{ fontFamily: 'var(--font-display)', color: 'var(--cs-amber)' }}
-            >
-              {devices.length}
-            </motion.p>
-            <p className="text-sm text-[var(--cs-text-dim)] font-medium">Total Device Aktif</p>
+            <div className="w-11 h-11 rounded-2xl bg-[#E0F2FE] flex items-center justify-center mb-3 text-[#0284C7]">
+              <Cpu className="w-6 h-6" />
+            </div>
+            <p className="text-3xl font-black text-[#0284C7]">{devices.length}</p>
+            <p className="text-xs text-[#475569] font-bold mt-1">Total Perangkat Terdaftar</p>
             {currentView === 'devices' && (
-              <motion.div layoutId="activeBorder" className="absolute bottom-0 left-0 right-0 h-1 bg-[var(--cs-amber)]" />
+              <motion.div layoutId="activeBorder" className="absolute bottom-0 left-0 right-0 h-1 bg-[#0284C7]" />
             )}
           </motion.div>
 
           <motion.div
-            whileHover={{ scale: 1.03, y: -6, boxShadow: '0 25px 30px -10px rgba(251,191,36,0.15)' }}
-            whileTap={{ scale: 0.97 }}
+            whileHover={{ scale: 1.02, y: -4 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => setCurrentView('users')}
-            className={`p-6 border rounded-2xl cursor-pointer transition-all duration-300 relative overflow-hidden`}
-            style={{
-              background: 'var(--cs-surface)',
-              borderColor: currentView === 'users' ? 'var(--cs-amber)' : 'var(--cs-border)'
-            }}
+            className={`p-6 bg-white border-2 rounded-3xl cursor-pointer transition-all relative overflow-hidden shadow-sm ${
+              currentView === 'users' ? 'border-[#0284C7]' : 'border-slate-200'
+            }`}
           >
-            <div className="absolute top-0 right-0 w-24 h-24 bg-[radial-gradient(circle_at_center,var(--cs-amber-glow)_0,transparent_70%)] opacity-30 pointer-events-none" />
-            <Users className="w-6 h-6 mb-4" style={{ color: 'var(--cs-amber)' }} />
-            <motion.p
-              key={users.length}
-              initial={{ scale: 0.7, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="text-3xl font-bold"
-              style={{ fontFamily: 'var(--font-display)', color: 'var(--cs-amber)' }}
-            >
-              {users.length}
-            </motion.p>
-            <p className="text-sm text-[var(--cs-text-dim)] font-medium">Pengguna Terdaftar</p>
+            <div className="w-11 h-11 rounded-2xl bg-[#E0F2FE] flex items-center justify-center mb-3 text-[#0284C7]">
+              <Users className="w-6 h-6" />
+            </div>
+            <p className="text-3xl font-black text-[#0284C7]">{users.length}</p>
+            <p className="text-xs text-[#475569] font-bold mt-1">Pengguna Terdaftar</p>
             {currentView === 'users' && (
-              <motion.div layoutId="activeBorder" className="absolute bottom-0 left-0 right-0 h-1 bg-[var(--cs-amber)]" />
+              <motion.div layoutId="activeBorder" className="absolute bottom-0 left-0 right-0 h-1 bg-[#0284C7]" />
             )}
           </motion.div>
 
           <motion.div
-            whileHover={{ scale: 1.03, y: -6, boxShadow: '0 25px 30px -10px rgba(239,68,68,0.15)' }}
-            whileTap={{ scale: 0.97 }}
+            whileHover={{ scale: 1.02, y: -4 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => setCurrentView('warning_devices')}
-            className={`p-6 border rounded-2xl cursor-pointer transition-all duration-300 relative overflow-hidden`}
-            style={{
-              background: 'color-mix(in oklab, var(--cs-danger) 8%, var(--cs-surface))',
-              borderColor: currentView === 'warning_devices' ? 'var(--cs-danger)' : 'color-mix(in oklab, var(--cs-danger) 20%, var(--cs-border))'
-            }}
+            className={`p-6 bg-[#FEF2F2] border-2 rounded-3xl cursor-pointer transition-all relative overflow-hidden shadow-sm ${
+              currentView === 'warning_devices' ? 'border-[#DC2626]' : 'border-[#FECACA]'
+            }`}
           >
-            <div className="absolute top-0 right-0 w-24 h-24 bg-[radial-gradient(circle_at_center,rgba(239,68,68,0.15)_0,transparent_70%)] pointer-events-none" />
-            <Activity className="w-6 h-6 mb-4 animate-pulse" style={{ color: 'var(--cs-danger-text)' }} />
-            <motion.p
-              key={devices.filter(d => d.status === 'Warning').length}
-              initial={{ scale: 0.7, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="text-3xl font-bold"
-              style={{ fontFamily: 'var(--font-display)', color: 'var(--cs-danger-text)' }}
-            >
-              {devices.filter(d => d.status === 'Warning').length}
-            </motion.p>
-            <p className="text-sm" style={{ color: 'var(--cs-danger-text)' }}>Device Status Bahaya</p>
+            <div className="w-11 h-11 rounded-2xl bg-[#FEE2E2] flex items-center justify-center mb-3 text-[#DC2626]">
+              <Activity className="w-6 h-6 animate-pulse" />
+            </div>
+            <p className="text-3xl font-black text-[#DC2626]">
+              {devices.filter(d => getDeviceStatus(d) === 'Warning').length}
+            </p>
+            <p className="text-xs text-[#DC2626] font-bold mt-1">Perangkat Status Bahaya</p>
             {currentView === 'warning_devices' && (
-              <motion.div layoutId="activeBorder" className="absolute bottom-0 left-0 right-0 h-1 bg-[var(--cs-danger)]" />
+              <motion.div layoutId="activeBorder" className="absolute bottom-0 left-0 right-0 h-1 bg-[#DC2626]" />
             )}
           </motion.div>
         </div>
 
-        {/* Render Tables with Framer Motion Transitions */}
+        {/* Tables */}
         <AnimatePresence mode="wait">
           {currentView === 'users' ? (
             <motion.div
@@ -550,25 +515,25 @@ export default function AdminDashboard() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.25 }}
-              className="border rounded-3xl overflow-hidden shadow-xl"
-              style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}
+              className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-md"
             >
-              <div className="p-6 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-4" style={{ borderColor: 'var(--cs-border)' }}>
-                <h2 className="text-lg font-bold">Daftar Pengguna Terdaftar & Perangkatnya</h2>
+              <div className="p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <h2 className="text-base font-extrabold text-[#0F172A]">
+                  Daftar Pengguna Terdaftar &amp; Perangkatnya
+                </h2>
                 <div className="relative w-full sm:w-72">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#475569]" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-9 py-2 bg-black/40 border rounded-xl focus:outline-none focus:border-[var(--cs-amber)] transition-colors placeholder:text-zinc-650 text-sm text-white"
-                    style={{ borderColor: 'var(--cs-border)' }}
+                    className="w-full pl-10 pr-9 py-2 bg-[#F9FAFB] border border-slate-300 rounded-xl focus:outline-none focus:border-[#0284C7] focus:bg-white transition-colors text-xs text-[#0F172A]"
                     placeholder="Cari pengguna, email, device..."
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#475569] hover:text-[#0F172A] cursor-pointer"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -576,28 +541,31 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead className="text-[var(--cs-text-dim)]" style={{ background: 'var(--cs-surface-2)' }}>
+                <table className="w-full text-left text-xs">
+                  <thead className="text-[#475569] bg-[#F9FAFB] border-b border-slate-200 uppercase font-bold">
                     <tr>
-                      <th className="px-6 py-4 font-medium">Username</th>
-                      <th className="px-6 py-4 font-medium">Email</th>
-                      <th className="px-6 py-4 font-medium">Perangkat Dimiliki</th>
+                      <th className="px-6 py-4">Username</th>
+                      <th className="px-6 py-4">Email</th>
+                      <th className="px-6 py-4">Perangkat Dimiliki</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+                  <tbody className="divide-y divide-slate-200">
                     {displayedUsers.map((u, i) => {
                       const userDevices = devices.filter(d => d.userEmail === u.email);
                       return (
-                        <tr key={i} className="hover:bg-zinc-800/10 transition-colors">
-                          <td className="px-6 py-4 font-bold text-white">{u.username}</td>
-                          <td className="px-6 py-4 text-[var(--cs-text-dim)] font-mono">{u.email}</td>
+                        <tr key={i} className="hover:bg-[#F0F9FF]/60 transition-colors">
+                          <td className="px-6 py-4 font-bold text-[#0F172A]">{u.username}</td>
+                          <td className="px-6 py-4 text-[#475569] font-mono">{u.email}</td>
                           <td className="px-6 py-4">
                             {userDevices.length === 0 ? (
-                              <span className="text-zinc-500 text-xs italic">Tidak ada perangkat</span>
+                              <span className="text-slate-400 italic">Tidak ada perangkat</span>
                             ) : (
                               <div className="flex flex-wrap gap-2">
                                 {userDevices.map(d => (
-                                  <span key={d.id} className="px-2.5 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-lg text-xs font-mono font-bold">
+                                  <span
+                                    key={d.id}
+                                    className="px-2.5 py-1 bg-[#E0F2FE] border border-[#0284C7]/30 text-[#0284C7] rounded-lg text-xs font-mono font-bold"
+                                  >
                                     {d.id} ({d.status})
                                   </span>
                                 ))}
@@ -609,8 +577,10 @@ export default function AdminDashboard() {
                     })}
                     {displayedUsers.length === 0 && (
                       <tr>
-                        <td colSpan={3} className="text-center py-8 text-zinc-500">
-                          {users.length === 0 ? 'Belum ada pengguna terdaftar.' : 'Tidak ada pengguna yang cocok dengan pencarian.'}
+                        <td colSpan={3} className="text-center py-8 text-[#475569]">
+                          {users.length === 0
+                            ? 'Belum ada pengguna terdaftar.'
+                            : 'Tidak ada pengguna yang cocok dengan pencarian.'}
                         </td>
                       </tr>
                     )}
@@ -625,27 +595,27 @@ export default function AdminDashboard() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.25 }}
-              className="border rounded-3xl overflow-hidden shadow-xl"
-              style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}
+              className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-md"
             >
-              <div className="p-6 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-4" style={{ borderColor: 'var(--cs-border)' }}>
-                <h2 className="text-lg font-bold">
-                  {currentView === 'warning_devices' ? 'Daftar Perangkat Bahaya' : 'Daftar Perangkat Terdaftar'}
+              <div className="p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <h2 className="text-base font-extrabold text-[#0F172A]">
+                  {currentView === 'warning_devices'
+                    ? 'Daftar Perangkat Status Bahaya'
+                    : 'Daftar Perangkat Terdaftar'}
                 </h2>
                 <div className="relative w-full sm:w-72">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#475569]" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-9 py-2 bg-black/40 border rounded-xl focus:outline-none focus:border-[var(--cs-amber)] transition-colors placeholder:text-zinc-650 text-sm text-white"
-                    style={{ borderColor: 'var(--cs-border)' }}
+                    className="w-full pl-10 pr-9 py-2 bg-[#F9FAFB] border border-slate-300 rounded-xl focus:outline-none focus:border-[#0284C7] focus:bg-white transition-colors text-xs text-[#0F172A]"
                     placeholder="Cari device ID, pengguna, status..."
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#475569] hover:text-[#0F172A] cursor-pointer"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -653,100 +623,114 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead className="text-[var(--cs-text-dim)]" style={{ background: 'var(--cs-surface-2)' }}>
+                <table className="w-full text-left text-xs">
+                  <thead className="text-[#475569] bg-[#F9FAFB] border-b border-slate-200 uppercase font-bold">
                     <tr>
-                      <th className="px-6 py-4 font-medium">Device ID</th>
-                      <th className="px-6 py-4 font-medium">Pengguna</th>
-                      <th className="px-6 py-4 font-medium">Status</th>
-                      <th className="px-6 py-4 font-medium">PPM Terakhir</th>
-                      <th className="px-6 py-4 font-medium">Aktivitas Terakhir</th>
-                      <th className="px-6 py-4 font-medium text-right">Aksi</th>
+                      <th className="px-6 py-4">Device ID</th>
+                      <th className="px-6 py-4">Pengguna</th>
+                      <th className="px-6 py-4">Status</th>
+                      <th className="px-6 py-4">PPM Terakhir</th>
+                      <th className="px-6 py-4">Aktivitas Terakhir</th>
+                      <th className="px-6 py-4 text-right">Aksi</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-                    {displayedDevices.map((dev, i) => (
-                      <tr key={i} className="hover:bg-zinc-800/10 transition-colors">
-                        <td className="px-6 py-4 font-mono font-bold" style={{ color: 'var(--cs-amber)' }}>{dev.id}</td>
-                        <td className="px-6 py-4">{dev.userEmail || 'Belum Terdaftar'}</td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${getDeviceStatus(dev) === 'Online' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                              getDeviceStatus(dev) === 'Warning' ? 'bg-red-500/10 text-red-450 border-red-500/20' :
-                                getDeviceStatus(dev) === 'Menunggu Bind' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
-                                  'bg-zinc-800 text-zinc-400 border border-zinc-700'
-                            }`}>
-                            {getDeviceStatus(dev)}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 font-bold">{getDevicePPM(dev)}</td>
-                        <td className="px-6 py-4 text-[var(--cs-text-dim)]">{dev.lastActive}</td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            {(!dev.userEmail || dev.status === 'Menunggu Bind') && (
-                              <>
-                                <button
-                                  onClick={() => {
-                                    setSelectedDevice(dev);
-                                    setBindUserEmail(dev.userEmail || '');
-                                    setShowBindModal(true);
-                                  }}
-                                  className="p-2 rounded-lg transition-colors border cursor-pointer"
-                                  style={{ background: 'color-mix(in oklab, var(--cs-amber) 12%, transparent)', borderColor: 'color-mix(in oklab, var(--cs-amber) 20%, var(--cs-border))', color: 'var(--cs-amber)' }}
-                                  title="Tautkan Pengguna"
-                                >
-                                  <UserPlus className="w-4 h-4" />
-                                </button>
-                                {!dev.userEmail && (
+                  <tbody className="divide-y divide-slate-200">
+                    {displayedDevices.map((dev, i) => {
+                      const st = getDeviceStatus(dev);
+                      return (
+                        <tr key={i} className="hover:bg-[#F0F9FF]/60 transition-colors">
+                          <td className="px-6 py-4 font-mono font-bold text-[#0284C7]">{dev.id}</td>
+                          <td className="px-6 py-4 font-medium text-[#0F172A]">
+                            {dev.userEmail || <span className="text-slate-400 italic">Belum Terdaftar</span>}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span
+                              className={`px-2.5 py-1 rounded-full text-[11px] font-bold border ${
+                                st === 'Online'
+                                  ? 'bg-[#DCFCE7] text-[#16A34A] border-[#86EFAC]'
+                                  : st === 'Warning'
+                                  ? 'bg-[#FEE2E2] text-[#DC2626] border-[#FCA5A5]'
+                                  : st === 'Menunggu Bind'
+                                  ? 'bg-[#FFEDD5] text-[#EA580C] border-[#FDBA74]'
+                                  : 'bg-slate-100 text-[#475569] border-slate-300'
+                              }`}
+                            >
+                              {st}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 font-bold text-[#0F172A]">{getDevicePPM(dev)}</td>
+                          <td className="px-6 py-4 text-[#475569]">{dev.lastActive}</td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {(!dev.userEmail || dev.status === 'Menunggu Bind') && (
+                                <>
                                   <button
-                                    onClick={() => { setSelectedDevice(dev); setShowQRModal(true); }}
-                                    className="p-2 rounded-lg transition-colors border cursor-pointer"
-                                    style={{ background: 'color-mix(in oklab, var(--cs-amber) 12%, transparent)', borderColor: 'color-mix(in oklab, var(--cs-amber) 20%, var(--cs-border))', color: 'var(--cs-amber)' }}
-                                    title="Tampilkan QR Code"
+                                    onClick={() => {
+                                      setSelectedDevice(dev);
+                                      setBindUserEmail(dev.userEmail || '');
+                                      setShowBindModal(true);
+                                    }}
+                                    className="p-2 rounded-xl bg-[#E0F2FE] hover:bg-[#BAE6FD] text-[#0284C7] border border-[#0284C7]/20 transition-colors cursor-pointer"
+                                    title="Tautkan Pengguna"
                                   >
-                                    <QrCode className="w-4 h-4" />
+                                    <UserPlus className="w-4 h-4" />
                                   </button>
-                                )}
-                              </>
-                            )}
-                            <button
-                              onClick={() => { setSelectedDevice(dev); setShowSourceModal(true); }}
-                              className="p-2 rounded-lg transition-colors border cursor-pointer"
-                              style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)', color: 'var(--cs-text)' }}
-                              title="Lihat Source Code"
-                            >
-                              <Code className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => {
-                                setEditDeviceId(dev.id);
-                                setNewEditDeviceId(dev.id);
-                                setEditUserEmail(dev.userEmail || '');
-                                setEditStatus(getDeviceStatus(dev));
-                                setEditPpm(getDevicePPM(dev));
-                                setShowEditModal(true);
-                              }}
-                              className="p-2 rounded-lg transition-colors border cursor-pointer"
-                              style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)', color: 'var(--cs-amber)' }}
-                              title="Edit Perangkat"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteDevice(dev.id)}
-                              className="p-2 rounded-lg transition-colors border cursor-pointer hover:text-red-400"
-                              style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)', color: 'var(--cs-danger-text)' }}
-                              title="Hapus Perangkat"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                                  {!dev.userEmail && (
+                                    <button
+                                      onClick={() => {
+                                        setSelectedDevice(dev);
+                                        setShowQRModal(true);
+                                      }}
+                                      className="p-2 rounded-xl bg-[#E0F2FE] hover:bg-[#BAE6FD] text-[#0284C7] border border-[#0284C7]/20 transition-colors cursor-pointer"
+                                      title="Tampilkan QR Code"
+                                    >
+                                      <QrCode className="w-4 h-4" />
+                                    </button>
+                                  )}
+                                </>
+                              )}
+                              <button
+                                onClick={() => {
+                                  setSelectedDevice(dev);
+                                  setShowSourceModal(true);
+                                }}
+                                className="p-2 rounded-xl bg-[#F9FAFB] hover:bg-slate-100 text-[#0F172A] border border-slate-300 transition-colors cursor-pointer"
+                                title="Lihat Source Code"
+                              >
+                                <Code className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setEditDeviceId(dev.id);
+                                  setNewEditDeviceId(dev.id);
+                                  setEditUserEmail(dev.userEmail || '');
+                                  setEditStatus(getDeviceStatus(dev));
+                                  setEditPpm(getDevicePPM(dev));
+                                  setShowEditModal(true);
+                                }}
+                                className="p-2 rounded-xl bg-[#F9FAFB] hover:bg-[#E0F2FE] text-[#0284C7] border border-slate-300 transition-colors cursor-pointer"
+                                title="Edit Perangkat"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteDevice(dev.id)}
+                                className="p-2 rounded-xl bg-[#FEF2F2] hover:bg-[#FEE2E2] text-[#DC2626] border border-[#FECACA] transition-colors cursor-pointer"
+                                title="Hapus Perangkat"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                     {displayedDevices.length === 0 && (
                       <tr>
-                        <td colSpan={6} className="text-center py-8 text-zinc-500">
-                          {devices.length === 0 ? 'Tidak ada perangkat terdaftar.' : 'Tidak ada perangkat yang cocok dengan pencarian.'}
+                        <td colSpan={6} className="text-center py-8 text-[#475569]">
+                          {devices.length === 0
+                            ? 'Tidak ada perangkat terdaftar.'
+                            : 'Tidak ada perangkat yang cocok dengan pencarian.'}
                         </td>
                       </tr>
                     )}
@@ -760,75 +744,76 @@ export default function AdminDashboard() {
 
       {/* Bind User Modal */}
       {showBindModal && selectedDevice && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="border w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200 rounded-[2rem]" style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}>
-            <div className="p-6 border-b flex items-center justify-between" style={{ borderColor: 'var(--cs-border)' }}>
-              <h3 className="text-xl font-bold tracking-wide uppercase" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>Tautkan Akun ke Device</h3>
-              <button disabled={bindSuccess} onClick={() => setShowBindModal(false)} className="text-zinc-400 hover:text-white cursor-pointer">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white border border-slate-200 w-full max-w-md overflow-hidden rounded-3xl shadow-2xl">
+            <div className="p-6 border-b border-slate-200 flex items-center justify-between">
+              <h3 className="text-lg font-extrabold text-[#0F172A]">Tautkan Akun ke Device</h3>
+              <button
+                disabled={bindSuccess}
+                onClick={() => setShowBindModal(false)}
+                className="text-[#475569] hover:text-[#0F172A] cursor-pointer"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6">
               {bindSuccess ? (
                 <div className="text-center py-6">
-                  <CheckCircle2 className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--cs-amber)' }} />
-                  <h4 className="text-xl font-bold mb-2">Berhasil Ditautkan!</h4>
-                  <p className="text-[var(--cs-text-dim)]">Device {selectedDevice.id} sekarang milik {bindUserEmail}.</p>
+                  <CheckCircle2 className="w-16 h-16 mx-auto mb-4 text-[#16A34A]" />
+                  <h4 className="text-xl font-extrabold text-[#0F172A] mb-2">Berhasil Ditautkan!</h4>
+                  <p className="text-xs text-[#475569]">
+                    Device <strong>{selectedDevice.id}</strong> sekarang milik <strong>{bindUserEmail}</strong>.
+                  </p>
                 </div>
               ) : (
                 <form onSubmit={handleBindUser} className="space-y-4">
-                  <p className="text-sm text-[var(--cs-text-dim)] mb-4">
-                    Pilih pengguna terdaftar untuk menautkan perangkat <strong style={{ color: 'var(--cs-amber)' }}>{selectedDevice.id}</strong>.
+                  <p className="text-xs text-[#475569] mb-4">
+                    Pilih pengguna terdaftar untuk menautkan perangkat{' '}
+                    <strong className="text-[#0284C7]">{selectedDevice.id}</strong>.
                   </p>
 
                   <div className="space-y-3">
-                    <label className="block text-sm font-medium text-[var(--cs-text-dim)]">Pilih Akun Pengguna</label>
-
-                    {/* Real-time Search Input */}
+                    <label className="block text-xs font-bold text-[#475569]">Pilih Akun Pengguna</label>
                     <div className="relative">
-                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#475569]" />
                       <input
                         type="text"
                         value={userSearchQuery}
                         onChange={(e) => setUserSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-black/40 border rounded-xl focus:outline-none focus:border-[var(--cs-amber)] transition-colors placeholder:text-zinc-650 text-sm text-white"
-                        style={{ borderColor: 'var(--cs-border)' }}
+                        className="w-full pl-10 pr-4 py-2.5 bg-[#F9FAFB] border border-slate-300 rounded-xl focus:outline-none focus:border-[#0284C7] focus:bg-white text-xs text-[#0F172A]"
                         placeholder="Cari berdasarkan username atau email..."
                       />
-                      {userSearchQuery && (
-                        <button
-                          type="button"
-                          onClick={() => setUserSearchQuery('')}
-                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white text-xs font-bold"
-                        >
-                          Clear
-                        </button>
-                      )}
                     </div>
 
-                    {/* Scrollable list selector */}
-                    <div className="border rounded-2xl max-h-48 overflow-y-auto divide-y divide-zinc-800 p-2 space-y-1" style={{ background: 'rgba(0,0,0,0.2)', borderColor: 'var(--cs-border)' }}>
+                    <div className="border border-slate-200 bg-[#F9FAFB] rounded-2xl max-h-48 overflow-y-auto divide-y divide-slate-200 p-2 space-y-1">
                       {filteredUsers.map((u) => {
                         const isSelected = bindUserEmail === u.email;
                         return (
                           <div
                             key={u.id}
                             onClick={() => setBindUserEmail(u.email)}
-                            className={`p-3 rounded-xl cursor-pointer transition-all flex items-center justify-between ${isSelected ? 'bg-amber-500/10 border border-amber-500/30 text-amber-400' : 'hover:bg-zinc-800/40 text-zinc-300'
-                              }`}
+                            className={`p-3 rounded-xl cursor-pointer transition-all flex items-center justify-between ${
+                              isSelected
+                                ? 'bg-[#E0F2FE] border border-[#0284C7] text-[#0284C7]'
+                                : 'hover:bg-white text-[#0F172A]'
+                            }`}
                           >
                             <div className="text-left">
-                              <p className="font-bold text-sm text-white">{u.username}</p>
-                              <p className="text-xs text-zinc-500 font-mono">{u.email}</p>
+                              <p className="font-bold text-xs text-[#0F172A]">{u.username}</p>
+                              <p className="text-[11px] text-[#475569] font-mono">{u.email}</p>
                             </div>
                             {isSelected && (
-                              <span className="text-[10px] font-bold px-2 py-0.5 bg-amber-500/20 text-amber-400 border border-amber-500/20 rounded-md uppercase tracking-wider">Terpilih</span>
+                              <span className="text-[10px] font-bold px-2 py-0.5 bg-[#0284C7] text-white rounded-md uppercase">
+                                Terpilih
+                              </span>
                             )}
                           </div>
                         );
                       })}
                       {filteredUsers.length === 0 && (
-                        <p className="text-center py-6 text-xs text-zinc-500 italic">Tidak ada pengguna ditemukan.</p>
+                        <p className="text-center py-6 text-xs text-[#475569] italic">
+                          Tidak ada pengguna ditemukan.
+                        </p>
                       )}
                     </div>
                   </div>
@@ -836,11 +821,11 @@ export default function AdminDashboard() {
                   <button
                     type="submit"
                     disabled={!bindUserEmail}
-                    className={`w-full py-3 text-black font-bold rounded-xl transition-all mt-6 flex justify-center items-center gap-2 cursor-pointer ${!bindUserEmail ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110'
-                      }`}
-                    style={{ background: 'var(--cs-amber)', boxShadow: bindUserEmail ? '0 4px 15px -4px var(--cs-amber-glow)' : 'none' }}
+                    className={`w-full py-3 bg-[#0284C7] hover:bg-[#0369A1] text-white font-extrabold text-xs rounded-xl transition-all mt-6 flex justify-center items-center gap-2 cursor-pointer ${
+                      !bindUserEmail ? 'opacity-40 cursor-not-allowed' : ''
+                    }`}
                   >
-                    <UserPlus className="w-5 h-5" /> Konfirmasi Binding
+                    <UserPlus className="w-4 h-4" /> Konfirmasi Penautan
                   </button>
                 </form>
               )}
@@ -851,38 +836,45 @@ export default function AdminDashboard() {
 
       {/* Add Device Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="border w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200 rounded-[2rem]" style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}>
-            <div className="p-6 border-b flex items-center justify-between" style={{ borderColor: 'var(--cs-border)' }}>
-              <h3 className="text-xl font-bold tracking-wide uppercase" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>Daftarkan Device Baru</h3>
-              <button onClick={() => setShowAddModal(false)} className="text-zinc-400 hover:text-white cursor-pointer">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white border border-slate-200 w-full max-w-md overflow-hidden rounded-3xl shadow-2xl">
+            <div className="p-6 border-b border-slate-200 flex items-center justify-between">
+              <h3 className="text-lg font-extrabold text-[#0F172A]">Daftarkan Device Baru</h3>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="text-[#475569] hover:text-[#0F172A] cursor-pointer"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6">
               <form onSubmit={handleAddDevice} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-[var(--cs-text-dim)] mb-2">Nama Device (ID)</label>
+                  <label className="block text-xs font-bold text-[#475569] mb-1.5">Nama Device (ID)</label>
                   <input
                     type="text"
                     required
                     value={newDeviceId}
                     onChange={(e) => setNewDeviceId(e.target.value)}
-                    className="w-full px-4 py-3 bg-black/40 border rounded-xl focus:outline-none focus:border-[var(--cs-amber)] transition-colors placeholder:text-zinc-700"
-                    style={{ borderColor: 'var(--cs-border)' }}
+                    className="w-full px-4 py-3 bg-[#F9FAFB] border border-slate-300 rounded-xl focus:outline-none focus:border-[#0284C7] focus:bg-white text-sm text-[#0F172A] font-mono"
                     placeholder="Misal: CS-RUANGTAMU-02"
                   />
-                  <p className="text-xs text-zinc-500 mt-2">Gunakan format kapital tanpa spasi untuk menghindari error pada Firebase path.</p>
+                  <p className="text-[11px] text-[#475569] mt-1.5">
+                    Gunakan huruf kapital tanpa spasi untuk path Firebase RTDB.
+                  </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[var(--cs-text-dim)] mb-2">Status Awal</label>
+                  <label className="block text-xs font-bold text-[#475569] mb-1.5">Status Awal</label>
                   <div className="grid grid-cols-3 gap-2">
                     {['Online', 'Offline', 'Warning'].map(status => (
-                      <label key={status} className="p-3 border rounded-xl text-center cursor-pointer transition-colors relative" style={{
-                        borderColor: newDeviceStatus === status ? 'var(--cs-amber)' : 'var(--cs-border)',
-                        background: newDeviceStatus === status ? 'color-mix(in oklab, var(--cs-amber) 10%, var(--cs-surface))' : 'rgba(0,0,0,0.2)',
-                        color: newDeviceStatus === status ? 'var(--cs-amber)' : 'var(--cs-text-dim)'
-                      }}>
+                      <label
+                        key={status}
+                        className={`p-3 border rounded-xl text-center cursor-pointer transition-colors text-xs font-bold ${
+                          newDeviceStatus === status
+                            ? 'border-[#0284C7] bg-[#E0F2FE] text-[#0284C7]'
+                            : 'border-slate-200 bg-[#F9FAFB] text-[#475569]'
+                        }`}
+                      >
                         <input
                           type="radio"
                           name="status"
@@ -896,8 +888,11 @@ export default function AdminDashboard() {
                     ))}
                   </div>
                 </div>
-                <button type="submit" className="w-full py-3 text-[#0c0a08] font-bold rounded-xl transition-all mt-6 cursor-pointer hover:brightness-110" style={{ background: 'var(--cs-amber)', boxShadow: '0 4px 15px -4px var(--cs-amber-glow)' }}>
-                  Buat Device & Generate QR
+                <button
+                  type="submit"
+                  className="w-full py-3.5 bg-[#0284C7] hover:bg-[#0369A1] text-white font-extrabold text-xs rounded-xl transition-all mt-4 cursor-pointer shadow-md shadow-[#0284C7]/25"
+                >
+                  Buat Device &amp; Tampilkan QR
                 </button>
               </form>
             </div>
@@ -907,20 +902,24 @@ export default function AdminDashboard() {
 
       {/* QR Code Modal */}
       {showQRModal && selectedDevice && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="border w-full max-w-sm overflow-hidden text-center animate-in fade-in zoom-in-95 duration-200 rounded-[2rem]" style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}>
-            <div className="p-6 pb-0 flex justify-end">
-              <button onClick={() => setShowQRModal(false)} className="text-zinc-400 hover:text-white cursor-pointer">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white border border-slate-200 w-full max-w-sm overflow-hidden text-center rounded-3xl shadow-2xl">
+            <div className="p-5 pb-0 flex justify-end">
+              <button
+                onClick={() => setShowQRModal(false)}
+                className="text-[#475569] hover:text-[#0F172A] cursor-pointer"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-8 pt-2">
-              <h3 className="text-xl font-bold tracking-wide uppercase mb-2" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>Device Berhasil Dibuat</h3>
-              <p className="text-sm text-[var(--cs-text-dim)] mb-8">
-                Minta pengguna untuk melakukan scan QR Code di bawah ini untuk mendaftar dan menautkan device <strong style={{ color: 'var(--cs-amber)' }}>{selectedDevice.id}</strong>.
+              <h3 className="text-lg font-extrabold text-[#0F172A] mb-2">Device Berhasil Dibuat</h3>
+              <p className="text-xs text-[#475569] mb-6">
+                Minta pengguna melakukan scan QR Code di bawah ini untuk menautkan device{' '}
+                <strong className="text-[#0284C7]">{selectedDevice.id}</strong>.
               </p>
 
-              <div className="bg-white p-6 rounded-2xl inline-block mb-8">
+              <div className="bg-white p-5 rounded-2xl inline-block mb-6 border border-slate-200 shadow-sm">
                 <QRCodeSVG
                   value={`${window.location.origin}/register?device=${selectedDevice.id}`}
                   size={200}
@@ -929,18 +928,15 @@ export default function AdminDashboard() {
                 />
               </div>
 
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    setShowQRModal(false);
-                    setShowSourceModal(true);
-                  }}
-                  className="flex-1 py-3 hover:bg-zinc-700 font-medium rounded-xl border transition-colors cursor-pointer text-white"
-                  style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}
-                >
-                  Lihat Source Code
-                </button>
-              </div>
+              <button
+                onClick={() => {
+                  setShowQRModal(false);
+                  setShowSourceModal(true);
+                }}
+                className="w-full py-3 bg-[#0284C7] hover:bg-[#0369A1] text-white font-extrabold text-xs rounded-xl transition-colors cursor-pointer"
+              >
+                Lihat Source Code .ino
+              </button>
             </div>
           </div>
         </div>
@@ -948,41 +944,62 @@ export default function AdminDashboard() {
 
       {/* Source Code Modal */}
       {showSourceModal && selectedDevice && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="border w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 rounded-[2rem]" style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}>
-            <div className="p-6 border-b flex items-center justify-between bg-zinc-900/80 backdrop-blur" style={{ borderColor: 'var(--cs-border)' }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white border border-slate-200 w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden rounded-3xl shadow-2xl">
+            <div className="p-6 border-b border-slate-200 flex items-center justify-between bg-[#F9FAFB]">
               <div>
-                <h3 className="text-xl font-bold tracking-wide uppercase" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>Source Code Firmware \`.ino\`</h3>
-                <p className="text-sm text-[var(--cs-text-dim)] mt-1">Generated khusus untuk device: <strong style={{ color: 'var(--cs-amber)' }}>{selectedDevice.id}</strong></p>
+                <h3 className="text-lg font-extrabold text-[#0F172A]">Source Code Firmware `.ino`</h3>
+                <p className="text-xs text-[#475569] mt-0.5">
+                  Kode khusus untuk perangkat: <strong className="text-[#0284C7]">{selectedDevice.id}</strong>
+                </p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5">
                 <button
                   onClick={handleCopySourceCode}
-                  className="px-4 py-2 border rounded-lg flex items-center gap-2 text-sm font-medium transition-colors cursor-pointer"
-                  style={{
-                    background: copied ? 'color-mix(in oklab, var(--cs-amber) 12%, transparent)' : 'var(--cs-surface)',
-                    borderColor: copied ? 'var(--cs-amber)' : 'var(--cs-border)',
-                    color: copied ? 'var(--cs-amber)' : 'var(--cs-text)'
-                  }}
+                  className={`px-4 py-2 border rounded-xl flex items-center gap-2 text-xs font-bold transition-colors cursor-pointer ${
+                    copied
+                      ? 'bg-[#DCFCE7] border-[#16A34A] text-[#16A34A]'
+                      : 'bg-white border-slate-300 text-[#0F172A] hover:border-[#0284C7]'
+                  }`}
                 >
-                  {copied ? <><CheckCircle2 className="w-4 h-4" /> Tersalin!</> : <><Copy className="w-4 h-4" /> Copy Code</>}
+                  {copied ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" /> Tersalin!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" /> Salin Kode
+                    </>
+                  )}
                 </button>
-                <button onClick={() => setShowSourceModal(false)} className="p-2 border text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer" style={{ borderColor: 'var(--cs-border)' }}>
+                <button
+                  onClick={() => setShowSourceModal(false)}
+                  className="p-2 border border-slate-300 bg-white text-[#475569] hover:text-[#0F172A] rounded-xl cursor-pointer"
+                >
                   <X className="w-5 h-5" />
                 </button>
               </div>
             </div>
-            <div className="flex-1 overflow-auto p-6 bg-zinc-950 font-mono text-sm">
-              <pre className="text-amber-300/80">
+            <div className="flex-1 overflow-auto p-6 bg-slate-900 font-mono text-xs text-sky-200">
+              <pre>
                 <code>
-                  {TEMPLATE_SOURCE_CODE
-                    .replace(/\{\{DEVICE_NAME\}\}/g, selectedDevice.id)
+                  {TEMPLATE_SOURCE_CODE.replace(/\{\{DEVICE_NAME\}\}/g, selectedDevice.id)
                     .replace(/\{\{USER_EMAIL\}\}/g, selectedDevice.userEmail || 'Belum Terhubung')
                     .split('\n')
                     .map((line, i) => (
-                      <div key={i} className="hover:bg-zinc-900/50 px-2 py-0.5 rounded flex">
-                        <span className="w-8 text-zinc-650 select-none border-r mr-4 text-right pr-2" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>{i + 1}</span>
-                        <span className={line.includes('API_KEY') || line.includes('DATABASE_URL') || line.includes('emisi_pabrik') || line.includes(selectedDevice.id) ? 'text-amber-400' : ''}>
+                      <div key={i} className="hover:bg-slate-800/70 px-2 py-0.5 rounded flex">
+                        <span className="w-8 text-slate-500 select-none border-r border-slate-700 mr-4 text-right pr-2">
+                          {i + 1}
+                        </span>
+                        <span
+                          className={
+                            line.includes('API_KEY') ||
+                            line.includes('DATABASE_URL') ||
+                            line.includes(selectedDevice.id)
+                              ? 'text-sky-400 font-bold'
+                              : ''
+                          }
+                        >
                           {line}
                         </span>
                       </div>
@@ -996,48 +1013,55 @@ export default function AdminDashboard() {
 
       {/* Edit Device Modal */}
       {showEditModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="border w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200 rounded-[2rem]" style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}>
-            <div className="p-6 border-b flex items-center justify-between" style={{ borderColor: 'var(--cs-border)' }}>
-              <h3 className="text-xl font-bold tracking-wide uppercase" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>Edit Device: {editDeviceId}</h3>
-              <button onClick={() => setShowEditModal(false)} className="text-zinc-400 hover:text-white cursor-pointer">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white border border-slate-200 w-full max-w-md overflow-hidden rounded-3xl shadow-2xl">
+            <div className="p-6 border-b border-slate-200 flex items-center justify-between">
+              <h3 className="text-lg font-extrabold text-[#0F172A]">Edit Device: {editDeviceId}</h3>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="text-[#475569] hover:text-[#0F172A] cursor-pointer"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6">
               <form onSubmit={handleEditDeviceSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-[var(--cs-text-dim)] mb-2">Device ID (Nama Device)</label>
+                  <label className="block text-xs font-bold text-[#475569] mb-1.5">
+                    Device ID (Nama Device)
+                  </label>
                   <input
                     type="text"
                     required
                     value={newEditDeviceId}
                     onChange={(e) => setNewEditDeviceId(e.target.value)}
-                    className="w-full px-4 py-3 bg-black/40 border rounded-xl focus:outline-none focus:border-[var(--cs-amber)] transition-colors placeholder:text-zinc-700 font-mono font-bold"
-                    style={{ borderColor: 'var(--cs-border)' }}
-                    placeholder="Misal: CS-RUANGTAMU-02"
+                    className="w-full px-4 py-2.5 bg-[#F9FAFB] border border-slate-300 rounded-xl focus:outline-none focus:border-[#0284C7] focus:bg-white font-mono font-bold text-sm text-[#0F172A]"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[var(--cs-text-dim)] mb-2">Email Pemilik (Kosongkan untuk Unbind)</label>
+                  <label className="block text-xs font-bold text-[#475569] mb-1.5">
+                    Email Pemilik (Kosongkan untuk Unbind)
+                  </label>
                   <input
                     type="text"
                     value={editUserEmail}
                     onChange={(e) => setEditUserEmail(e.target.value)}
-                    className="w-full px-4 py-3 bg-black/40 border rounded-xl focus:outline-none focus:border-[var(--cs-amber)] transition-colors placeholder:text-zinc-700"
-                    style={{ borderColor: 'var(--cs-border)' }}
+                    className="w-full px-4 py-2.5 bg-[#F9FAFB] border border-slate-300 rounded-xl focus:outline-none focus:border-[#0284C7] focus:bg-white text-sm text-[#0F172A]"
                     placeholder="Contoh: user@example.com"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[var(--cs-text-dim)] mb-2">Status Perangkat</label>
+                  <label className="block text-xs font-bold text-[#475569] mb-1.5">Status Perangkat</label>
                   <div className="grid grid-cols-3 gap-2">
                     {['Online', 'Offline', 'Warning'].map(status => (
-                      <label key={status} className="p-3 border rounded-xl text-center cursor-pointer transition-colors relative" style={{
-                        borderColor: editStatus === status ? 'var(--cs-amber)' : 'var(--cs-border)',
-                        background: editStatus === status ? 'color-mix(in oklab, var(--cs-amber) 10%, var(--cs-surface))' : 'rgba(0,0,0,0.2)',
-                        color: editStatus === status ? 'var(--cs-amber)' : 'var(--cs-text-dim)'
-                      }}>
+                      <label
+                        key={status}
+                        className={`p-2.5 border rounded-xl text-center cursor-pointer transition-colors text-xs font-bold ${
+                          editStatus === status
+                            ? 'border-[#0284C7] bg-[#E0F2FE] text-[#0284C7]'
+                            : 'border-slate-200 bg-[#F9FAFB] text-[#475569]'
+                        }`}
+                      >
                         <input
                           type="radio"
                           name="editStatus"
@@ -1052,18 +1076,22 @@ export default function AdminDashboard() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[var(--cs-text-dim)] mb-2">Kadar CO (PPM) Terakhir</label>
+                  <label className="block text-xs font-bold text-[#475569] mb-1.5">
+                    Kadar CO (PPM) Terakhir
+                  </label>
                   <input
                     type="text"
                     required
                     value={editPpm}
                     onChange={(e) => setEditPpm(e.target.value)}
-                    className="w-full px-4 py-3 bg-black/40 border rounded-xl focus:outline-none focus:border-[var(--cs-amber)] transition-colors placeholder:text-zinc-700"
-                    style={{ borderColor: 'var(--cs-border)' }}
+                    className="w-full px-4 py-2.5 bg-[#F9FAFB] border border-slate-300 rounded-xl focus:outline-none focus:border-[#0284C7] focus:bg-white text-sm text-[#0F172A]"
                     placeholder="Contoh: 450 atau --"
                   />
                 </div>
-                <button type="submit" className="w-full py-3 text-[#0c0a08] font-bold rounded-xl transition-all mt-6 cursor-pointer hover:brightness-110" style={{ background: 'var(--cs-amber)', boxShadow: '0 4px 15px -4px var(--cs-amber-glow)' }}>
+                <button
+                  type="submit"
+                  className="w-full py-3.5 bg-[#0284C7] hover:bg-[#0369A1] text-white font-extrabold text-xs rounded-xl transition-all mt-4 cursor-pointer shadow-md shadow-[#0284C7]/25"
+                >
                   Simpan Perubahan
                 </button>
               </form>
@@ -1071,7 +1099,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
-
     </div>
   );
 }

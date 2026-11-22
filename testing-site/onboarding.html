@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pengaturan Awal Ruangan - CarbonSense</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body class="bg-[#F0F9FF] text-[#0F172A] font-sans min-h-screen flex flex-col justify-between grid-backdrop">
+
+  <!-- Header -->
+  <header class="w-full border-b border-slate-200 bg-white/90 backdrop-blur-md shadow-sm">
+    <div class="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-[#0284C7] flex items-center justify-center font-bold text-white shadow-md shadow-[#0284C7]/25">
+          <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <span class="font-display text-2xl tracking-wider text-[#0F172A]">CarbonSense</span>
+      </div>
+      <div id="step-counter-header" class="text-xs font-bold px-3.5 py-1.5 rounded-full bg-[#E0F2FE] border border-[#0284C7]/30 text-[#0284C7]">
+        Langkah <span id="current-step-num">1</span> dari <span id="total-steps-num">7</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Wizard Content Container -->
+  <main class="flex-1 flex items-center justify-center p-6 my-6">
+    <div class="w-full max-w-2xl">
+
+      <!-- Progress bar -->
+      <div class="w-full bg-white h-2.5 rounded-full mb-8 overflow-hidden border border-slate-200 shadow-inner">
+        <div id="progress-bar-fill" class="h-full bg-[#0284C7] transition-all duration-300 w-[14%]"></div>
+      </div>
+
+      <!-- Question Card Container -->
+      <div id="wizard-question-box" class="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl relative">
+        <div class="flex items-center gap-2 text-[#0284C7] text-xs font-bold uppercase tracking-wider mb-2">
+          <span class="w-2 h-2 rounded-full bg-[#0284C7] animate-pulse"></span>
+          <span id="wizard-badge">Pengaturan Ruangan & Kontak Darurat</span>
+        </div>
+
+        <h2 id="wizard-title" class="text-2xl sm:text-3xl font-bold text-[#0F172A] mb-2 font-display tracking-wider">
+          Lokasi Pemasangan Alat
+        </h2>
+        <p id="wizard-desc" class="text-sm text-[#475569] mb-8">
+          Di bagian mana alat pendeteksi gas ini akan dipasang?
+        </p>
+
+        <!-- Options Container -->
+        <div id="wizard-options" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
+          <!-- Dynamically populated options or custom inputs -->
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="flex items-center justify-between pt-6 border-t border-slate-200">
+          <button 
+            type="button" 
+            id="wizard-btn-prev" 
+            onclick="prevStep()" 
+            class="px-5 py-2.5 rounded-xl text-xs font-bold text-[#475569] hover:text-[#0284C7] border border-slate-300 bg-white hover:bg-[#F0F9FF] transition disabled:opacity-40 disabled:cursor-not-allowed"
+            disabled
+          >
+            Kembali
+          </button>
+          
+          <button 
+            type="button" 
+            id="wizard-btn-next" 
+            onclick="nextStep()" 
+            class="btn-primary px-6 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-[#0284C7]/20"
+          >
+            <span>Lanjut</span>
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Processing state (Hidden initially) -->
+      <div id="wizard-processing" class="hidden bg-white p-10 rounded-3xl border border-slate-200 text-center shadow-xl">
+        <div class="w-16 h-16 rounded-full border-4 border-[#E0F2FE] border-t-[#0284C7] animate-spin mx-auto mb-6"></div>
+        <h3 class="text-2xl font-bold text-[#0F172A] font-display tracking-wider">Menyimpan Pengaturan Ruangan...</h3>
+        <p class="text-sm text-[#475569] mt-2 max-w-md mx-auto">
+          Sistem sedang menyetel batas aman kadar udara dan kontak darurat untuk tempat Anda.
+        </p>
+      </div>
+
+      <!-- Final Summary Card (Hidden initially) -->
+      <div id="wizard-summary-box" class="hidden bg-white p-8 rounded-3xl border border-[#0284C7]/40 shadow-xl relative overflow-hidden">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-200 mb-6">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-[#DCFCE7] text-[#16A34A] flex items-center justify-center font-bold">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-xl font-bold text-[#0F172A] font-display tracking-wider">Pengaturan Ruangan Selesai</h3>
+              <p class="text-xs text-[#475569]">Sistem siap memantau kualitas udara secara aktif</p>
+            </div>
+          </div>
+          <span id="summary-sensitivity-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-[#DCFCE7] text-[#16A34A] border border-[#16A34A]/30">
+            Status Pemantauan Aktif
+          </span>
+        </div>
+
+        <div class="bg-[#F9FAFB] p-6 rounded-2xl border border-slate-200 mb-6">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-[#0284C7] mb-2">Ringkasan Pengaturan Ruangan:</h4>
+          <p id="summary-text" class="text-sm text-[#475569] leading-relaxed">
+            <!-- Dynamically populated summary -->
+          </p>
+        </div>
+
+        <!-- Answers recap pills -->
+        <div class="mb-6">
+          <span class="text-xs uppercase font-bold text-[#475569] block mb-2">Pilihan yang Disimpan:</span>
+          <div id="summary-recap-pills" class="flex flex-wrap gap-2">
+            <!-- Dynamically populated pills -->
+          </div>
+        </div>
+
+        <!-- Registered WhatsApp Contacts Recap -->
+        <div class="mb-8 p-4 rounded-2xl bg-[#F9FAFB] border border-slate-200">
+          <span class="text-xs uppercase font-bold text-[#475569] block mb-2">Kontak WhatsApp Peringatan Bahaya:</span>
+          <div id="summary-contacts-list" class="space-y-2">
+            <!-- Dynamically populated contacts -->
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-6 border-t border-slate-200">
+          <button 
+            type="button" 
+            onclick="restartWizard()" 
+            class="px-5 py-2.5 rounded-xl text-xs font-bold text-[#475569] hover:text-[#0284C7] border border-slate-300 bg-white hover:bg-[#F0F9FF] transition"
+          >
+            Ubah Pengaturan
+          </button>
+          <a 
+            href="select-device.html" 
+            class="btn-primary px-8 py-3 rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-[#0284C7]/25"
+          >
+            <span>Lanjut ke Pilih Alat</span>
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="py-6 text-center text-xs text-[#475569] border-t border-slate-200 bg-white">
+    CarbonSense &bull; Solusi Deteksi Gas untuk Tempat Usaha & Rumah Tangga
+  </footer>
+
+  <script src="assets/js/mock-data.js"></script>
+  <script src="assets/js/testing-nav.js"></script>
+  <script>
+    const STEPS = [
+      {
+        id: 'lokasi',
+        title: 'Lokasi Pemasangan Alat',
+        desc: 'Di bagian mana alat pendeteksi gas ini akan dipasang?',
+        options: ['Dapur / Tempat Memasak', 'Ruang Usaha / Warung / Toko', 'Ruang Keluarga / Tamu', 'Kamar Tidur', 'Lainnya']
+      },
+      {
+        id: 'sirkulasi',
+        title: 'Kondisi Aliran Udara / Ventilasi',
+        desc: 'Bagaimana sirkulasi udara di ruangan tempat alat berada?',
+        options: ['Ruangan tertutup ber-AC', 'Jendela rutin dibuka', 'Ada Kipas Pembuang (Exhaust Fan)', 'Ruangan terbuka / semi-terbuka', 'Lainnya']
+      },
+      {
+        id: 'kapasitas',
+        title: 'Jumlah Orang yang Beraktivitas',
+        desc: 'Berapa banyak orang yang biasanya beraktivitas di area ini?',
+        options: ['1-2 Orang', '3-5 Orang', 'Lebih dari 5 Orang', 'Jarang ada orang']
+      },
+      {
+        id: 'polutan',
+        title: 'Potensi Sumber Gas / Asap',
+        desc: 'Apakah ada sumber api, gas kompor, atau asap di dekat alat?',
+        options: ['Kompor Gas / Tabung LPG', 'Asap Rokok', 'Asap Kendaraan / Garasi', 'Mesin Produksi / Pembakaran', 'Tidak Ada', 'Lainnya']
+      },
+      {
+        id: 'luas_ruang',
+        title: 'Perkiraan Luas Ruangan',
+        desc: 'Kira-kira seberapa luas area ruangan yang dipantau?',
+        options: ['Kecil (kurang dari 10 m²)', 'Sedang (10 sampai 25 m²)', 'Luas (lebih dari 25 m²)', 'Lainnya']
+      },
+      {
+        id: 'detektor_lain',
+        title: 'Alat Pengaman Lain yang Sudah Ada',
+        desc: 'Apakah sebelumnya sudah ada alarm gas atau alat pemadam kebakaran?',
+        options: ['Belum ada sama sekali', 'Sudah ada alarm asap / gas', 'Ada Tabung Pemadam (APAR)', 'Lainnya']
+      },
+      {
+        id: 'kontak_darurat',
+        type: 'contacts_list',
+        title: 'Nomor WhatsApp untuk Peringatan Bahaya',
+        desc: 'Masukkan kontak WhatsApp yang akan otomatis menerima pesan jika ada kebocoran gas. Anda bisa menambahkan lebih dari satu kontak.'
+      }
+    ];
+
+    let currentStepIdx = 0;
+    const userAnswers = [];
+    const customLainnyaTexts = {};
+
+    // Multi-contact storage for step kontak_darurat
+    let emergencyContacts = [
+      { id: 'c-1', name: 'Penanggung Jawab / Keluarga', phone: '+6285694813059' }
+    ];
+
+    // Load existing profile & contacts if available
+    if (window.MockStore) {
+      const savedContacts = window.MockStore.getEmergencyContacts();
+      if (Array.isArray(savedContacts) && savedContacts.length > 0) {
+        emergencyContacts = savedContacts.map(c => ({
+          id: c.id || ('c-' + Math.random().toString(36).substr(2, 5)),
+          name: c.name || 'Kontak',
+          phone: c.phone || '+6285694813059'
+        }));
+      }
+    }
+
+    function renderStep() {
+      const step = STEPS[currentStepIdx];
+      document.getElementById('current-step-num').textContent = currentStepIdx + 1;
+      document.getElementById('total-steps-num').textContent = STEPS.length;
+      document.getElementById('progress-bar-fill').style.width = `${((currentStepIdx + 1) / STEPS.length) * 100}%`;
+      
+      document.getElementById('wizard-title').textContent = step.title;
+      document.getElementById('wizard-desc').textContent = step.desc;
+
+      const prevBtn = document.getElementById('wizard-btn-prev');
+      prevBtn.disabled = currentStepIdx === 0;
+
+      const optsContainer = document.getElementById('wizard-options');
+      optsContainer.innerHTML = '';
+
+      // Check if step is multi-contact list
+      if (step.type === 'contacts_list') {
+        renderContactsListUI(optsContainer);
+        return;
+      }
+
+      // Normal choice steps with editable "Lainnya"
+      optsContainer.className = 'grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8';
+
+      let currentSelection = userAnswers.find(a => a.id === step.id)?.value || step.options[0];
+
+      if (!userAnswers.some(a => a.id === step.id)) {
+        userAnswers.push({ id: step.id, value: currentSelection });
+      }
+
+      step.options.forEach(opt => {
+        const isLainnya = (opt === 'Lainnya');
+        const isSelected = isLainnya 
+          ? (typeof currentSelection === 'string' && (currentSelection === 'Lainnya' || currentSelection.startsWith('Lainnya:')))
+          : (currentSelection === opt);
+
+        const card = document.createElement('div');
+        card.className = `p-4 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between ${
+          isSelected 
+            ? 'bg-[#E0F2FE] border-[#0284C7] text-[#0F172A] shadow-sm ring-1 ring-[#0284C7]' 
+            : 'bg-[#F9FAFB] border-slate-200 text-[#475569] hover:border-[#0284C7]/50 hover:bg-white'
+        } ${isLainnya ? 'sm:col-span-2' : ''}`;
+
+        let customInputHtml = '';
+        if (isLainnya) {
+          const defaultCustomVal = customLainnyaTexts[step.id] || 
+            (currentSelection.startsWith('Lainnya:') ? currentSelection.replace('Lainnya:', '').trim() : '');
+          
+          customInputHtml = `
+            <div class="mt-3 pt-2.5 border-t border-[#0284C7]/30 ${isSelected ? 'block' : 'hidden'}" id="container-custom-${step.id}">
+              <label class="block text-[11px] font-bold text-[#0284C7] mb-1">
+                Ketik Pilihan Anda Sendiri di Sini:
+              </label>
+              <input 
+                type="text" 
+                id="input-custom-${step.id}" 
+                value="${defaultCustomVal}" 
+                placeholder="Contoh: Dapur Belakang, Ruang Katering, dll..." 
+                class="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-300 text-[#0F172A] text-xs focus:outline-none focus:border-[#0284C7] transition"
+              />
+            </div>
+          `;
+        }
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between w-full">
+            <span class="text-sm font-semibold">${isLainnya ? 'Lainnya (Ketik Langsung di Sini)' : opt}</span>
+            <div class="w-5 h-5 rounded-full border flex items-center justify-center ${isSelected ? 'border-[#0284C7] bg-[#0284C7] text-white' : 'border-slate-300 bg-white'}">
+              ${isSelected ? '<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>' : ''}
+            </div>
+          </div>
+          ${customInputHtml}
+        `;
+
+        card.onclick = (e) => {
+          if (e.target.tagName === 'INPUT') return;
+
+          const found = userAnswers.find(a => a.id === step.id);
+          if (isLainnya) {
+            const savedText = customLainnyaTexts[step.id] || '';
+            const val = savedText ? `Lainnya: ${savedText}` : 'Lainnya';
+            if (found) found.value = val;
+            else userAnswers.push({ id: step.id, value: val });
+          } else {
+            if (found) found.value = opt;
+            else userAnswers.push({ id: step.id, value: opt });
+          }
+          renderStep();
+          if (isLainnya) {
+            const inputEl = document.getElementById(`input-custom-${step.id}`);
+            if (inputEl) inputEl.focus();
+          }
+        };
+
+        optsContainer.appendChild(card);
+
+        if (isLainnya) {
+          const inputEl = card.querySelector(`#input-custom-${step.id}`);
+          if (inputEl) {
+            inputEl.onclick = (e) => e.stopPropagation();
+            inputEl.oninput = (e) => {
+              const textVal = e.target.value.trim();
+              customLainnyaTexts[step.id] = textVal;
+              const found = userAnswers.find(a => a.id === step.id);
+              if (found) {
+                found.value = textVal ? `Lainnya: ${textVal}` : 'Lainnya';
+              }
+            };
+          }
+        }
+      });
+    }
+
+    function renderContactsListUI(container) {
+      container.className = 'flex flex-col gap-3 mb-8 w-full';
+
+      let html = `
+        <div class="space-y-3" id="contacts-inputs-wrapper">
+      `;
+
+      emergencyContacts.forEach((contact, index) => {
+        html += `
+          <div class="p-4 rounded-2xl bg-[#F9FAFB] border border-slate-200 flex flex-col sm:flex-row gap-3 items-center justify-between" id="row-contact-${contact.id}">
+            <div class="w-full sm:w-1/2">
+              <label class="block text-[11px] font-semibold text-[#475569] mb-1">
+                Nama Kontak #${index + 1}:
+              </label>
+              <input 
+                type="text" 
+                value="${contact.name || ''}" 
+                placeholder="Contoh: Pak Budi / Istri / Penanggung Jawab" 
+                onchange="updateContactField('${contact.id}', 'name', this.value)"
+                class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-[#0F172A] text-xs focus:outline-none focus:border-[#0284C7] transition"
+              />
+            </div>
+
+            <div class="w-full sm:w-1/2">
+              <label class="block text-[11px] font-semibold text-[#475569] mb-1">
+                Nomor WhatsApp:
+              </label>
+              <div class="flex gap-2">
+                <input 
+                  type="tel" 
+                  value="${contact.phone || ''}" 
+                  placeholder="+62 812-3456-7890 atau 081234567890" 
+                  onchange="updateContactField('${contact.id}', 'phone', this.value)"
+                  class="flex-1 px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-[#0F172A] text-xs font-mono focus:outline-none focus:border-[#0284C7] transition"
+                />
+                ${emergencyContacts.length > 1 ? `
+                  <button 
+                    type="button" 
+                    onclick="removeContactRow('${contact.id}')" 
+                    title="Hapus kontak ini"
+                    class="px-3 py-2.5 rounded-xl bg-[#FEE2E2] text-[#DC2626] border border-[#DC2626]/30 hover:bg-red-200 text-xs font-bold transition"
+                  >
+                    Hapus
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      html += `
+        </div>
+
+        <button 
+          type="button" 
+          onclick="addContactRow()" 
+          class="mt-2 py-3 px-4 rounded-xl border border-dashed border-[#0284C7]/50 bg-[#F0F9FF] hover:bg-[#E0F2FE] text-[#0284C7] text-xs font-bold flex items-center justify-center gap-2 transition"
+        >
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>+ Tambah Kontak WhatsApp Lainnya</span>
+        </button>
+
+        <p class="text-[11px] text-[#475569] mt-1">
+          Semua kontak di atas akan otomatis menerima pesan darurat jika kadar gas berbahaya terdeteksi.
+        </p>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    function updateContactField(id, field, value) {
+      const contact = emergencyContacts.find(c => c.id === id);
+      if (contact) {
+        contact[field] = value.trim();
+      }
+    }
+
+    function addContactRow() {
+      const newId = 'c-' + Date.now();
+      emergencyContacts.push({
+        id: newId,
+        name: '',
+        phone: '+6285694813059'
+      });
+      renderStep();
+    }
+
+    function removeContactRow(id) {
+      if (emergencyContacts.length <= 1) return;
+      emergencyContacts = emergencyContacts.filter(c => c.id !== id);
+      renderStep();
+    }
+
+    function prevStep() {
+      if (currentStepIdx > 0) {
+        currentStepIdx--;
+        renderStep();
+      }
+    }
+
+    function nextStep() {
+      // Validate contacts step
+      if (STEPS[currentStepIdx].type === 'contacts_list') {
+        const cleaned = emergencyContacts.map(c => ({
+          id: c.id,
+          name: c.name || 'Kontak Darurat',
+          phone: c.phone || '+6285694813059'
+        }));
+        emergencyContacts = cleaned;
+        if (window.MockStore) {
+          window.MockStore.saveEmergencyContacts(cleaned);
+        }
+      }
+
+      if (currentStepIdx < STEPS.length - 1) {
+        currentStepIdx++;
+        renderStep();
+      } else {
+        finishWizard();
+      }
+    }
+
+    function finishWizard() {
+      document.getElementById('wizard-question-box').classList.add('hidden');
+      document.getElementById('wizard-processing').classList.remove('hidden');
+
+      setTimeout(() => {
+        document.getElementById('wizard-processing').classList.add('hidden');
+        document.getElementById('wizard-summary-box').classList.remove('hidden');
+
+        // Build clean profile object
+        const profileObj = {};
+        userAnswers.forEach(a => {
+          profileObj[a.id] = a.value;
+        });
+        profileObj.sensitivityMode = 'Standar Aman';
+
+        if (window.MockStore) {
+          window.MockStore.saveProfile(profileObj);
+          window.MockStore.saveEmergencyContacts(emergencyContacts);
+          window.MockStore.setOnboardingDone(true);
+        }
+
+        const summaryText = window.MockStore 
+          ? window.MockStore.generateDynamicSummary(userAnswers)
+          : 'Pengaturan ruangan berhasil disimpan dan siap dipantau.';
+        
+        document.getElementById('summary-text').innerHTML = summaryText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+        // Recap pills
+        const pillsContainer = document.getElementById('summary-recap-pills');
+        pillsContainer.innerHTML = '';
+        userAnswers.forEach(ans => {
+          if (ans.id === 'kontak_darurat') return;
+          const pill = document.createElement('span');
+          pill.className = 'px-3 py-1 rounded-xl text-xs bg-[#E0F2FE] border border-[#0284C7]/30 text-[#0284C7] font-semibold';
+          pill.textContent = ans.value;
+          pillsContainer.appendChild(pill);
+        });
+
+        // Contacts list in summary
+        const contactsContainer = document.getElementById('summary-contacts-list');
+        contactsContainer.innerHTML = '';
+        emergencyContacts.forEach((c, idx) => {
+          const row = document.createElement('div');
+          row.className = 'flex items-center justify-between text-xs py-1.5 border-b border-slate-200 last:border-none';
+          row.innerHTML = `
+            <span class="text-[#0F172A] font-semibold">${idx + 1}. ${c.name}</span>
+            <span class="font-mono text-[#0284C7] font-bold">${c.phone}</span>
+          `;
+          contactsContainer.appendChild(row);
+        });
+
+        if (typeof confetti === 'function') {
+          confetti({
+            particleCount: 50,
+            spread: 60,
+            origin: { y: 0.6 }
+          });
+        }
+      }, 700);
+    }
+
+    function restartWizard() {
+      currentStepIdx = 0;
+      userAnswers.length = 0;
+      document.getElementById('wizard-summary-box').classList.add('hidden');
+      document.getElementById('wizard-question-box').classList.remove('hidden');
+      renderStep();
+    }
+
+    renderStep();
+  </script>
+</body>
+</html>

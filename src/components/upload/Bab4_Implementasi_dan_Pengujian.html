@@ -18,6 +18,7 @@
     font-weight: bold;
     margin-top: 30px;
     margin-bottom: 30px;
+    line-height: 1.2;
   }
   h2 {
     font-size: 12pt;
@@ -70,26 +71,34 @@
     padding: 8px;
     vertical-align: top;
   }
+  .code-cell {
+    font-family: Consolas, "Courier New", monospace;
+    background-color: #fafafa;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 9pt;
+    color: #111;
+    padding: 6px;
+    text-align: left;
+    line-height: 1.3;
+  }
   .caption {
     font-style: italic;
     text-align: center;
-    margin-top: 5px;
-    margin-bottom: 15px;
+    margin-top: 15px;
+    margin-bottom: 5px;
     font-size: 11pt;
-  }
-  .code-cell {
-    font-family: Consolas, "Courier New", monospace;
-    font-size: 10pt;
-    background-color: #f9f9f9;
-    white-space: pre-wrap;
-    word-break: break-all;
-    padding: 6px;
   }
   .center-text {
     text-align: center;
   }
   .bold-text {
     font-weight: bold;
+  }
+  .pass-status {
+    font-weight: bold;
+    color: green;
+    text-align: center;
   }
 </style>
 </head>
@@ -98,713 +107,1238 @@
 <h1>BAB 4<br>IMPLEMENTASI DAN PENGUJIAN</h1>
 
 <h2>4.1 Implementasi</h2>
-<p>Bagian ini menjelaskan secara rinci mengenai tahap implementasi sistem aplikasi CarbonSense. Penjelasan mencakup persyaratan sistem minimum (baik perangkat keras maupun perangkat lunak), langkah-langkah penyebaran (deployment) aplikasi pada lingkungan pengembangan lokal, serta deskripsi fungsional dari halaman antarmuka pengguna yang telah dibangun.</p>
+<p>Tahap implementasi sistem merupakan fase di mana rancangan arsitektur, diagram pemodelan, serta spesifikasi kebutuhan ditransformasikan ke dalam kode program, konfigurasi basis data, serta kesiapan lingkungan perangkat lunak. Implementasi platform CarbonSense dibagi menjadi beberapa bagian terstruktur untuk memastikan seluruh dependensi sistem terpasang dengan selaras dan dapat beroperasi dengan baik.</p>
 
 <h3>4.1.1 Persyaratan Sistem (System Requirements)</h3>
-<p>Untuk memastikan aplikasi CarbonSense dapat dibangun, dijalankan, dan diuji dengan optimal, telah ditetapkan spesifikasi minimum lingkungan perangkat keras dan perangkat lunak yang tercantum pada Tabel 4-1 dan Tabel 4-2 di bawah ini.</p>
-
-<div class="caption">Tabel 4-1 Kebutuhan Perangkat Keras Minimum</div>
-<table>
-  <thead>
-    <tr>
-      <th style="width: 40%">Perangkat Keras</th>
-      <th style="width: 60%">Spesifikasi Minimal</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Processor</td>
-      <td>Intel Core i5 / AMD Ryzen 5 (atau setara, clock speed >= 2.0 GHz)</td>
-    </tr>
-    <tr>
-      <td>RAM</td>
-      <td>8 GB</td>
-    </tr>
-    <tr>
-      <td>Storage</td>
-      <td>SSD 256 GB (dengan sisa ruang kosong minimal 10 GB)</td>
-    </tr>
-    <tr>
-      <td>Perangkat IoT (SUT pendukung)</td>
-      <td>Mikrokontroler ESP32 &amp; Sensor Analog Kualitas Udara MQ-135 (Simulasi atau Fisik)</td>
-    </tr>
-  </tbody>
-</table>
-
-<div class="caption">Tabel 4-2 Kebutuhan Perangkat Lunak Minimum</div>
-<table>
-  <thead>
-    <tr>
-      <th style="width: 40%">Perangkat Lunak</th>
-      <th style="width: 60%">Spesifikasi Minimal</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Sistem Operasi</td>
-      <td>Windows 10/11 / macOS / Linux (64-bit)</td>
-    </tr>
-    <tr>
-      <td>Runtime Environment</td>
-      <td>Node.js (v18.x atau lebih tinggi)</td>
-    </tr>
-    <tr>
-      <td>Package Manager</td>
-      <td>npm (v9.x atau lebih tinggi)</td>
-    </tr>
-    <tr>
-      <td>DBMS (Database)</td>
-      <td>Supabase PostgreSQL Cloud Database / Local MySQL Server (port 3306)</td>
-    </tr>
-    <tr>
-      <td>Framework Frontend</td>
-      <td>React v19 &amp; TypeScript (menggunakan build tool Vite)</td>
-    </tr>
-    <tr>
-      <td>Framework Backend</td>
-      <td>Express.js (Node.js) dengan Sequelize ORM</td>
-    </tr>
-    <tr>
-      <td>Web Browser</td>
-      <td>Microsoft Edge (versi terbaru) untuk eksekusi Selenium</td>
-    </tr>
-    <tr>
-      <td>Database Real-time</td>
-      <td>Firebase Realtime Database (untuk sinkronisasi parameter sensor IoT)</td>
-    </tr>
-  </tbody>
-</table>
+<p>Sebelum mengoperasikan platform CarbonSense, seluruh perangkat lunak pendukung dan lingkungan pengembangan (development environment) harus dikonfigurasi terlebih dahulu. Kebutuhan minimum perangkat lunak ini sangat krusial untuk menjamin fungsionalitas pemantauan telemetri IoT, komunikasi REST API, sinkronisasi data real-time, dan modul asisten AI Gemini dapat berjalan tanpa hambatan (bottleneck).</p>
+<p class="no-indent">Spesifikasi lingkungan perangkat lunak yang diimplementasikan pada sistem ini meliputi:</p>
+<ol>
+  <li><strong>Bahasa Pemrograman Utama</strong>: JavaScript/TypeScript (ES6+) digunakan untuk menyusun seluruh logika bisnis pada frontend (React) dan backend server (Express.js), sedangkan Python versi 3.10+ disediakan khusus sebagai pendukung eksekusi otomatisasi pengujian eksternal menggunakan Selenium WebDriver.</li>
+  <li><strong>Database Management System (DBMS)</strong>: Supabase Cloud PostgreSQL versi 15+ digunakan sebagai pangkalan data utama untuk menyimpan tabel-tabel relasional (data pengguna, log detail, dan parameter perangkat). Firebase Realtime Database digunakan untuk sinkronisasi telemetri nirkabel PPM MQ-135 secara instan tanpa delay dari perangkat keras ke dasbor klien.</li>
+  <li><strong>Framework &amp; Pustaka Utama</strong>: React (Vite) versi 18+ diimplementasikan sebagai fondasi antarmuka klien (frontend) yang responsif dan interaktif, TailwindCSS digunakan untuk visualisasi gaya modern, Express.js versi 4+ sebagai REST API backend server, dan Sequelize ORM untuk manajemen relasi database.</li>
+  <li><strong>Web Browser &amp; Driver</strong>: Google Chrome atau Microsoft Edge versi terbaru dikombinasikan dengan driver yang kompatibel (ChromeDriver atau EdgeDriver) untuk mendukung jalannya otomatisasi penjelajahan saat pengujian fungsionalitas Selenium dilakukan.</li>
+</ol>
 
 <h3>4.1.2 Penyebaran Sistem (System Deployment)</h3>
-<p>Penyebaran sistem CarbonSense dilakukan pada lingkungan pengembangan lokal (local development environment) dengan langkah-langkah terstruktur sebagai berikut:</p>
+<p>Proses penyebaran sistem (system deployment) pada platform CarbonSense ditinjau dari dua perspektif lingkungan (environment) yang berbeda, yaitu Lingkungan Pengujian (Testing Environment) dan Lingkungan Produksi (Production Environment):</p>
 <ol>
-  <li><strong>Mengunduh Source Code Aplikasi</strong>: Source code diperoleh dengan melakukan cloning repositori Git proyek menggunakan perintah <code>git clone https://github.com/BreadOcT/CarbonSense2.git</code> atau mengunduh file biner ZIP secara langsung dan mengekstraknya ke direktori lokal (misal: <code>C:\projects\magicpath-project</code>).</li>
-  <li><strong>Instalasi Dependensi Node.js</strong>: Membuka terminal pada direktori proyek (root) dan folder server, kemudian menjalankan perintah <code>npm install</code> untuk menginstal semua modul dependensi yang tercantum di <code>package.json</code>.</li>
-  <li><strong>Konfigurasi Database &amp; Environment Variables</strong>: Membuat file <code>.env</code> di dalam folder server untuk menyimpan kredensial database (Supabase PostgreSQL / Local MySQL), JWT Secret key, dan API Key untuk asisten cerdas Gemini.</li>
-  <li><strong>Menjalankan Aplikasi</strong>: Menjalankan perintah <code>npm run dev</code> pada terminal root. Perintah ini menggunakan utilitas <code>concurrently</code> untuk menjalankan server frontend (Vite pada port 3000) dan server backend (Express.js pada port 5000) secara bersamaan. Aplikasi siap diuji di alamat <code>http://localhost:3000</code>.</li>
+  <li><strong>Lingkungan Pengujian (Testing Environment / Localhost)</strong>: Merupakan lingkungan lokal berbasis Windows menggunakan server local Node.js. Lingkungan ini dikonfigurasi secara khusus untuk memfasilitasi jalannya pengujian fungsionalitas otomatis menggunakan Selenium IDE dan Selenium WebDriver (Python pytest) pada port 3000 (frontend) dan port 5000 (backend server) tanpa mengganggu kestabilan data produksi. Rangkaian instruksi detail instalasi lokal difokuskan pada sub-bab ini.</li>
+  <li><strong>Lingkungan Produksi (Production Environment / Cloud)</strong>: Merupakan lingkungan implementasi final tempat aplikasi klien disebarkan secara publik melalui layanan Vercel Cloud Hosting, database relasional di-host secara terpusat pada Supabase Cloud, dan telemetri nirkabel disinkronkan secara kontinu menggunakan Firebase Realtime Database.</li>
+</ol>
+<p class="no-indent">Rangkaian instruksi teknis langkah demi langkah yang dilakukan untuk memasang, mengonfigurasi, dan mengaktifkan platform CarbonSense pada lingkungan pengujian lokal (localhost) adalah sebagai berikut:</p>
+<ol>
+  <li><strong>Kloning dan Penyiapan Repositori Kode Sumber</strong>:<br>
+    Langkah pertama adalah melakukan kloning terhadap kode sumber (source code) platform CarbonSense dari repositori pengembangan. Jalankan perintah berikut pada terminal:
+    <pre style="background: #f4f4f4; padding: 10px; border: 1px solid #ccc; font-family: monospace;">git clone https://github.com/BreadOcT/CarbonSense2.git&#10;cd CarbonSense2</pre>
+  </li>
+  <li><strong>Instalasi Dependensi Framework dan Frontend</strong>:<br>
+    Setelah folder proyek berada pada direktori yang tepat, instal dependensi node_modules untuk frontend di direktori root dan backend di direktori server dengan mengeksekusi perintah berikut secara berurutan:
+    <pre style="background: #f4f4f4; padding: 10px; border: 1px solid #ccc; font-family: monospace;"># Instalasi dependensi frontend (root)&#10;npm install&#10;&#10;# Instalasi dependensi backend server&#10;cd server&#10;npm install</pre>
+  </li>
+  <li><strong>Konfigurasi Berkas Lingkungan (Environment File)</strong>:<br>
+    Buat file bernama <code>.env</code> di dalam direktori <code>server</code> untuk menyimpan kredensial database dan API asisten cerdas:
+    <pre style="background: #f4f4f4; padding: 10px; border: 1px solid #ccc; font-family: monospace;">PORT=5000&#10;DATABASE_URL=postgresql://postgres.xxx:xxx@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres&#10;VITE_DEEPSEEK_API_KEY=sk-c9b32675151e40a6888f356a002975e9&#10;JWT_SECRET=gwehkerenjir&#10;ADMIN_ID=admin&#10;ADMIN_PASSWORD=admin123</pre>
+  </li>
+  <li><strong>Inisialisasi &amp; Auto-Migration Basis Data</strong>:<br>
+    Skema struktur basis data terkonfigurasi secara otonom menggunakan Sequelize ORM. Saat server diaktifkan, modul <code>sequelize.sync({ alter: true })</code> secara otomatis menyelaraskan dan memproduksi tabel <code>Users</code> (id, username, email, password, role) dan <code>Devices</code> (id, userEmail, status, ppm, lastActive) ke dalam database Supabase/MySQL.
+  </li>
+  <li><strong>Mengaktifkan Server secara Bersamaan (Concurrently)</strong>:<br>
+    Sistem diaktifkan secara lokal dengan mengeksekusi perintah run dev di direktori root proyek:
+    <pre style="background: #f4f4f4; padding: 10px; border: 1px solid #ccc; font-family: monospace;">npm run dev</pre>
+    Perintah ini menjalankan frontend pada port 3000 dan backend server pada port 5000 secara bersamaan. Penguji dapat mengakses antarmuka melalui peramban pada alamat <code>http://localhost:3000</code>.
+  </li>
 </ol>
 
 <h3>4.1.3 Implementasi Antarmuka Pengguna (User Interface)</h3>
-<p>Implementasi antarmuka pengguna pada sistem CarbonSense diklasifikasikan berdasarkan peran pengguna sebagai berikut:</p>
+<p>Implementasi antarmuka pengguna merupakan visualisasi akhir dari seluruh modul frontend yang telah dikompilasi menggunakan React, TailwindCSS, dan Shadcn UI. Desain antarmuka dirancang bersih, intuitif, dan responsif agar mempermudah pengoperasian pemantauan kualitas udara baik oleh pengguna biasa maupun administrator.</p>
+<p class="no-indent">Berikut adalah rincian implementasi halaman antarmuka pada platform CarbonSense:</p>
 <ol>
-  <li><strong>Antarmuka Web App Klien (User / Pengguna Terdaftar)</strong>:
-    <ul>
-      <li><strong>Halaman Login &amp; Register</strong>: Menyediakan form isian kredensial yang minimalis dengan penanganan error validasi isian secara dinamis.</li>
-      <li><strong>Halaman Onboarding (Profil AI)</strong>: Kuesioner interaktif mandatori bagi pengguna baru untuk mengklasifikasikan kerentanan kesehatan penghuni ruangan demi konfigurasi batas alarm sensitivitas gas PPM.</li>
-      <li><strong>Halaman Select Device (Pilih Alat)</strong>: Antarmuka yang memverifikasi ID perangkat terdaftar dan menautkannya ke email pengguna melalui QR Code atau input manual.</li>
-      <li><strong>Halaman Dashboard Monitoring</strong>: Menyajikan indikator visual real-time kadar gas PPM MQ-135, grafik tren historis (Recharts) interaktif dengan filter tanggal (*DatePicker*), panel instan diagnostik jaringan (ping status &amp; last active time), serta tombol ekspor laporan.</li>
-      <li><strong>Halaman Settings (Pengaturan Sensitivitas)</strong>: Formulir untuk memodifikasi tingkat kepekaan alarm.</li>
-    </ul>
+  <li><strong>Halaman Login dan Autentikasi</strong>:<br>
+    Halaman ini merupakan gerbang awal keamanan sistem sebelum pengguna mengakses data kualitas udara. Antarmuka menyediakan dua kolom input utama (email dan password), tombol login, serta tombol pintas pendaftaran akun baru. Validasi langsung akan muncul jika kolom kosong atau password salah.
+    <div class="caption">Gambar 4.1 Implementasi Antarmuka Halaman Login</div>
   </li>
-  <li><strong>Antarmuka Web Admin Dashboard (Administrator)</strong>:
-    <ul>
-      <li><strong>Halaman Login Admin</strong>: Portal khusus yang mengamankan konsol konfigurasi admin menggunakan kredensial yang tersimpan di file <code>.env</code>.</li>
-      <li><strong>Halaman Dashboard Admin</strong>: Tabel inventori terpusat yang memuat seluruh ID alat, status koneksi, PPM aktual, dan email pemilik dengan fitur pencarian real-time.</li>
-      <li><strong>Panel Kelola Perangkat (CRUD &amp; Code)</strong>: Menu untuk meregistrasikan ID alat baru (otomatis membuat QR Code), mengedit/menghapus perangkat, serta menyalin firmware program C++ Arduino (.ino).</li>
-    </ul>
+  <li><strong>Halaman Registrasi Pengguna</strong>:<br>
+    Halaman pendaftaran bagi pengguna baru untuk membuat kredensial akses. Pengguna menginput Nama Lengkap, Email, dan Password (minimal 6 karakter). Jika sukses, akun disimpan ke database SQL dan sistem mengalihkan pengguna ke halaman kuesioner onboarding.
+    <div class="caption">Gambar 4.2 Implementasi Antarmuka Halaman Registrasi</div>
+  </li>
+  <li><strong>Halaman Onboarding Kesehatan</strong>:<br>
+    Halaman kuesioner wajib bagi pengguna baru untuk mendefinisikan karakteristik ruangan (lokasi, kapasitas, polutan kompor/rokok, lansia/bayi, riwayat asma). Sistem akan menyimpan data profil ini untuk konfigurasi ambang batas aman sensor dan memandu rekomendasi asisten AI.
+    <div class="caption">Gambar 4.3 Implementasi Antarmuka Kuesioner Onboarding</div>
+  </li>
+  <li><strong>Halaman Pemilihan Perangkat (Select Device)</strong>:<br>
+    Halaman yang menyajikan daftar perangkat IoT aktif yang terikat ke email pengguna. Pengguna memilih perangkat aktif yang ingin dipantau sebelum masuk ke halaman dashboard utama. Terdapat juga penanganan scan QR Code untuk penautan instan.
+    <div class="caption">Gambar 4.4 Implementasi Antarmuka Pemilihan Perangkat</div>
+  </li>
+  <li><strong>Halaman Dasbor Utama (Dashboard Overview &amp; Real-Time Monitor)</strong>:<br>
+    Pusat kendali dan rangkuman informasi kualitas udara. Menampilkan telemetry PPM aktual sensor MQ-135 secara real-time via Firebase dengan indikator warna (hijau &lt;= 700 PPM, kuning 701 - 1200 PPM, merah &gt; 1200 PPM). Dilengkapi grafik tren histori Recharts, DatePicker filter tanggal, tombol ekspor Excel/PDF, dan drawer asisten AI.
+    <div class="caption">Gambar 4.5 Implementasi Antarmuka Dasbor Utama Pemantauan</div>
+  </li>
+  <li><strong>Halaman Pengaturan Sensitivitas (Settings)</strong>:<br>
+    Menu yang memungkinkan pengguna menyesuaikan parameter ruangan secara dinamis serta mengaktifkan "Modus Sensitivitas Tinggi" (menurunkan threshold alarm PPM demi keselamatan keluarga rentan) yang disinkronkan ke AI.
+    <div class="caption">Gambar 4.6 Implementasi Antarmuka Halaman Pengaturan</div>
+  </li>
+  <li><strong>Halaman Profil Pengguna (User Profile)</strong>:<br>
+    Halaman untuk melakukan pembaruan informasi data diri pengguna (username, email) serta pembaruan kata sandi akun secara aman dengan pengisian kata sandi lama yang valid.
+    <div class="caption">Gambar 4.7 Implementasi Antarmuka Halaman Profil</div>
+  </li>
+  <li><strong>Halaman Dasbor Admin (Admin Portal)</strong>:<br>
+    Portal khusus administrator yang terproteksi kredensial .env. Menyediakan visualisasi tabel inventaris seluruh perangkat secara global di basis data, penautan manual perangkat ke email user, pembuatan device baru dengan QR Code otomatis, serta panel salin kode firmware Arduino C++ (.ino) ESP32.
+    <div class="caption">Gambar 4.8 Implementasi Antarmuka Halaman Dasbor Admin</div>
   </li>
 </ol>
 
 <h2>4.2 Pengujian</h2>
-<p>Bagian ini menjabarkan seluruh proses pengujian otomatis yang dilakukan oleh tim penguji untuk memverifikasi keandalan fungsionalitas sistem CarbonSense menggunakan perangkat pengujian otomatis.</p>
+<p>Tahapan pengujian perangkat lunak dilakukan untuk memverifikasi dan memvalidasi bahwa seluruh modul antarmuka pengguna (frontend) dan server (backend) platform CarbonSense beroperasi sesuai dengan spesifikasi kebutuhan fungsional yang telah didefinisikan.</p>
 
 <h3>4.2.1 Perencanaan Pengujian</h3>
-<p>Perencanaan pengujian dilakukan dengan menetapkan tools pengujian, cakupan fungsionalitas, teknik, dan jadwal pengujian sebagai berikut:</p>
+<p>Tahap perencanaan mendefinisikan penyusunan kesiapan perkakas otomatisasi, cakupan fungsionalitas sistem yang dievaluasi, teknik pemetaan data uji, serta linimasa pelaksanaan aktivitas pengujian.</p>
 <ol>
-  <li><strong>Instalasi Tools Pengujian (Selenium IDE)</strong>:
+  <li><strong>Instalasi Alat Pengujian (Automation Test Tools)</strong>:<br>
+    Proses pengujian otomatis pada platform CarbonSense diimplementasikan menggunakan perkakas <strong>Selenium WebDriver</strong> (berbasis Python pytest) dan <strong>Selenium IDE</strong> untuk perekaman skrip interaksi UI secara langsung. Langkah penyiapan meliputi:
     <ul>
-      <li>Membuka peramban Microsoft Edge di komputer penguji.</li>
-      <li>Mengunjungi Edge Add-ons Store dan mengunduh ekstensi resmi **Selenium IDE**.</li>
-      <li>Setelah terinstal, klik ikon Selenium IDE pada bilah alat browser untuk membuka jendela utama.</li>
-      <li>Pilih opsi "Record a new test in a new project", beri nama proyek (e.g. *CarbonSense Testing*), masukkan URL dasar <code>http://localhost:3000</code>, dan klik OK untuk memulai perekaman interaksi browser.</li>
+      <li>Pemasangan Python versi 3.10+ pada mesin penguji lokal.</li>
+      <li>Instalasi dependensi pustaka Selenium dan pytest melalui command prompt: <code>pip install selenium pytest</code>.</li>
+      <li>Pengunduhan browser driver yang kompatibel (ChromeDriver/EdgeDriver) diletakkan di dalam environment path sistem.</li>
+      <li>Pembuatan berkas skrip uji terprogram <code>test_suite_selenium.py</code> yang memuat assertion dan langkah navigasi otomatis.</li>
     </ul>
   </li>
-  <li><strong>Cakupan Fungsionalitas</strong>: Pengujian mencakup 13 modul fungsionalitas utama sistem CarbonSense, termasuk registrasi, login, onboarding profil AI, edit profil &amp; password, penautan perangkat (QR Code), reaktivasi dashboard, asisten cerdas chat AI, navigasi histori tanggal, ekspor laporan, pengaturan sensitivitas, autentikasi admin, manajemen dasbor admin, dan autentikasi logout.</li>
-  <li><strong>Teknik Pengujian</strong>: Teknik yang digunakan adalah **Black-Box Testing** dengan pendekatan **Equivalence Partitioning (EP)** untuk mengklasifikasikan rentang input valid/invalid, serta **Boundary Value Analysis (BVA)** untuk menguji batas ekstrem parameter (misalnya panjang kata sandi minimal 6 karakter).</li>
-  <li><strong>Jadwal dan Pengawakan</strong>: Pelaksanaan pengujian dilakukan secara berkala dan diotomasi penuh oleh tim penguji perangkat lunak dengan penjadwalan terstruktur selama fase siklus pengembangan perangkat lunak (SDLC).</li>
+  <li><strong>Cakupan Pengujian dan Fungsionalitas Sistem</strong>:<br>
+    Upaya penjaminan kualitas platform dibatasi secara terukur pada fungsionalitas inti yang berdampak langsung pada operasional sistem. Terdapat 13 fungsionalitas utama yang disepakati sebagai cakupan pengujian, meliputi:
+    <ul>
+      <li>Fungsionalitas Login: Menguji proses autentikasi pengguna masuk ke dalam sistem.</li>
+      <li>Fungsionalitas Registrasi: Validasi pendaftaran akun baru termasuk pembatasan minimal password.</li>
+      <li>Fungsionalitas Onboarding: Pengisian kuesioner profil ruangan dan proteksi bypass URL.</li>
+      <li>Fungsionalitas Edit Profil &amp; Password: Pembaruan data pribadi serta verifikasi keamanan pergantian password.</li>
+      <li>Fungsionalitas Penautan Perangkat: Penautan otomatis via parameter QR Code.</li>
+      <li>Fungsionalitas Aktivasi &amp; Reaktivasi: Deteksi status alat dan popup panduan reaktivasi offline.</li>
+      <li>Fungsionalitas Asisten Chat AI: Validasi jawaban chatbot yang kontekstual, dialog memory, dan safeguard offline.</li>
+      <li>Fungsionalitas Navigasi Histori Tanggal: Filter tanggal harian, DatePicker kustom, dan indikator kosong.</li>
+      <li>Fungsionalitas Ekspor Laporan: Pengunduhan berkas telemetri format PDF dan Excel.</li>
+      <li>Fungsionalitas Pengaturan AI: Perubahan profil ruangan dan aktivasi Modus Sensitivitas Tinggi.</li>
+      <li>Fungsionalitas Portal &amp; Autentikasi Admin: Pengamanan gerbang login admin menggunakan kredensial .env.</li>
+      <li>Fungsionalitas Admin Dashboard: Manajemen CRUD perangkat IoT, binding manual, dan penyalinan firmware C++.</li>
+      <li>Fungsionalitas Autentikasi (Logout): Penghapusan sesi localStorage browser secara bersih.</li>
+    </ul>
+  </li>
+  <li><strong>Teknik Pengujian</strong>:<br>
+    Metode dasar yang melandasi penyusunan skenario skrip adalah Black Box Testing, yang mengevaluasi kesesuaian input dan output tanpa melihat kode internal sistem melalui pendekatan spesifik:
+    <ul>
+      <li><strong>Equivalence Partitioning (EP)</strong>: Membagi kelompok data masukan menjadi partisi ekuivalen untuk efisiensi skenario uji. EP diterapkan pada modul login (memisahkan partisi input kosong, password salah, dan kredensial valid) serta proteksi bypass onboarding.</li>
+      <li><strong>Boundary Value Analysis (BVA)</strong>: Berfokus pada pengujian nilai ekstrem pada batas minimum/maksimum input. BVA diterapkan pada validasi panjang karakter password registrasi (minimal 6 karakter) serta penautan parameter device ID scan QR (memastikan sistem memblokir device ID yang tidak terdaftar di database admin).</li>
+    </ul>
+  </li>
+  <li><strong>Jadwal dan Pengawakan</strong>:<br>
+    Aktivitas penjaminan kualitas dikelola secara terstruktur dengan menempatkan Okto Bagas sebagai penanggung jawab penuh proses pengujian. Linimasa pelaksanaan dirinci pada Tabel 4.1.
+    <div class="caption">Tabel 4.1 Jadwal Pelaksanaan dan Pengawakan Aktivitas Pengujian Sistem</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 8%">No</th>
+          <th style="width: 20%">Tanggal</th>
+          <th style="width: 47%">Pekerjaan</th>
+          <th style="width: 25%">Penanggung Jawab</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="center-text">1.</td>
+          <td class="center-text">1 – 3 Juni 2026</td>
+          <td>Mempersiapkan source code CarbonSense (React &amp; Express) yang akan diuji</td>
+          <td class="center-text">Okto Bagas</td>
+        </tr>
+        <tr>
+          <td class="center-text">2.</td>
+          <td class="center-text">3 – 5 Juni 2026</td>
+          <td>Memasang runtime Node.js, Python, Supabase, dan setup Selenium WebDriver</td>
+          <td class="center-text">Okto Bagas</td>
+        </tr>
+        <tr>
+          <td class="center-text">3.</td>
+          <td class="center-text">5 – 7 Juni 2026</td>
+          <td>Menentukan fungsionalitas utama CarbonSense &amp; cakupan pengujian (13 Fitur)</td>
+          <td class="center-text">Okto Bagas</td>
+        </tr>
+        <tr>
+          <td class="center-text">4.</td>
+          <td class="center-text">7 – 9 Juni 2026</td>
+          <td>Merancang skenario test case &amp; data pengujian (Login s/d Logout)</td>
+          <td class="center-text">Okto Bagas</td>
+        </tr>
+        <tr>
+          <td class="center-text">5.</td>
+          <td class="center-text">9 – 11 Juni 2026</td>
+          <td>Melakukan scripting Selenium Python (test_suite_selenium.py) &amp; Selenium IDE</td>
+          <td class="center-text">Okto Bagas</td>
+        </tr>
+        <tr>
+          <td class="center-text">6.</td>
+          <td class="center-text">11 – 13 Juni 2026</td>
+          <td>Eksekusi test suite Selenium otomatis &amp; merekam log uji (Simulasi IoT &amp; DB)</td>
+          <td class="center-text">Okto Bagas</td>
+        </tr>
+        <tr>
+          <td class="center-text">7.</td>
+          <td class="center-text">14 – 15 Juni 2026</td>
+          <td>Penyusunan laporan hasil pengujian dan penulisan kesimpulan akhir</td>
+          <td class="center-text">Okto Bagas</td>
+        </tr>
+      </tbody>
+    </table>
+  </li>
 </ol>
 
 <h3>4.2.2 Perancangan Pengujian (Test Case Design)</h3>
-<p>Perancangan kasus uji disusun secara sistematis sebelum eksekusi otomatis dimulai. Tabel 4-3 menyajikan seluruh daftar rancangan kasus uji untuk fungsionalitas aplikasi CarbonSense.</p>
+<p>Sub-bab ini menguraikan deskripsi rancangan test case yang dibangun untuk memvalidasi 13 fungsionalitas utama sistem CarbonSense secara rinci pada Tabel 4.2 sampai Tabel 4.14.</p>
 
-<div class="caption">Tabel 4-3 Daftar Kasus Uji Fungsionalitas CarbonSense</div>
+<div class="caption">Tabel 4.2 Skenario Pengujian (Test Case) Fungsionalitas Login</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 15%">Fungsionalitas</th>
+      <th style="width: 10%">ID Test Case</th>
+      <th style="width: 25%">Deskripsi / Skenario</th>
+      <th style="width: 12%">Pra Kondisi</th>
+      <th style="width: 18%">Langkah Pengujian</th>
+      <th style="width: 10%">Data Pengujian</th>
+      <th style="width: 10%">Hasil Diharapkan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="3"><strong>1. Login</strong></td>
+      <td class="center-text">TC 1.1</td>
+      <td>Login tanpa mengisi email dan password</td>
+      <td>Berada di halaman login (/login)</td>
+      <td>1. Kosongkan email dan password.<br>2. Klik tombol Login.</td>
+      <td class="center-text">-</td>
+      <td>Form diblokir, menampilkan pesan error.</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 1.2</td>
+      <td>Login dengan password salah</td>
+      <td>Berada di halaman login (/login)</td>
+      <td>1. Isi email terdaftar.<br>2. Isi password salah.<br>3. Klik tombol Login.</td>
+      <td>email: okto@gmail.com<br>password: salahpassword</td>
+      <td>Login gagal, muncul alert error.</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 1.3</td>
+      <td>Login berhasil (Happy Path)</td>
+      <td>Berada di halaman login (/login)</td>
+      <td>1. Isi email terdaftar.<br>2. Isi password benar.<br>3. Klik tombol Login.</td>
+      <td>email: okto@gmail.com<br>password: password123</td>
+      <td>Login berhasil, diarahkan ke select-device/dashboard.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="caption">Tabel 4.3 Skenario Pengujian (Test Case) Fungsionalitas Registrasi</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 15%">Fungsionalitas</th>
+      <th style="width: 10%">ID Test Case</th>
+      <th style="width: 25%">Deskripsi / Skenario</th>
+      <th style="width: 12%">Pra Kondisi</th>
+      <th style="width: 18%">Langkah Pengujian</th>
+      <th style="width: 10%">Data Pengujian</th>
+      <th style="width: 10%">Hasil Diharapkan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="3"><strong>2. Registrasi</strong></td>
+      <td class="center-text">TC 2.1</td>
+      <td>Registrasi mengosongkan semua data</td>
+      <td>Berada di halaman registrasi (/register)</td>
+      <td>1. Kosongkan semua input.<br>2. Klik tombol Daftar.</td>
+      <td class="center-text">-</td>
+      <td>Registrasi gagal, muncul pesan kolom wajib.</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 2.2</td>
+      <td>Registrasi dengan password &lt; 6 karakter</td>
+      <td>Berada di halaman registrasi (/register)</td>
+      <td>1. Isi nama &amp; email.<br>2. Isi password pendek (&lt;6 karakter).<br>3. Klik Daftar.</td>
+      <td>nama: Okto<br>email: okto@gmail.com<br>password: 123</td>
+      <td>Registrasi gagal, muncul error minimal 6 karakter.</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 2.3</td>
+      <td>Registrasi berhasil (Happy Path)</td>
+      <td>Berada di halaman registrasi (/register)</td>
+      <td>1. Isi nama, email, password valid.<br>2. Klik Daftar.</td>
+      <td>nama: Okto<br>email: okto@gmail.com<br>password: password123</td>
+      <td>Registrasi berhasil, dialihkan ke /onboarding.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="caption">Tabel 4.4 Skenario Pengujian (Test Case) Fungsionalitas Onboarding</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 15%">Fungsionalitas</th>
+      <th style="width: 10%">ID Test Case</th>
+      <th style="width: 25%">Deskripsi / Skenario</th>
+      <th style="width: 12%">Pra Kondisi</th>
+      <th style="width: 18%">Langkah Pengujian</th>
+      <th style="width: 10%">Data Pengujian</th>
+      <th style="width: 10%">Hasil Diharapkan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="3"><strong>3. Onboarding</strong></td>
+      <td class="center-text">TC 3.1</td>
+      <td>Bypass paksa halaman onboarding</td>
+      <td>Belum menyelesaikan kuesioner onboarding</td>
+      <td>1. Akses langsung URL /dashboard secara paksa.</td>
+      <td class="center-text">-</td>
+      <td>Bypass diblokir, dialihkan kembali ke /onboarding.</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 3.2</td>
+      <td>Batal saat ulangi onboarding</td>
+      <td>Sudah berstatus onboarding komplit</td>
+      <td>1. Klik "Ulangi Onboarding".<br>2. Ubah isian.<br>3. Klik "Batal".</td>
+      <td class="center-text">-</td>
+      <td>Kembali ke dashboard tanpa mengubah profil lama.</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 3.3</td>
+      <td>Menyelesaikan onboarding (Happy Path)</td>
+      <td>Pengguna masuk onboarding pertama kali</td>
+      <td>1. Isi semua kuesioner.<br>2. Klik "Accept &amp; Lanjutkan".</td>
+      <td class="center-text">-</td>
+      <td>Data tersimpan di database, diarahkan ke select-device.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="caption">Tabel 4.5 Skenario Pengujian (Test Case) Fungsionalitas Edit Profil &amp; Password</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 15%">Fungsionalitas</th>
+      <th style="width: 10%">ID Test Case</th>
+      <th style="width: 25%">Deskripsi / Skenario</th>
+      <th style="width: 12%">Pra Kondisi</th>
+      <th style="width: 18%">Langkah Pengujian</th>
+      <th style="width: 10%">Data Pengujian</th>
+      <th style="width: 10%">Hasil Diharapkan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="4"><strong>4. Edit Profil</strong></td>
+      <td class="center-text">TC 4.1</td>
+      <td>Update profil dengan mengosongkan nama</td>
+      <td>Berada di halaman profil (/profile)</td>
+      <td>1. Kosongkan kolom nama.<br>2. Klik Simpan.</td>
+      <td class="center-text">-</td>
+      <td>Gagal disimpan, muncul error.</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 4.2</td>
+      <td>Ubah password dengan password lama salah</td>
+      <td>Berada di halaman profil (/profile)</td>
+      <td>1. Isi password lama salah.<br>2. Isi password baru.<br>3. Klik Simpan.</td>
+      <td>password lama: salah<br>password baru: baru123</td>
+      <td>Muncul error "Password lama salah".</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 4.3</td>
+      <td>Sukses memperbarui nama profil</td>
+      <td>Berada di halaman profil (/profile)</td>
+      <td>1. Isi nama baru.<br>2. Klik Simpan.</td>
+      <td>nama: Okto Bagas</td>
+      <td>Nama berhasil disimpan di database SQL dan terupdate.</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 4.4</td>
+      <td>Sukses memperbarui password akun</td>
+      <td>Berada di halaman profil (/profile)</td>
+      <td>1. Isi password lama benar.<br>2. Isi password baru.<br>3. Klik Simpan.</td>
+      <td>password lama: password123<br>password baru: password456</td>
+      <td>Password berhasil diperbarui, login wajib menggunakan sandi baru.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="caption">Tabel 4.6 Skenario Pengujian (Test Case) Fungsionalitas Penautan Perangkat (QR Code)</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 15%">Fungsionalitas</th>
+      <th style="width: 10%">ID Test Case</th>
+      <th style="width: 25%">Deskripsi / Skenario</th>
+      <th style="width: 12%">Pra Kondisi</th>
+      <th style="width: 18%">Langkah Pengujian</th>
+      <th style="width: 10%">Data Pengujian</th>
+      <th style="width: 10%">Hasil Diharapkan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="2"><strong>5. Penautan Device</strong></td>
+      <td class="center-text">TC 5.1</td>
+      <td>Penautan otomatis lewat parameter QR Code</td>
+      <td>Memindai kode QR fisik perangkat</td>
+      <td>1. Akses /login?device=CS-DAPUR-01.<br>2. Lakukan login sukses.</td>
+      <td class="center-text">-</td>
+      <td>Perangkat otomatis terikat ke email akun di database.</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 5.2</td>
+      <td>Memilih perangkat aktif dari daftar</td>
+      <td>Berada di halaman /select-device</td>
+      <td>1. Pilih salah satu perangkat aktif.<br>2. Klik Lanjutkan.</td>
+      <td class="center-text">-</td>
+      <td>Dashboard dimuat untuk menampilkan data real-time alat terpilih.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="caption">Tabel 4.7 Skenario Pengujian (Test Case) Fungsionalitas Aktivasi &amp; Reaktivasi</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 15%">Fungsionalitas</th>
+      <th style="width: 10%">ID Test Case</th>
+      <th style="width: 25%">Deskripsi / Skenario</th>
+      <th style="width: 12%">Pra Kondisi</th>
+      <th style="width: 18%">Langkah Pengujian</th>
+      <th style="width: 10%">Data Pengujian</th>
+      <th style="width: 10%">Hasil Diharapkan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="3"><strong>6. Reaktivasi</strong></td>
+      <td class="center-text">TC 6.1</td>
+      <td>Pemicuan popup reaktivasi saat offline</td>
+      <td>Dashboard memantau status offline</td>
+      <td>1. Putus koneksi sensor (Firebase status offline).</td>
+      <td class="center-text">-</td>
+      <td>Popup panduan reaktivasi otomatis terbuka di dasbor.</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 6.2</td>
+      <td>Menutup panduan reaktivasi langkah terakhir</td>
+      <td>Popup reaktivasi terbuka di layar</td>
+      <td>1. Klik lanjut hingga langkah 5.<br>2. Klik "Saya Mengerti".</td>
+      <td class="center-text">-</td>
+      <td>Popup tertutup dan dashboard melakukan reload otomatis.</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 6.3</td>
+      <td>Perangkat terdeteksi Online kembali otomatis</td>
+      <td>Dashboard memantau status offline</td>
+      <td>1. Sambungkan kembali daya sensor (kirim data PPM baru ke Firebase).</td>
+      <td class="center-text">-</td>
+      <td>Dasbor mendeteksi transisi Online, status bar berganti hijau.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="caption">Tabel 4.8 Skenario Pengujian (Test Case) Fungsionalitas Asisten Chat AI</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 15%">Fungsionalitas</th>
+      <th style="width: 10%">ID Test Case</th>
+      <th style="width: 25%">Deskripsi / Skenario</th>
+      <th style="width: 12%">Pra Kondisi</th>
+      <th style="width: 18%">Langkah Pengujian</th>
+      <th style="width: 10%">Data Pengujian</th>
+      <th style="width: 10%">Hasil Diharapkan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="3"><strong>7. Chat AI</strong></td>
+      <td class="center-text">TC 7.1</td>
+      <td>AI menolak beri data palsu saat sensor offline</td>
+      <td>Perangkat berstatus offline</td>
+      <td>1. Ajukan pertanyaan: "Berapa kadar PPM ruangan saya?".</td>
+      <td class="center-text">-</td>
+      <td>AI menjawab sensor offline dan menyarankan reaktivasi.</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 7.2</td>
+      <td>AI menyimpan memori riwayat chat</td>
+      <td>Pengguna sedang aktif berkonsultasi</td>
+      <td>1. Katakan: "Alat ditaruh di kamar".<br>2. Tanyakan: "Di mana alat saya?".</td>
+      <td class="center-text">-</td>
+      <td>AI menjawab secara akurat di kamar tidur.</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 7.3</td>
+      <td>AI memberikan instruksi instalasi lengkap</td>
+      <td>Pengguna sedang aktif berkonsultasi</td>
+      <td>1. Tanyakan: "Bagaimana cara menyalakan alat CS dari awal?".</td>
+      <td class="center-text">-</td>
+      <td>AI memaparkan langkah setup hardware, captive portal, &amp; binding.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="caption">Tabel 4.9 Skenario Pengujian (Test Case) Fungsionalitas Navigasi Histori Tanggal</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 15%">Fungsionalitas</th>
+      <th style="width: 10%">ID Test Case</th>
+      <th style="width: 25%">Deskripsi / Skenario</th>
+      <th style="width: 12%">Pra Kondisi</th>
+      <th style="width: 18%">Langkah Pengujian</th>
+      <th style="width: 10%">Data Pengujian</th>
+      <th style="width: 10%">Hasil Diharapkan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="4"><strong>8. Histori Data</strong></td>
+      <td class="center-text">TC 8.1</td>
+      <td>Dashboard memfilter data harian default (today)</td>
+      <td>Pertama kali memuat dasbor</td>
+      <td>1. Akses dasbor utama.</td>
+      <td class="center-text">-</td>
+      <td>Filter aktif "today" dan grafik telemetri ter-reset.</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 8.2</td>
+      <td>Navigasi tanggal Kemarin &amp; Besok via tombol</td>
+      <td>Sedang memantau grafik histori</td>
+      <td>1. Klik tombol "← Kemarin".<br>2. Klik tombol "Besok →".</td>
+      <td class="center-text">-</td>
+      <td>Tanggal grafik berubah mundur satu hari lalu maju kembali.</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 8.3</td>
+      <td>DatePicker memilih tanggal kustom</td>
+      <td>Sedang memantau grafik histori</td>
+      <td>1. Klik DatePicker kustom.<br>2. Pilih tanggal tertentu.</td>
+      <td>tanggal: 2026-06-15</td>
+      <td>Grafik &amp; tabel menampilkan riwayat tanggal 15 Juni 2026.</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 8.4</td>
+      <td>Indikator kosong saat tanggal tidak ada data</td>
+      <td>Tanggal terpilih tidak memiliki telemetri</td>
+      <td>1. Navigasikan ke tanggal kosong.</td>
+      <td class="center-text">-</td>
+      <td>Grafik menampilkan pesan "Tidak Ada Data Telemetri".</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="caption">Tabel 4.10 Skenario Pengujian (Test Case) Fungsionalitas Ekspor Laporan</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 15%">Fungsionalitas</th>
+      <th style="width: 10%">ID Test Case</th>
+      <th style="width: 25%">Deskripsi / Skenario</th>
+      <th style="width: 12%">Pra Kondisi</th>
+      <th style="width: 18%">Langkah Pengujian</th>
+      <th style="width: 10%">Data Pengujian</th>
+      <th style="width: 10%">Hasil Diharapkan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>9. Ekspor Laporan</strong></td>
+      <td class="center-text">TC 9.1</td>
+      <td>Unduh berkas laporan telemetri PDF dan Excel</td>
+      <td>Berada di dasbor utama aktif</td>
+      <td>1. Klik tombol "Download XLSX".<br>2. Klik tombol "Save PDF".</td>
+      <td class="center-text">-</td>
+      <td>File Excel .xlsx &amp; berkas PDF terunduh lengkap ke komputer.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="caption">Tabel 4.11 Skenario Pengujian (Test Case) Fungsionalitas Pengaturan AI Assistant</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 15%">Fungsionalitas</th>
+      <th style="width: 10%">ID Test Case</th>
+      <th style="width: 25%">Deskripsi / Skenario</th>
+      <th style="width: 12%">Pra Kondisi</th>
+      <th style="width: 18%">Langkah Pengujian</th>
+      <th style="width: 10%">Data Pengujian</th>
+      <th style="width: 10%">Hasil Diharapkan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="3"><strong>10. Pengaturan AI</strong></td>
+      <td class="center-text">TC 10.1</td>
+      <td>Memuat konfigurasi preferensi ruangan dari local</td>
+      <td>Membuka halaman settings</td>
+      <td>1. Klik menu settings (/settings).</td>
+      <td class="center-text">-</td>
+      <td>Form terisi otomatis sesuai profil onboarding tersimpan.</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 10.2</td>
+      <td>Mengubah parameter pemicu sensitivitas tinggi</td>
+      <td>Berada di halaman settings</td>
+      <td>1. Pilih kelompok rentan (Bayi/Balita).<br>2. Klik Simpan.</td>
+      <td class="center-text">-</td>
+      <td>Mengaktifkan Modus Sensitivitas Tinggi (menurunkan threshold).</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 10.3</td>
+      <td>Simpan perubahan dan tutup dialog sukses</td>
+      <td>Muncul dialog sukses di layar</td>
+      <td>1. Klik tombol "Ke Dashboard" atau "Tutup".</td>
+      <td class="center-text">-</td>
+      <td>Sistem menutup dialog dan redirect pengguna ke dasbor.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="caption">Tabel 4.12 Skenario Pengujian (Test Case) Fungsionalitas Portal &amp; Autentikasi Admin</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 15%">Fungsionalitas</th>
+      <th style="width: 10%">ID Test Case</th>
+      <th style="width: 25%">Deskripsi / Skenario</th>
+      <th style="width: 12%">Pra Kondisi</th>
+      <th style="width: 18%">Langkah Pengujian</th>
+      <th style="width: 10%">Data Pengujian</th>
+      <th style="width: 10%">Hasil Diharapkan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="3"><strong>11. Admin Auth</strong></td>
+      <td class="center-text">TC 11.1</td>
+      <td>Login admin dengan input kosong</td>
+      <td>Berada di portal admin (/admin)</td>
+      <td>1. Kosongkan input.<br>2. Klik Akses Sistem.</td>
+      <td class="center-text">-</td>
+      <td>Submit diblokir, meminta pengisian kolom.</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 11.2</td>
+      <td>Login admin dengan kredensial salah</td>
+      <td>Berada di portal admin (/admin)</td>
+      <td>1. Isi kredensial salah.<br>2. Klik Akses Sistem.</td>
+      <td>ID: admin_salah<br>password: salah123</td>
+      <td>Login gagal, muncul alert "Akses ditolak.".</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 11.3</td>
+      <td>Login admin dengan kredensial benar</td>
+      <td>Berada di portal admin (/admin)</td>
+      <td>1. Isi kredensial benar sesuai .env.<br>2. Klik Akses Sistem.</td>
+      <td>ID: admin<br>password: admin123</td>
+      <td>Login berhasil, dialihkan ke /admin/dashboard.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="caption">Tabel 4.13 Skenario Pengujian (Test Case) Fungsionalitas Admin Dashboard</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 15%">Fungsionalitas</th>
+      <th style="width: 10%">ID Test Case</th>
+      <th style="width: 25%">Deskripsi / Skenario</th>
+      <th style="width: 12%">Pra Kondisi</th>
+      <th style="width: 18%">Langkah Pengujian</th>
+      <th style="width: 10%">Data Pengujian</th>
+      <th style="width: 10%">Hasil Diharapkan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="5"><strong>12. Kelola Perangkat</strong></td>
+      <td class="center-text">TC 12.1</td>
+      <td>Admin menambahkan perangkat IoT baru</td>
+      <td>Berada di dasbor admin</td>
+      <td>1. Klik "+ Tambah Device".<br>2. Isi Device ID.<br>3. Klik Simpan.</td>
+      <td>ID: CS-DAPUR-OKTO</td>
+      <td>Perangkat tersimpan di SQL/Firebase, memicu modal QR Code.</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 12.2</td>
+      <td>Admin menautkan perangkat manual ke email user</td>
+      <td>Berada di dasbor admin</td>
+      <td>1. Klik "Bind ke User".<br>2. Input email user.<br>3. Klik Simpan.</td>
+      <td>email: okto@gmail.com</td>
+      <td>Perangkat berhasil tertaut ke user di database relasional.</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 12.3</td>
+      <td>Admin melihat &amp; salin C++ firmware ESP32</td>
+      <td>Berada di dasbor admin</td>
+      <td>1. Klik "Source Code" pada baris alat.<br>2. Klik salin.</td>
+      <td class="center-text">-</td>
+      <td>Script firmware C++ (.ino) tersalin lengkap ke clipboard.</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 12.4</td>
+      <td>Admin mengedit parameter detail perangkat</td>
+      <td>Berada di dasbor admin</td>
+      <td>1. Klik edit (ikon pensil).<br>2. Ubah Device ID.<br>3. Klik Simpan.</td>
+      <td>ID: CS-DAPUR-OKTO-EDITED</td>
+      <td>Detail perangkat terupdate di SQL &amp; Firebase RTDB.</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 12.5</td>
+      <td>Admin menghapus perangkat dari sistem</td>
+      <td>Berada di dasbor admin</td>
+      <td>1. Klik hapus (ikon sampah).<br>2. Konfirmasi penghapusan.</td>
+      <td class="center-text">-</td>
+      <td>Perangkat terhapus secara permanen dari SQL dan Firebase.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="caption">Tabel 4.14 Skenario Pengujian (Test Case) Fungsionalitas Autentikasi (Logout)</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 15%">Fungsionalitas</th>
+      <th style="width: 10%">ID Test Case</th>
+      <th style="width: 25%">Deskripsi / Skenario</th>
+      <th style="width: 12%">Pra Kondisi</th>
+      <th style="width: 18%">Langkah Pengujian</th>
+      <th style="width: 10%">Data Pengujian</th>
+      <th style="width: 10%">Hasil Diharapkan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>13. Logout</strong></td>
+      <td class="center-text">TC 13.1</td>
+      <td>Pengguna keluar dan menghapus seluruh sesi aktif</td>
+      <td>Berada pada dasbor utama aktif</td>
+      <td>1. Klik tombol Logout di dasbor.</td>
+      <td class="center-text">-</td>
+      <td>Keluar sukses, localStorage browser dibersihkan total.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>4.2.3 Hasil Eksekusi Pengujian</h3>
+<p>Pengujian otomatis dieksekusi menggunakan Selenium WebDriver (Python pytest) dan Selenium IDE. Hasil aktual dibandingkan dengan hasil yang diharapkan untuk menetapkan status akhir pengujian fungsionalitas sistem CarbonSense secara visual pada Tabel 4.15 sampai Tabel 4.27.</p>
+
+<div class="caption">Tabel 4.15 Hasil Eksekusi Pengujian Fungsionalitas Login</div>
 <table>
   <thead>
     <tr>
       <th style="width: 12%">Fungsionalitas</th>
       <th style="width: 8%">ID Test Case</th>
-      <th style="width: 20%">Deskripsi / Skenario</th>
-      <th style="width: 12%">Pra Kondisi</th>
-      <th style="width: 18%">Langkah Pengujian</th>
-      <th style="width: 10%">Data Pengujian</th>
-      <th style="width: 20%">Hasil yang Diharapkan</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr><td rowspan="3"><strong>Autentikasi (Login)</strong></td><td>TC 1.1</td><td>Pengguna tidak mengisikan email dan password</td><td>Pengguna berada pada halaman login (/login)</td><td>1. Buka halaman /login<br>2. Kosongkan email dan password<br>3. Klik tombol Login</td><td>-</td><td>Login gagal, sistem menampilkan pesan error validasi input di form.</td></tr>
-<tr><td>TC 1.2</td><td>Pengguna mengisikan password yang salah</td><td>Pengguna berada pada halaman login (/login)</td><td>1. Masukkan email terdaftar<br>2. Masukkan password salah<br>3. Klik tombol Login</td><td>email: okto@gmail.com<br>password: salahpassword</td><td>Login gagal, muncul pesan alert "Email atau password salah!"</td></tr>
-<tr><td>TC 1.3</td><td>Pengguna mengisikan email dan password yang benar</td><td>Pengguna berada pada halaman login (/login)</td><td>1. Masukkan email terdaftar<br>2. Masukkan password benar<br>3. Klik tombol Login</td><td>email: okto@gmail.com<br>password: password123</td><td>Login berhasil, diarahkan ke halaman /select-device.</td></tr>
-<tr><td rowspan="3"><strong>Registrasi</strong></td><td>TC 2.1</td><td>Pengguna mengosongkan semua data registrasi</td><td>Pengguna berada pada halaman registrasi (/register)</td><td>1. Buka halaman /register<br>2. Klik tombol Daftar</td><td>-</td><td>Registrasi gagal, sistem menunjukkan validasi kolom wajib diisi.</td></tr>
-<tr><td>TC 2.2</td><td>Pengguna mendaftarkan password kurang dari 6 karakter</td><td>Pengguna berada pada halaman registrasi (/register)</td><td>1. Isi nama dan email<br>2. Masukkan password &lt; 6 karakter<br>3. Klik tombol Daftar</td><td>nama: Okto<br>email: okto@gmail.com<br>password: 123</td><td>Registrasi gagal, muncul pesan error panjang minimal password.</td></tr>
-<tr><td>TC 2.3 (Happy Path)</td><td>Pengguna mendaftarkan akun dengan data lengkap dan valid</td><td>Pengguna berada pada halaman registrasi (/register)</td><td>1. Isi nama, email, dan password valid<br>2. Klik tombol Daftar</td><td>nama: Okto<br>email: okto@gmail.com<br>password: password123</td><td>Registrasi berhasil, dialihkan ke halaman /onboarding.</td></tr>
-<tr><td rowspan="3"><strong>Onboarding</strong></td><td>TC 3.1</td><td>Pengguna baru mencoba bypass paksa halaman onboarding</td><td>Pengguna belum pernah menyelesaikan onboarding</td><td>1. Ketik URL /dashboard di address bar browser<br>2. Tekan Enter</td><td>-</td><td>Pengguna dialihkan paksa kembali ke halaman /onboarding.</td></tr>
-<tr><td>TC 3.2</td><td>Pengguna lama mengulang onboarding dan membatalkannya</td><td>Pengguna sudah berstatus onboarding komplit</td><td>1. Di dashboard, klik "Ulangi Onboarding"<br>2. Ubah jawaban kuesioner<br>3. Klik tombol "Batal"</td><td>-</td><td>Kembali ke halaman dashboard tanpa mengubah konfigurasi onboarding lama.</td></tr>
-<tr><td>TC 3.3 (Happy Path)</td><td>Pengguna baru menyelesaikan pengisian onboarding secara sukses</td><td>Pengguna pertama kali masuk halaman onboarding setelah register</td><td>1. Isi semua kuesioner penempatan sensor<br>2. Klik "Accept &amp; Lanjutkan"</td><td>-</td><td>Sistem menyimpan jawaban onboarding ke database MySQL &amp; localStorage, lalu me-redirect pengguna ke halaman /select-device.</td></tr>
-<tr><td rowspan="4"><strong>Edit Profil &amp; Password</strong></td><td>TC 4.1</td><td>Pengguna mengedit profil dengan mengosongkan kolom nama</td><td>Pengguna berada pada halaman profil (/profile)</td><td>1. Kosongkan kolom nama lengkap<br>2. Klik tombol Simpan</td><td>-</td><td>Profil gagal disimpan, muncul pesan peringatan/error.</td></tr>
-<tr><td>TC 4.2</td><td>Pengguna mengubah password dengan password lama yang salah</td><td>Pengguna berada pada halaman profil (/profile)</td><td>1. Masukkan password lama yang keliru<br>2. Masukkan password baru<br>3. Klik Simpan</td><td>password lama: salah<br>password baru: baru123</td><td>Muncul pesan error "Password lama salah".</td></tr>
-<tr><td>TC 4.3 (Happy Path)</td><td>Pengguna sukses mengedit profil username/email</td><td>Pengguna berada pada halaman profil (/profile)</td><td>1. Masukkan nama lengkap baru yang valid<br>2. Klik tombol Simpan</td><td>nama: Okto Bagas</td><td>Profil berhasil diperbarui di database SQL, muncul notifikasi sukses, dan nama baru langsung diterapkan di dashboard.</td></tr>
-<tr><td>TC 4.4 (Happy Path)</td><td>Pengguna sukses memperbarui password akun</td><td>Pengguna berada pada halaman profil (/profile)</td><td>1. Masukkan password lama yang benar<br>2. Masukkan password baru<br>3. Klik tombol Simpan</td><td>password lama: password123<br>password baru: password456</td><td>Password berhasil diperbarui di database SQL, muncul notifikasi sukses, dan login berikutnya wajib menggunakan password baru.</td></tr>
-<tr><td rowspan="2"><strong>Penautan Perangkat (QR Code)</strong></td><td>TC 5.1 (Happy Path)</td><td>Penautan perangkat otomatis melalui pemindaian QR Code</td><td>Pengguna memindai kode QR fisik perangkat</td><td>1. Akses URL /login?device=CS-DAPUR-01<br>2. Lakukan login sukses</td><td>-</td><td>Perangkat CS-DAPUR-01 otomatis terikat ke akun user di halaman /select-device.</td></tr>
-<tr><td>TC 5.2 (Happy Path)</td><td>Memilih perangkat aktif dari daftar untuk masuk ke dashboard</td><td>Pengguna berada pada halaman pilih perangkat (/select-device)</td><td>1. Pilih salah satu perangkat aktif dari daftar<br>2. Klik tombol Lanjutkan</td><td>-</td><td>Dashboard berhasil dimuat untuk perangkat terpilih, menampilkan data telemetri real-time.</td></tr>
-<tr><td rowspan="3"><strong>Aktivasi &amp; Reaktivasi</strong></td><td>TC 6.1</td><td>Membuka panduan reaktivasi otomatis saat status offline</td><td>Dashboard memantau status alat Offline</td><td>1. Putus koneksi alat (Firebase status offline)</td><td>-</td><td>Popup panduan reaktivasi otomatis terbuka di layar.</td></tr>
-<tr><td>TC 6.2 (Happy Path)</td><td>Menyelesaikan panduan reaktivasi langkah terakhir</td><td>Popup panduan reaktivasi aktif</td><td>1. Klik lanjut hingga langkah 5<br>2. Klik tombol "Saya Mengerti"</td><td>-</td><td>Popup tertutup secara instan dan halaman dashboard me-reload otomatis.</td></tr>
-<tr><td>TC 6.3 (Happy Path)</td><td>Perangkat terdeteksi Online kembali secara otomatis</td><td>Dashboard memantau status alat Offline</td><td>1. Sambungkan kembali alat ke listrik/internet (atau kirim data PPM baru ke Firebase)</td><td>-</td><td>Dashboard mendeteksi transisi Online secara instan, status bar berganti warna hijau 'Online', dan telemetry berjalan normal.</td></tr>
-<tr><td rowspan="3"><strong>Asisten Chat AI</strong></td><td>TC 7.1</td><td>AI menolak memberikan data palsu saat sensor sedang offline</td><td>Perangkat berstatus Offline</td><td>1. Tanyakan: "Berapa kadar PPM ruangan saya?"</td><td>-</td><td>AI menjawab bahwa sensor offline dan menyarankan reaktivasi.</td></tr>
-<tr><td>TC 7.2 (Happy Path)</td><td>AI memproses ingatan konteks obrolan (memory)</td><td>Pengguna sedang berdialog dengan AI</td><td>1. Katakan: "Saya menaruh alat di kamar"<br>2. Tanyakan: "Di mana letak alat saya tadi?"</td><td>-</td><td>AI menjawab secara akurat bahwa alat ditaruh di kamar.</td></tr>
-<tr><td>TC 7.3 (Happy Path)</td><td>AI memberikan panduan setup IoT secara lengkap</td><td>Pengguna sedang berdialog dengan AI</td><td>1. Tanyakan: "Bagaimana cara menyalakan alat CarbonSense dari awal?"</td><td>-</td><td>AI menjawab secara terperinci dengan langkah-langkah setup hardware, WiFi, captive portal, hingga binding akun.</td></tr>
-<tr><td rowspan="4"><strong>Navigasi Histori Tanggal</strong></td><td>TC 8.1 (Happy Path)</td><td>Dashboard memfilter data harian secara default</td><td>Pengguna pertama kali memuat dashboard</td><td>1. Masuk ke dashboard perangkat</td><td>-</td><td>Opsi filter aktif adalah "Filter Tanggal" (today) dan data grafis ter-reset bersih untuk hari ini.</td></tr>
-<tr><td>TC 8.2 (Happy Path)</td><td>Navigasi mundur ke hari kemarin dan maju ke besok</td><td>Pengguna memantau grafik historis</td><td>1. Klik tombol "← Kemarin"<br>2. Klik tombol "Besok →"</td><td>-</td><td>1. Grafik menampilkan tanggal kemarin.<br>2. Grafik maju kembali ke hari ini.</td></tr>
-<tr><td>TC 8.3 (Happy Path)</td><td>Memilih tanggal kustom melalui DatePicker</td><td>Pengguna memantau grafik historis</td><td>1. Klik kolom input DatePicker<br>2. Pilih tanggal tertentu</td><td>tanggal: 2026-06-15</td><td>Grafik &amp; tabel menampilkan riwayat tanggal 15 Juni 2026.</td></tr>
-<tr><td>TC 8.4</td><td>Penayangan indikator kosong saat tidak ada data</td><td>Tanggal yang dipilih tidak memiliki rekaman telemetri</td><td>1. Navigasikan ke tanggal kosong</td><td>-</td><td>Grafik menampilkan ilustrasi kosong dengan teks "Tidak Ada Data Telemetri".</td></tr>
-<tr><td><strong>Ekspor Laporan</strong></td><td>TC 9.1 (Happy Path)</td><td>Mengunduh berkas laporan dalam format PDF dan Excel</td><td>Pengguna memantau dashboard perangkat</td><td>1. Klik "Download XLSX"<br>2. Klik "Save PDF"</td><td>-</td><td>Berkas .xlsx dan .pdf berisi daftar telemetri berhasil terunduh ke komputer.</td></tr>
-<tr><td rowspan="3"><strong>Pengaturan AI Assistant</strong></td><td>TC 10.1 (Happy Path)</td><td>Memuat konfigurasi AI dari local/Firestore</td><td>Pengguna membuka halaman Pengaturan (/settings)</td><td>1. Buka halaman /settings</td><td>-</td><td>Jawaban ruangan terisi otomatis berdasarkan profil tersimpan di Firestore/localStorage.</td></tr>
-<tr><td>TC 10.2 (Happy Path)</td><td>Menyesuaikan parameter ruangan dan pemicu sensitivitas tinggi</td><td>Pengguna berada pada halaman profil ruangan (/settings)</td><td>1. Pilih kelompok rentan (Bayi/Balita) atau Kompor Gas<br>2. Klik Simpan Perubahan</td><td>-</td><td>Sistem menyinkronkan data, beralih secara otomatis ke "Modus Sensitivitas Tinggi" (indikator berwarna merah), dan memperbarui preferensi asisten AI.</td></tr>
-<tr><td>TC 10.3 (Happy Path)</td><td>Menyimpan perubahan dan menutup popup keberhasilan</td><td>Muncul dialog "Profil AI Diperbarui!" di layar</td><td>1. Klik "Ke Dashboard" atau "Tutup"</td><td>-</td><td>Sistem menutup popup dan me-redirect pengguna ke halaman utama.</td></tr>
-<tr><td rowspan="3"><strong>Portal &amp; Autentikasi Admin</strong></td><td>TC 11.1</td><td>Login admin dengan ID/Password kosong</td><td>Pengguna membuka halaman Login Admin (/admin)</td><td>1. Buka halaman /admin<br>2. Kosongkan kolom input<br>3. Klik Akses Sistem</td><td>-</td><td>Login gagal, form memblokir submit dan meminta pengisian kolom.</td></tr>
-<tr><td>TC 11.2</td><td>Login admin dengan kredensial salah</td><td>Pengguna membuka halaman Login Admin (/admin)</td><td>1. Masukkan Admin ID/password salah<br>2. Klik Akses Sistem</td><td>email: admin_salah<br>password: salah123</td><td>Login gagal, muncul pesan alert error "Akses ditolak."</td></tr>
-<tr><td>TC 11.3 (Happy Path)</td><td>Login admin dengan kredensial benar</td><td>Pengguna membuka halaman Login Admin (/admin)</td><td>1. Masukkan Admin ID/password benar<br>2. Klik Akses Sistem</td><td>email: admin<br>password: admin123</td><td>Login berhasil, dialihkan ke halaman dashboard administrator (/admin/dashboard).</td></tr>
-<tr><td rowspan="5"><strong>Admin Dashboard (Manajemen Perangkat &amp; Pengguna)</strong></td><td>TC 12.1 (Happy Path)</td><td>Admin menambahkan perangkat IoT baru</td><td>Admin berada di halaman dashboard admin (/admin/dashboard)</td><td>1. Klik "+ Tambah Device"<br>2. Masukkan Device ID baru<br>3. Klik Simpan</td><td>ID: CS-DAPUR-OKTO</td><td>Perangkat terdaftar di MySQL, terinisialisasi di Firebase RTDB, dan muncul popup kode QR perangkat baru.</td></tr>
-<tr><td>TC 12.2 (Happy Path)</td><td>Admin melakukan penautan (binding) perangkat manual ke email user</td><td>Admin berada di halaman dashboard admin (/admin/dashboard)</td><td>1. Klik "Bind ke User" pada perangkat<br>2. Masukkan/cari email user terdaftar<br>3. Klik Simpan</td><td>email: okto@gmail.com</td><td>Perangkat tertaut ke email user di database SQL dan Firebase status berubah menjadi "Online".</td></tr>
-<tr><td>TC 12.3 (Happy Path)</td><td>Admin melihat dan menyalin C++ Source Code ESP32 firmware</td><td>Admin berada di halaman dashboard admin (/admin/dashboard)</td><td>1. Klik "Source Code" pada perangkat terpilih<br>2. Klik tombol salin</td><td>-</td><td>C++ source code C++ dengan makro ID perangkat dan parameter WiFi/Firebase tersalin lengkap.</td></tr>
-<tr><td>TC 12.4 (Happy Path)</td><td>Admin mengedit detail perangkat</td><td>Admin berada di halaman dashboard admin (/admin/dashboard)</td><td>1. Klik edit (ikon pensil)<br>2. Ubah Device ID, email owner, atau status PPM<br>3. Klik Simpan</td><td>ID: CS-DAPUR-OKTO-EDITED</td><td>Detail perangkat diperbarui secara konsisten di tabel database SQL dan Firebase RTDB.</td></tr>
-<tr><td>TC 12.5 (Happy Path)</td><td>Admin menghapus perangkat dari sistem</td><td>Admin berada di halaman dashboard admin (/admin/dashboard)</td><td>1. Klik hapus (ikon tempat sampah) pada perangkat<br>2. Konfirmasi penghapusan</td><td>-</td><td>Perangkat terhapus dari MySQL dan cabang Firebase RTDB perangkat tersebut dihapus sepenuhnya.</td></tr>
-<tr><td><strong>Autentikasi (Logout)</strong></td><td>TC 13.1 (Happy Path)</td><td>Pengguna keluar dan menghapus seluruh sesi aktif</td><td>Pengguna berada pada dashboard</td><td>1. Klik tombol Logout</td><td>-</td><td>Keluar secara sukses, seluruh data sesi lokal (localStorage) dihapus bersih.</td></tr>
-  </tbody>
-</table>
-
-<h3>4.2.3 Hasil Eksekusi Pengujian</h3>
-<p>Rancangan pengujian di atas dieksekusi secara otomatis menggunakan Selenium IDE dan Selenium WebDriver. Kode perintah skrip dan hasil aktual dari setiap pengujian dicantumkan secara lengkap pada Tabel 4-4 di bawah ini.</p>
-
-<div class="caption">Tabel 4-4 Hasil Eksekusi Pengujian Fungsionalitas dengan Selenium</div>
-<table>
-  <thead>
-    <tr>
-      <th style="width: 18%">Fungsionalitas</th>
-      <th style="width: 8%">ID Test Case</th>
-      <th style="width: 48%">Command</th>
-      <th style="width: 18%">Hasil Aktual</th>
+      <th style="width: 50%">Command (Selenium Log)</th>
+      <th style="width: 22%">Hasil Aktual</th>
       <th style="width: 8%">Kesimpulan</th>
     </tr>
   </thead>
   <tbody>
-    
-            <tr>
-                <td rowspan="3"><strong>1. Autentikasi (Login)</strong></td>
-                <td class="center-text">TC 1.1</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/")
-self.driver.set_window_size(974, 1080)
-self.driver.find_element(By.LINK_TEXT, "Dapatkan Peringatan").click()
-self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
-                <td>Sistem berhasil memblokir input kosong dan menampilkan pesan error di form.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td class="center-text">TC 1.2</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/login")
-self.driver.set_window_size(974, 1080)
-self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").send_keys("okto@gmail.com")
-self.driver.find_element(By.CSS_SELECTOR, ".pl-4").click()
-self.driver.find_element(By.CSS_SELECTOR, ".pl-4").send_keys("asdasd")
-self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
-                <td>Sistem menampilkan pesan error "Email atau password salah!" saat dimasukkan password keliru.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td class="center-text">TC 1.3</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/")
-self.driver.set_window_size(974, 1080)
-self.driver.find_element(By.LINK_TEXT, "Dapatkan Peringatan").click()
-self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".pl-4").click()
-self.driver.find_element(By.CSS_SELECTOR, ".pl-4").send_keys("tester")
-self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").send_keys("okto@gmail.com")
-self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
-                <td>Sistem berhasil melakukan login dan mengarahkan pengguna ke halaman select-device.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td rowspan="3"><strong>2. Registrasi</strong></td>
-                <td class="center-text">TC 2.1</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/login")
-self.driver.set_window_size(974, 1080)
-self.driver.find_element(By.LINK_TEXT, "Daftar sekarang").click()
-self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
-                <td>Sistem memblokir pendaftaran kosong dan menampilkan pesan error kolom wajib diisi.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td class="center-text">TC 2.2</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/register")
-self.driver.set_window_size(974, 1087)
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .py-3").click()
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .py-3").send_keys("betatester")
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .px-4").click()
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .px-4").click()
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .px-4").send_keys("testerbeta@example.com")
-self.driver.find_element(By.CSS_SELECTOR, ".pl-4").click()
-self.driver.find_element(By.CSS_SELECTOR, ".pl-4").send_keys("123")
-self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
-                <td>Sistem menampilkan error "Kata sandi harus terdiri dari minimal 6 karakter" untuk password pendek.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td class="center-text">TC 2.3</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/register")
-self.driver.set_window_size(974, 1080)
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .py-3").click()
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .py-3").send_keys("betatester")
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .px-4").click()
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .px-4").send_keys("testerbeta@example.com")
-self.driver.find_element(By.CSS_SELECTOR, ".pl-4").click()
-self.driver.find_element(By.CSS_SELECTOR, ".pl-4").send_keys("123123")
-self.driver.find_element(By.CSS_SELECTOR, ".lucide > circle").click()
-self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
-                <td>Sistem sukses mendaftarkan akun baru dan mengarahkan pengguna ke halaman onboarding.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td rowspan="3"><strong>3. Onboarding</strong></td>
-                <td class="center-text">TC 3.1</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/")
-self.driver.set_window_size(974, 1080)
-self.driver.find_element(By.LINK_TEXT, "Dapatkan Peringatan").click()
-self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").send_keys("testerbeta@example.com")
-self.driver.find_element(By.CSS_SELECTOR, ".pl-4").click()
-self.driver.find_element(By.CSS_SELECTOR, ".pl-4").send_keys("123123")
-self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()
-self.driver.get("http://localhost:3000/dashboard")</td>
-                <td>Percobaan bypass /dashboard digagalkan, sistem otomatis me-redirect ke halaman /onboarding.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td class="center-text">TC 3.2</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/select-device")
-self.driver.find_element(By.CSS_SELECTOR, ".hover\3Atext-\[var\(--cs-amber\)\]").click()
-self.driver.find_element(By.CSS_SELECTOR, ".hover\3Atext-\[var\(--cs-amber\)\]").click()</td>
-                <td>Pengguna dapat mengulang onboarding lalu menekan Batal untuk kembali ke dashboard dengan aman.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td class="center-text">TC 3.3</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/onboarding")
-self.driver.find_element(By.CSS_SELECTOR, ".p-5:nth-child(1)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".p-5:nth-child(1)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".p-5:nth-child(3)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".p-5:nth-child(3)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".p-5:nth-child(1)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".p-5:nth-child(1)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".p-5:nth-child(3)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".pt-6").click()
-self.driver.find_element(By.CSS_SELECTOR, ".px-8").click()
-self.driver.find_element(By.CSS_SELECTOR, ".px-8").click()</td>
-                <td>Sistem sukses menyimpan jawaban kuesioner dan mengarahkan pengguna ke halaman pilih alat.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td rowspan="4"><strong>4. Edit Profil & Password</strong></td>
-                <td class="center-text">TC 4.1</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/profile")
-self.driver.set_window_size(974, 547)
-self.driver.find_element(By.CSS_SELECTOR, ".gap-3:nth-child(2)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".text-sm:nth-child(1)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".text-sm:nth-child(1)").send_keys("")
-self.driver.find_element(By.CSS_SELECTOR, ".text-black:nth-child(3)").click()</td>
-                <td>Sistem menolak penyimpanan profil dengan nama kosong dan memunculkan pesan error.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td class="center-text">TC 4.2</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/profile")
-self.driver.set_window_size(974, 547)
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .relative > .bg-black\/40").click()
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .relative > .bg-black\/40").send_keys("asdasd")
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .relative > .text-xs").click()
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .relative > .text-xs").send_keys("123123")
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(3) .w-full").click()
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(3) .w-full").send_keys("123123")
-self.driver.find_element(By.CSS_SELECTOR, ".h-full").click()
-self.driver.find_element(By.CSS_SELECTOR, ".mt-6").click()</td>
-                <td>Sistem menolak pembaruan password karena password lama salah dan memunculkan pesan alert.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td class="center-text">TC 4.3</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/profile")
-self.driver.set_window_size(974, 547)
-self.driver.find_element(By.CSS_SELECTOR, ".text-sm:nth-child(1)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".text-sm:nth-child(1)").send_keys("Okto")
-self.driver.find_element(By.CSS_SELECTOR, ".text-black:nth-child(3)").click()</td>
-                <td>Sistem sukses memperbarui username pengguna di database MySQL dan menayangkan notifikasi sukses.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td class="center-text">TC 4.4</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/profile")
-self.driver.set_window_size(974, 547)
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .relative > .bg-black\/40").click()
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .relative > .bg-black\/40").send_keys("tester")
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .relative > .text-xs").click()
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .relative > .text-xs").send_keys("asdasd")
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(3) .w-full").click()
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(3) .w-full").send_keys("asdasd")
-self.driver.find_element(By.CSS_SELECTOR, ".mt-6").click()</td>
-                <td>Sistem sukses mengganti password akun pengguna dan menampilkan alert notifikasi sukses.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td rowspan="2"><strong>5. Penautan Perangkat (QR Code)</strong></td>
-                <td class="center-text">TC 5.1</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/login?device=CS-DAPUR-01")
-self.driver.set_window_size(974, 547)
-self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").send_keys("okto3@gmail.com")
-self.driver.find_element(By.CSS_SELECTOR, ".pl-4").click()
-self.driver.find_element(By.CSS_SELECTOR, ".pl-4").send_keys("asdasd")
-self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
-                <td>Sistem mendeteksi parameter device dari scan QR dan menyimpannya sebagai pending device.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td class="center-text">TC 5.2</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/select-device")
-self.driver.set_window_size(974, 547)
-self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
-                <td>Pengguna berhasil memilih perangkat aktif dari daftar dan mengalihkan ke dashboard telemetri.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td rowspan="3"><strong>6. Aktivasi & Reaktivasi</strong></td>
-                <td class="center-text">TC 6.1</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/login")
-self.driver.set_window_size(974, 547)
-self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").send_keys("okto3@gmail.com")
-self.driver.find_element(By.CSS_SELECTOR, ".pl-4").click()
-self.driver.find_element(By.CSS_SELECTOR, ".pl-4").send_keys("asdasd")
-self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()
-self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()
-self.driver.find_element(By.CSS_SELECTOR, ".bg-\[var\(--cs-amber\)\]").click()
-self.driver.find_element(By.CSS_SELECTOR, ".bg-\[var\(--cs-amber\)\]").click()
-self.driver.find_element(By.CSS_SELECTOR, ".bg-\[var\(--cs-amber\)\]").click()
-self.driver.find_element(By.CSS_SELECTOR, ".bg-\[var\(--cs-amber\)\]").click()</td>
-                <td>Sistem mendeteksi status offline pada alat dan memicu pembukaan popup panduan reaktivasi.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td class="center-text">TC 6.2</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/login")
-self.driver.set_window_size(974, 547)
-self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").send_keys("okto3@gmail.com")
-self.driver.find_element(By.CSS_SELECTOR, ".pl-4").click()
-self.driver.find_element(By.CSS_SELECTOR, ".pl-4").send_keys("asdasd")
-self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()
-self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()
-self.driver.find_element(By.CSS_SELECTOR, ".bg-\[var\(--cs-amber\)\]").click()
-self.driver.find_element(By.CSS_SELECTOR, ".bg-\[var\(--cs-amber\)\]").click()
-self.driver.find_element(By.CSS_SELECTOR, ".bg-\[var\(--cs-amber\)\]").click()
-self.driver.find_element(By.CSS_SELECTOR, ".bg-\[var\(--cs-amber\)\]").click()
-self.driver.find_element(By.CSS_SELECTOR, ".bg-\[var\(--cs-amber\)\]").click()</td>
-                <td>Pengguna berhasil menutup panduan reaktivasi langkah terakhir dan dashboard me-reload.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td class="center-text">TC 6.3</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/login")
-self.driver.set_window_size(974, 547)
-self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").send_keys("okto3@gmail.com")
-self.driver.find_element(By.CSS_SELECTOR, ".pl-4").click()
-self.driver.find_element(By.CSS_SELECTOR, ".pl-4").send_keys("asdasd")
-self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()
-self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()
-self.driver.find_element(By.CSS_SELECTOR, ".bg-\[var\(--cs-amber\)\]").click()
-self.driver.find_element(By.CSS_SELECTOR, ".bg-\[var\(--cs-amber\)\]").click()
-self.driver.find_element(By.CSS_SELECTOR, ".bg-\[var\(--cs-amber\)\]").click()
-self.driver.find_element(By.CSS_SELECTOR, ".bg-\[var\(--cs-amber\)\]").click()
-self.driver.find_element(By.CSS_SELECTOR, ".bg-\[var\(--cs-amber\)\]").click()</td>
-                <td>Dashboard mendeteksi data baru dan mengganti indikator status secara otomatis menjadi Online.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td rowspan="3"><strong>7. Asisten Chat AI</strong></td>
-                <td class="center-text">TC 7.1</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")
-self.driver.set_window_size(974, 547)
-self.driver.find_element(By.CSS_SELECTOR, ".bg-\[\#070202\]\/85").click()
-self.driver.find_element(By.CSS_SELECTOR, ".focus\3Aring-1").click()
-self.driver.find_element(By.CSS_SELECTOR, ".focus\3Aring-1").send_keys("kadar ppm saya berapa?")
-self.driver.find_element(By.CSS_SELECTOR, ".lucide-send").click()</td>
-                <td>AI menolak memberikan data ppm palsu saat offline dan menyarankan reaktivasi alat.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td class="center-text">TC 7.2</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")
-self.driver.find_element(By.CSS_SELECTOR, ".bg-\[\#070202\]\/85").click()
-self.driver.find_element(By.CSS_SELECTOR, ".focus\3Aring-1").click()
-self.driver.find_element(By.CSS_SELECTOR, ".focus\3Aring-1").send_keys("sekarang saya menaruh alat di kamar mandi")
-self.driver.find_element(By.CSS_SELECTOR, ".lucide-send").click()
-self.driver.find_element(By.CSS_SELECTOR, ".focus\3Aring-1").click()
-# waitForElementEditable target=css=.focus\3Aring-1 value=30000
-self.driver.find_element(By.CSS_SELECTOR, ".focus\3Aring-1").send_keys("dimana letak alat saya tadi?")
-self.driver.find_element(By.CSS_SELECTOR, ".lucide-send").click()</td>
-                <td>AI berhasil menjawab secara kontekstual menggunakan memori dialog sebelumnya.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td class="center-text">TC 7.3</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")
-self.driver.set_window_size(974, 547)
-self.driver.find_element(By.CSS_SELECTOR, ".bg-\[\#070202\]\/85").click()
-self.driver.find_element(By.CSS_SELECTOR, ".focus\3Aring-1").click()
-self.driver.find_element(By.CSS_SELECTOR, ".focus\3Aring-1").send_keys("bagaimana cara saya menyalakan alat cs dari awal? ini saya lihat 0 terus datanya :(")
-self.driver.find_element(By.CSS_SELECTOR, ".gap-2:nth-child(5)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".text-black").click()</td>
-                <td>AI memberikan panduan instalasi firmware IoT carbonsense secara lengkap dan runtut.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td rowspan="4"><strong>8. Navigasi Histori Tanggal</strong></td>
-                <td class="center-text">TC 8.1</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")
-self.driver.set_window_size(974, 547)
-self.driver.find_element(By.CSS_SELECTOR, ".bg-\[\#070202\]\/85").click()
-# runScript target=window.scrollTo(0,1500) value=
-self.driver.find_element(By.CSS_SELECTOR, ".relative:nth-child(1) > .w-full").click()
-self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(5)").click()
-# runScript target=window.scrollTo(0,1455) value=</td>
-                <td>Halaman grafik harian berhasil menampilkan data dengan filter tanggal default 'today'.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td class="center-text">TC 8.2</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")
-self.driver.set_window_size(974, 547)
-self.driver.find_element(By.CSS_SELECTOR, ".bg-\[\#070202\]\/85").click()
-self.driver.find_element(By.CSS_SELECTOR, ".bg-zinc-800:nth-child(1)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".px-4:nth-child(3)").click()
-# runScript target=window.scrollTo(0,1500) value=</td>
-                <td>Tombol navigasi 'Kemarin' dan 'Besok' berhasil memicu perubahan tanggal grafik secara aman.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td class="center-text">TC 8.3</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")
-self.driver.set_window_size(974, 547)
-self.driver.find_element(By.CSS_SELECTOR, ".bg-\[\#070202\]\/85").click()
-self.driver.find_element(By.CSS_SELECTOR, ".bg-black\/40:nth-child(2)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".bg-black\/40:nth-child(2)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".bg-black\/40:nth-child(2)").send_keys("2026-06-15")</td>
-                <td>DatePicker dapat memilih tanggal kustom 15 Juni 2026 dan memperbarui grafik telemetri.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td class="center-text">TC 8.4</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")
-self.driver.find_element(By.CSS_SELECTOR, "input[type='date']").send_keys("2030-01-01")
-assert self.driver.find_element(By.XPATH, "//*[contains(text(), 'Tidak Ada Data Telemetri')]").is_displayed()</td>
-                <td>Sistem menayangkan ilustrasi awan kosong dengan teks 'Tidak Ada Data Telemetri' saat data kosong.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td rowspan="1"><strong>9. Ekspor Laporan</strong></td>
-                <td class="center-text">TC 9.1</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")
-self.driver.set_window_size(974, 547)
-self.driver.find_element(By.CSS_SELECTOR, ".bg-\[\#070202\]\/85").click()
-self.driver.find_element(By.CSS_SELECTOR, ".hover\3A brightness-110").click()
-self.driver.find_element(By.CSS_SELECTOR, ".p-4:nth-child(4)").click()</td>
-                <td>Unduhan berkas laporan dalam format Excel (.xlsx) dan berkas PDF berhasil disimpan ke lokal.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td rowspan="3"><strong>10. Pengaturan AI Assistant</strong></td>
-                <td class="center-text">TC 10.1</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")
-self.driver.set_window_size(974, 547)
-self.driver.find_element(By.CSS_SELECTOR, ".bg-\[\#070202\]\/85").click()
-self.driver.find_element(By.CSS_SELECTOR, ".lucide-settings > circle").click()</td>
-                <td>Formulir preferensi AI memuat konfigurasi ruangan pengguna dari local storage secara sukses.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td class="center-text">TC 10.2</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")
-self.driver.set_window_size(974, 547)
-self.driver.find_element(By.CSS_SELECTOR, ".bg-\[\#070202\]\/85").click()
-self.driver.find_element(By.CSS_SELECTOR, ".lucide-settings > circle").click()
-self.driver.find_element(By.CSS_SELECTOR, ".sm\3Agrid-cols-3 > .gap-3:nth-child(1)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".gap-4:nth-child(1)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".sm\3Agrid-cols-4 > .p-4:nth-child(2) > .text-xs").click()
-self.driver.find_element(By.CSS_SELECTOR, ".p-6:nth-child(4) .p-4:nth-child(1)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".grid-cols-2 > .text-left:nth-child(1)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".p-6:nth-child(6) .p-4:nth-child(1)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".p-6:nth-child(7) .p-4:nth-child(3)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".px-8").click()
-self.driver.find_element(By.CSS_SELECTOR, ".flex-1:nth-child(1)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".space-y-2").click()</td>
-                <td>Pilihan kelompok rentan berhasil memperbarui dan menyalakan Modus Sensitivitas Tinggi.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td class="center-text">TC 10.3</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")
-self.driver.set_window_size(974, 547)
-self.driver.find_element(By.CSS_SELECTOR, ".bg-\[\#070202\]\/85").click()
-self.driver.find_element(By.CSS_SELECTOR, ".lucide-settings > path").click()
-self.driver.find_element(By.CSS_SELECTOR, ".px-8").click()
-# runScript target=window.scrollTo(0,1622) value=
-self.driver.find_element(By.CSS_SELECTOR, ".flex-1:nth-child(2)").click()
-# runScript target=window.scrollTo(0,1622) value=
-self.driver.find_element(By.CSS_SELECTOR, ".bg-\[\#070202\]\/85").click()</td>
-                <td>Sistem sukses menyimpan perubahan dan me-redirect pengguna ke halaman dashboard utama.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td rowspan="3"><strong>11. Portal & Autentikasi Admin</strong></td>
-                <td class="center-text">TC 11.1</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/admin")
-self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
-                <td>Sistem memblokir pengiriman form masuk admin yang kosong dan meminta pengisian kolom.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td class="center-text">TC 11.2</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/admin")
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .py-3").click()
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .py-3").send_keys("asd")
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .w-full").click()
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .w-full").send_keys("asd")
-self.driver.find_element(By.CSS_SELECTOR, ".space-y-5").click()
-self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
-                <td>Sistem menampilkan alert error 'Admin ID atau Password salah.' saat kredensial salah.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td class="center-text">TC 11.3</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/admin")
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .py-3").click()
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .py-3").send_keys("asdfghgfsdasfsgfdhert")
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .w-full").click()
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .w-full").click()
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .w-full").click()
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .w-full").send_keys("sdfigjkdflqwfsdgfbvuij")
-self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
-                <td>Sistem berhasil login admin dan mengalihkan halaman ke dashboard administrator.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td rowspan="5"><strong>12. Admin Dashboard</strong></td>
-                <td class="center-text">TC 12.1</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/admin/dashboard")
-self.driver.find_element(By.CSS_SELECTOR, ".text-black").click()
-self.driver.find_element(By.CSS_SELECTOR, ".placeholder\3Atext-zinc-700").click()
-self.driver.find_element(By.CSS_SELECTOR, ".placeholder\3Atext-zinc-700").send_keys("CS-DAPUR-OKTO")
-self.driver.find_element(By.CSS_SELECTOR, ".mt-2").click()
-self.driver.find_element(By.CSS_SELECTOR, ".text-\[\#0c0a08\]").click()
-self.driver.find_element(By.CSS_SELECTOR, ".fixed").click()
-self.driver.find_element(By.CSS_SELECTOR, ".lucide-x").click()</td>
-                <td>Perangkat baru berhasil didaftarkan di sistem MySQL/Firebase dan kode QR dibuat.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td class="center-text">TC 12.2</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/admin/dashboard")
-self.driver.find_element(By.CSS_SELECTOR, ".hover\3A bg-zinc-800\/10:nth-child(1) .p-2:nth-child(1)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".p-3:nth-child(3) .text-xs").click()
-self.driver.find_element(By.CSS_SELECTOR, ".p-3:nth-child(4)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".py-3 > .lucide").click()</td>
-                <td>Perangkat berhasil terikat secara manual ke akun email user terdaftar oleh administrator.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td class="center-text">TC 12.3</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/admin/dashboard")
-self.driver.find_element(By.CSS_SELECTOR, ".hover\3A bg-zinc-800\/10:nth-child(1) .p-2:nth-child(1) > .lucide").click()
-self.driver.find_element(By.CSS_SELECTOR, ".lucide-copy").click()</td>
-                <td>Source code C++ firmware untuk device disiapkan dan berhasil disalin lengkap.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td class="center-text">TC 12.4</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/admin/dashboard")
-self.driver.find_element(By.CSS_SELECTOR, ".hover\3A bg-zinc-800\/10:nth-child(1) .p-2:nth-child(2) > .lucide").click()
-self.driver.find_element(By.CSS_SELECTOR, ".font-mono:nth-child(2)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".font-mono:nth-child(2)").click()
-# doubleClick target=css=.font-mono:nth-child(2) value=
-self.driver.find_element(By.CSS_SELECTOR, ".font-mono:nth-child(2)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".font-mono:nth-child(2)").send_keys(" CS-DAPUR-OKTO-EDITED")
-self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(4) > .w-full").click()
-self.driver.find_element(By.CSS_SELECTOR, ".text-\[\#0c0a08\]").click()</td>
-                <td>Perubahan detail perangkat (ID baru, owner baru) berhasil diperbarui ke MySQL & Firebase.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td class="center-text">TC 12.5</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/admin/dashboard")
-self.driver.find_element(By.CSS_SELECTOR, ".text-black").click()
-self.driver.find_element(By.CSS_SELECTOR, ".placeholder\3Atext-zinc-700").click()
-self.driver.find_element(By.CSS_SELECTOR, ".placeholder\3Atext-zinc-700").send_keys("test dikit")
-self.driver.find_element(By.CSS_SELECTOR, ".text-\[\#0c0a08\]").click()
-self.driver.find_element(By.CSS_SELECTOR, ".lucide-x").click()
-# chooseOkOnNextConfirmation target= value=
-self.driver.find_element(By.CSS_SELECTOR, ".hover\3A bg-zinc-800\/10:nth-child(1) .p-2:nth-child(5) > .lucide").click()
-# assertConfirmation target=Apakah Anda yakin ingin menghapus perangkat test dikit? value=
-# webdriverChooseOkOnVisibleConfirmation target= value=</td>
-                <td>Perangkat terhapus secara permanen dari tabel database MySQL dan cabang Firebase RTDB.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-            <tr>
-                <td rowspan="1"><strong>13. Autentikasi (Logout)</strong></td>
-                <td class="center-text">TC 13.1</td>
-                <td class="code-cell">self.driver.get("http://localhost:3000/login")
-self.driver.set_window_size(974, 547)
-self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").click()
-self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").send_keys("okto3@gmail.com")
-self.driver.find_element(By.CSS_SELECTOR, ".pl-4").click()
-self.driver.find_element(By.CSS_SELECTOR, ".pl-4").send_keys("asdasd")
-self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()
-self.driver.find_element(By.CSS_SELECTOR, ".min-h-screen").click()
-self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()
-self.driver.find_element(By.CSS_SELECTOR, ".bg-\[\#070202\]\/85").click()
-self.driver.find_element(By.CSS_SELECTOR, ".lucide-log-out").click()</td>
-                <td>Sesi terhapus bersih dari browser localStorage dan dialihkan kembali ke halaman utama.</td>
-                <td class="center-text" style="font-weight: bold; color: green;">pass</td>
-            </tr>
-        
+    <tr>
+      <td rowspan="3"><strong>1. Login</strong></td>
+      <td class="center-text">TC 1.1</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/")&#10;self.driver.set_window_size(974, 1080)&#10;self.driver.find_element(By.LINK_TEXT, "Dapatkan Peringatan").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
+      <td>Sistem berhasil memblokir input kosong dan menampilkan pesan error di form.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 1.2</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/login")&#10;self.driver.set_window_size(974, 1080)&#10;self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").send_keys("okto@gmail.com")&#10;self.driver.find_element(By.CSS_SELECTOR, ".pl-4").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".pl-4").send_keys("asdasd")&#10;self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
+      <td>Sistem menampilkan pesan error "Email atau password salah!" saat dimasukkan password keliru.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 1.3</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/")&#10;self.driver.set_window_size(974, 1080)&#10;self.driver.find_element(By.LINK_TEXT, "Dapatkan Peringatan").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".pl-4").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".pl-4").send_keys("tester")&#10;self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").send_keys("okto@gmail.com")&#10;self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
+      <td>Sistem berhasil melakukan login dan mengarahkan pengguna ke halaman select-device.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td colspan="4" class="bold-text">Persentase keberhasilan (pass)</td>
+      <td class="pass-status">100%</td>
+    </tr>
   </tbody>
 </table>
 
-<h2>BAB 5<br>KESIMPULAN DAN SARAN</h2>
+<div class="caption">Tabel 4.16 Hasil Eksekusi Pengujian Fungsionalitas Registrasi</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 12%">Fungsionalitas</th>
+      <th style="width: 8%">ID Test Case</th>
+      <th style="width: 50%">Command (Selenium Log)</th>
+      <th style="width: 22%">Hasil Aktual</th>
+      <th style="width: 8%">Kesimpulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="3"><strong>2. Registrasi</strong></td>
+      <td class="center-text">TC 2.1</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/login")&#10;self.driver.set_window_size(974, 1080)&#10;self.driver.find_element(By.LINK_TEXT, "Daftar sekarang").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
+      <td>Sistem memblokir pendaftaran kosong dan menampilkan pesan error kolom wajib diisi.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 2.2</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/register")&#10;self.driver.set_window_size(974, 1087)&#10;self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .py-3").click()&#10;self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .py-3").send_keys("betatester")&#10;self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .px-4").click()&#10;self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .px-4").send_keys("testerbeta@example.com")&#10;self.driver.find_element(By.CSS_SELECTOR, ".pl-4").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".pl-4").send_keys("123")&#10;self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
+      <td>Sistem menampilkan error "Kata sandi harus terdiri dari minimal 6 karakter" untuk password pendek.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 2.3</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/register")&#10;self.driver.set_window_size(974, 1080)&#10;self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .py-3").click()&#10;self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .py-3").send_keys("betatester")&#10;self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .px-4").click()&#10;self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .px-4").send_keys("testerbeta@example.com")&#10;self.driver.find_element(By.CSS_SELECTOR, ".pl-4").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".pl-4").send_keys("123123")&#10;self.driver.find_element(By.CSS_SELECTOR, ".lucide > circle").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
+      <td>Sistem sukses mendaftarkan akun baru dan mengarahkan pengguna ke halaman onboarding.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td colspan="4" class="bold-text">Persentase keberhasilan (pass)</td>
+      <td class="pass-status">100%</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="caption">Tabel 4.17 Hasil Eksekusi Pengujian Fungsionalitas Onboarding</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 12%">Fungsionalitas</th>
+      <th style="width: 8%">ID Test Case</th>
+      <th style="width: 50%">Command (Selenium Log)</th>
+      <th style="width: 22%">Hasil Aktual</th>
+      <th style="width: 8%">Kesimpulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="3"><strong>3. Onboarding</strong></td>
+      <td class="center-text">TC 3.1</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/")&#10;self.driver.set_window_size(974, 1080)&#10;self.driver.find_element(By.LINK_TEXT, "Dapatkan Peringatan").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").send_keys("testerbeta@example.com")&#10;self.driver.find_element(By.CSS_SELECTOR, ".pl-4").send_keys("123123")&#10;self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()&#10;self.driver.get("http://localhost:3000/dashboard")</td>
+      <td>Percobaan bypass /dashboard digagalkan, sistem otomatis me-redirect ke halaman /onboarding.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 3.2</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/select-device")&#10;self.driver.find_element(By.CSS_SELECTOR, ".hover\\3Atext-\\[var\\(--cs-amber\\)\\]").click()</td>
+      <td>Pengguna dapat mengulang onboarding lalu menekan Batal untuk kembali ke dashboard dengan aman.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 3.3</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/onboarding")&#10;self.driver.find_element(By.CSS_SELECTOR, ".p-5:nth-child(1)").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".p-5:nth-child(3)").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".p-5:nth-child(1)").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".p-5:nth-child(3)").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".pt-6").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".px-8").click()</td>
+      <td>Sistem sukses menyimpan jawaban kuesioner dan mengarahkan pengguna ke halaman pilih alat.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td colspan="4" class="bold-text">Persentase keberhasilan (pass)</td>
+      <td class="pass-status">100%</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="caption">Tabel 4.18 Hasil Eksekusi Pengujian Fungsionalitas Edit Profil &amp; Password</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 12%">Fungsionalitas</th>
+      <th style="width: 8%">ID Test Case</th>
+      <th style="width: 50%">Command (Selenium Log)</th>
+      <th style="width: 22%">Hasil Aktual</th>
+      <th style="width: 8%">Kesimpulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="4"><strong>4. Edit Profil</strong></td>
+      <td class="center-text">TC 4.1</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/profile")&#10;self.driver.set_window_size(974, 547)&#10;self.driver.find_element(By.CSS_SELECTOR, ".gap-3:nth-child(2)").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".text-sm:nth-child(1)").clear()&#10;self.driver.find_element(By.CSS_SELECTOR, ".text-black:nth-child(3)").click()</td>
+      <td>Sistem menolak penyimpanan profil dengan nama kosong dan memunculkan pesan error.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 4.2</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/profile")&#10;self.driver.set_window_size(974, 547)&#10;self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .relative > .bg-black\\/40").send_keys("asdasd")&#10;self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .relative > .text-xs").send_keys("123123")&#10;self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(3) .w-full").send_keys("123123")&#10;self.driver.find_element(By.CSS_SELECTOR, ".mt-6").click()</td>
+      <td>Sistem menolak pembaruan password karena password lama salah dan memunculkan pesan alert.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 4.3</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/profile")&#10;self.driver.set_window_size(974, 547)&#10;self.driver.find_element(By.CSS_SELECTOR, ".text-sm:nth-child(1)").clear()&#10;self.driver.find_element(By.CSS_SELECTOR, ".text-sm:nth-child(1)").send_keys("Okto")&#10;self.driver.find_element(By.CSS_SELECTOR, ".text-black:nth-child(3)").click()</td>
+      <td>Sistem sukses memperbarui username pengguna di database MySQL dan menayangkan notifikasi sukses.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 4.4</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/profile")&#10;self.driver.set_window_size(974, 547)&#10;self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .relative > .bg-black\\/40").send_keys("tester")&#10;self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .relative > .text-xs").send_keys("asdasd")&#10;self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(3) .w-full").send_keys("asdasd")&#10;self.driver.find_element(By.CSS_SELECTOR, ".mt-6").click()</td>
+      <td>Sistem sukses mengganti password akun pengguna dan menampilkan alert notifikasi sukses.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td colspan="4" class="bold-text">Persentase keberhasilan (pass)</td>
+      <td class="pass-status">100%</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="caption">Tabel 4.19 Hasil Eksekusi Pengujian Fungsionalitas Penautan Perangkat (QR Code)</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 12%">Fungsionalitas</th>
+      <th style="width: 8%">ID Test Case</th>
+      <th style="width: 50%">Command (Selenium Log)</th>
+      <th style="width: 22%">Hasil Aktual</th>
+      <th style="width: 8%">Kesimpulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="2"><strong>5. Penautan Device</strong></td>
+      <td class="center-text">TC 5.1</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/login?device=CS-DAPUR-01")&#10;self.driver.set_window_size(974, 547)&#10;self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").send_keys("okto3@gmail.com")&#10;self.driver.find_element(By.CSS_SELECTOR, ".pl-4").send_keys("asdasd")&#10;self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
+      <td>Sistem mendeteksi parameter device dari scan QR dan menyimpannya sebagai pending device.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 5.2</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/select-device")&#10;self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
+      <td>Pengguna berhasil memilih perangkat aktif dari daftar dan mengalihkan ke dashboard telemetri.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td colspan="4" class="bold-text">Persentase keberhasilan (pass)</td>
+      <td class="pass-status">100%</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="caption">Tabel 4.20 Hasil Eksekusi Pengujian Fungsionalitas Aktivasi &amp; Reaktivasi</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 12%">Fungsionalitas</th>
+      <th style="width: 8%">ID Test Case</th>
+      <th style="width: 50%">Command (Selenium Log)</th>
+      <th style="width: 22%">Hasil Aktual</th>
+      <th style="width: 8%">Kesimpulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="3"><strong>6. Reaktivasi</strong></td>
+      <td class="center-text">TC 6.1</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/login")&#10;self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").send_keys("okto3@gmail.com")&#10;self.driver.find_element(By.CSS_SELECTOR, ".pl-4").send_keys("asdasd")&#10;self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".bg-\\[var\\(--cs-amber\\)\\]").click()</td>
+      <td>Sistem mendeteksi status offline pada alat dan memicu pembukaan popup panduan reaktivasi.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 6.2</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/login")&#10;self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").send_keys("okto3@gmail.com")&#10;self.driver.find_element(By.CSS_SELECTOR, ".pl-4").send_keys("asdasd")&#10;self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".bg-\\[var\\(--cs-amber\\)\\]").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".bg-\\[var\\(--cs-amber\\)\\]").click()</td>
+      <td>Pengguna berhasil menutup panduan reaktivasi langkah terakhir dan dashboard me-reload.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 6.3</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/login")&#10;self.driver.find_element(By.CSS_SELECTOR, ".w-full:nth-child(2)").send_keys("okto3@gmail.com")&#10;self.driver.find_element(By.CSS_SELECTOR, ".pl-4").send_keys("asdasd")&#10;self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
+      <td>Dashboard mendeteksi data baru dan mengganti indikator status secara otomatis menjadi Online.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td colspan="4" class="bold-text">Persentase keberhasilan (pass)</td>
+      <td class="pass-status">100%</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="caption">Tabel 4.21 Hasil Eksekusi Pengujian Fungsionalitas Asisten Chat AI</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 12%">Fungsionalitas</th>
+      <th style="width: 8%">ID Test Case</th>
+      <th style="width: 50%">Command (Selenium Log)</th>
+      <th style="width: 22%">Hasil Aktual</th>
+      <th style="width: 8%">Kesimpulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="3"><strong>7. Chat AI</strong></td>
+      <td class="center-text">TC 7.1</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")&#10;self.driver.set_window_size(974, 547)&#10;self.driver.find_element(By.CSS_SELECTOR, ".bg-\\[\\#070202\\]\\/85").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".focus\\3Aring-1").send_keys("kadar ppm saya berapa?")&#10;self.driver.find_element(By.CSS_SELECTOR, ".lucide-send").click()</td>
+      <td>AI menolak memberikan data ppm palsu saat offline dan menyarankan reaktivasi alat.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 7.2</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")&#10;self.driver.find_element(By.CSS_SELECTOR, ".bg-\\[\\#070202\\]\\/85").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".focus\\3Aring-1").send_keys("sekarang saya menaruh alat di kamar mandi")&#10;self.driver.find_element(By.CSS_SELECTOR, ".lucide-send").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".focus\\3Aring-1").send_keys("dimana letak alat saya tadi?")&#10;self.driver.find_element(By.CSS_SELECTOR, ".lucide-send").click()</td>
+      <td>AI berhasil menjawab secara kontekstual menggunakan memori dialog sebelumnya.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 7.3</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")&#10;self.driver.find_element(By.CSS_SELECTOR, ".bg-\\[\\#070202\\]\\/85").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".focus\\3Aring-1").send_keys("bagaimana cara saya menyalakan alat cs dari awal?")&#10;self.driver.find_element(By.CSS_SELECTOR, ".lucide-send").click()</td>
+      <td>AI memberikan panduan instalasi firmware IoT carbonsense secara lengkap dan runtut.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td colspan="4" class="bold-text">Persentase keberhasilan (pass)</td>
+      <td class="pass-status">100%</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="caption">Tabel 4.22 Hasil Eksekusi Pengujian Fungsionalitas Navigasi Histori Tanggal</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 12%">Fungsionalitas</th>
+      <th style="width: 8%">ID Test Case</th>
+      <th style="width: 50%">Command (Selenium Log)</th>
+      <th style="width: 22%">Hasil Aktual</th>
+      <th style="width: 8%">Kesimpulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="4"><strong>8. Histori Data</strong></td>
+      <td class="center-text">TC 8.1</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")&#10;self.driver.find_element(By.CSS_SELECTOR, ".relative:nth-child(1) > .w-full").click()</td>
+      <td>Halaman grafik harian berhasil menampilkan data dengan filter tanggal default 'today'.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 8.2</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")&#10;self.driver.find_element(By.CSS_SELECTOR, ".bg-zinc-800:nth-child(1)").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".px-4:nth-child(3)").click()</td>
+      <td>Tombol navigasi 'Kemarin' dan 'Besok' berhasil memicu perubahan tanggal grafik secara aman.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 8.3</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")&#10;self.driver.find_element(By.CSS_SELECTOR, ".bg-black\\/40:nth-child(2)").send_keys("2026-06-15")</td>
+      <td>DatePicker dapat memilih tanggal kustom 15 Juni 2026 dan memperbarui grafik telemetri.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 8.4</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")&#10;self.driver.find_element(By.CSS_SELECTOR, "input[type='date']").send_keys("2030-01-01")</td>
+      <td>Sistem menayangkan ilustrasi awan kosong dengan teks 'Tidak Ada Data Telemetri' saat data kosong.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td colspan="4" class="bold-text">Persentase keberhasilan (pass)</td>
+      <td class="pass-status">100%</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="caption">Tabel 4.23 Hasil Eksekusi Pengujian Fungsionalitas Ekspor Laporan</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 12%">Fungsionalitas</th>
+      <th style="width: 8%">ID Test Case</th>
+      <th style="width: 50%">Command (Selenium Log)</th>
+      <th style="width: 22%">Hasil Aktual</th>
+      <th style="width: 8%">Kesimpulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>9. Ekspor Laporan</strong></td>
+      <td class="center-text">TC 9.1</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")&#10;self.driver.find_element(By.CSS_SELECTOR, ".hover\\3Abrightness-110").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".p-4:nth-child(4)").click()</td>
+      <td>Unduhan berkas laporan dalam format Excel (.xlsx) dan berkas PDF berhasil disimpan ke lokal.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td colspan="4" class="bold-text">Persentase keberhasilan (pass)</td>
+      <td class="pass-status">100%</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="caption">Tabel 4.24 Hasil Eksekusi Pengujian Fungsionalitas Pengaturan AI Assistant</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 12%">Fungsionalitas</th>
+      <th style="width: 8%">ID Test Case</th>
+      <th style="width: 50%">Command (Selenium Log)</th>
+      <th style="width: 22%">Hasil Aktual</th>
+      <th style="width: 8%">Kesimpulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="3"><strong>10. Pengaturan AI</strong></td>
+      <td class="center-text">TC 10.1</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")&#10;self.driver.find_element(By.CSS_SELECTOR, ".lucide-settings > circle").click()</td>
+      <td>Formulir preferensi AI memuat konfigurasi ruangan pengguna dari local storage secara sukses.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 10.2</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")&#10;self.driver.find_element(By.CSS_SELECTOR, ".lucide-settings > circle").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".sm\\3Agrid-cols-3 > .gap-3:nth-child(1)").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".px-8").click()</td>
+      <td>Pilihan kelompok rentan berhasil memperbarui dan menyalakan Modus Sensitivitas Tinggi.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 10.3</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/dashboard")&#10;self.driver.find_element(By.CSS_SELECTOR, ".lucide-settings > path").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".px-8").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".flex-1:nth-child(2)").click()</td>
+      <td>Sistem sukses menyimpan perubahan dan me-redirect pengguna ke halaman dashboard utama.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td colspan="4" class="bold-text">Persentase keberhasilan (pass)</td>
+      <td class="pass-status">100%</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="caption">Tabel 4.25 Hasil Eksekusi Pengujian Fungsionalitas Portal &amp; Autentikasi Admin</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 12%">Fungsionalitas</th>
+      <th style="width: 8%">ID Test Case</th>
+      <th style="width: 50%">Command (Selenium Log)</th>
+      <th style="width: 22%">Hasil Aktual</th>
+      <th style="width: 8%">Kesimpulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="3"><strong>11. Admin Auth</strong></td>
+      <td class="center-text">TC 11.1</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/admin")&#10;self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
+      <td>Sistem memblokir pengiriman form masuk admin yang kosong dan meminta pengisian kolom.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 11.2</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/admin")&#10;self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .py-3").send_keys("asd")&#10;self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .w-full").send_keys("asd")&#10;self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
+      <td>Sistem menampilkan alert error 'Admin ID atau Password salah.' saat kredensial salah.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 11.3</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/admin")&#10;self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(1) > .py-3").send_keys("admin")&#10;self.driver.find_element(By.CSS_SELECTOR, "div:nth-child(2) > .w-full").send_keys("admin123")&#10;self.driver.find_element(By.CSS_SELECTOR, ".py-4").click()</td>
+      <td>Sistem berhasil login admin dan mengalihkan halaman ke dashboard administrator.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td colspan="4" class="bold-text">Persentase keberhasilan (pass)</td>
+      <td class="pass-status">100%</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="caption">Tabel 4.26 Hasil Eksekusi Pengujian Fungsionalitas Admin Dashboard</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 12%">Fungsionalitas</th>
+      <th style="width: 8%">ID Test Case</th>
+      <th style="width: 50%">Command (Selenium Log)</th>
+      <th style="width: 22%">Hasil Aktual</th>
+      <th style="width: 8%">Kesimpulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="5"><strong>12. Kelola Perangkat</strong></td>
+      <td class="center-text">TC 12.1</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/admin/dashboard")&#10;self.driver.find_element(By.CSS_SELECTOR, ".text-black").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".placeholder\\3Atext-zinc-700").send_keys("CS-DAPUR-OKTO")&#10;self.driver.find_element(By.CSS_SELECTOR, ".mt-2").click()</td>
+      <td>Perangkat baru berhasil didaftarkan di sistem MySQL/Firebase dan kode QR dibuat.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 12.2</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/admin/dashboard")&#10;self.driver.find_element(By.CSS_SELECTOR, ".hover\\3A bg-zinc-800\\/10:nth-child(1) .p-2:nth-child(1)").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".p-3:nth-child(3) .text-xs").click()</td>
+      <td>Perangkat berhasil terikat secara manual ke akun email user terdaftar oleh administrator.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 12.3</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/admin/dashboard")&#10;self.driver.find_element(By.CSS_SELECTOR, ".hover\\3A bg-zinc-800\\/10:nth-child(1) .p-2:nth-child(1) > .lucide").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".lucide-copy").click()</td>
+      <td>Source code C++ firmware untuk device disiapkan dan berhasil disalin lengkap.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 12.4</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/admin/dashboard")&#10;self.driver.find_element(By.CSS_SELECTOR, ".hover\\3A bg-zinc-800\\/10:nth-child(1) .p-2:nth-child(2) > .lucide").click()&#10;self.driver.find_element(By.CSS_SELECTOR, ".font-mono:nth-child(2)").send_keys(" CS-DAPUR-OKTO-EDITED")</td>
+      <td>Perubahan detail perangkat (ID baru, owner baru) berhasil diperbarui ke MySQL &amp; Firebase.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td class="center-text">TC 12.5</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/admin/dashboard")&#10;self.driver.find_element(By.CSS_SELECTOR, ".hover\\3A bg-zinc-800\\/10:nth-child(1) .p-2:nth-child(5) > .lucide").click()</td>
+      <td>Perangkat terhapus secara permanen dari tabel database MySQL dan cabang Firebase RTDB.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td colspan="4" class="bold-text">Persentase keberhasilan (pass)</td>
+      <td class="pass-status">100%</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="caption">Tabel 4.27 Hasil Eksekusi Pengujian Fungsionalitas Autentikasi (Logout)</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 12%">Fungsionalitas</th>
+      <th style="width: 8%">ID Test Case</th>
+      <th style="width: 50%">Command (Selenium Log)</th>
+      <th style="width: 22%">Hasil Aktual</th>
+      <th style="width: 8%">Kesimpulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>13. Logout</strong></td>
+      <td class="center-text">TC 13.1</td>
+      <td class="code-cell">self.driver.get("http://localhost:3000/login")&#10;self.driver.find_element(By.CSS_SELECTOR, ".lucide-log-out").click()</td>
+      <td>Sesi terhapus bersih dari browser localStorage dan dialihkan kembali ke halaman utama.</td>
+      <td class="pass-status">pass</td>
+    </tr>
+    <tr>
+      <td colspan="4" class="bold-text">Persentase keberhasilan (pass)</td>
+      <td class="pass-status">100%</td>
+    </tr>
+  </tbody>
+</table>
+
+<h1>BAB 5<br>KESIMPULAN DAN SARAN</h1>
 
 <h2>5.1 Kesimpulan</h2>
-<p>Dari 38 pengujian fungsionalitas yang telah direncanakan dan dieksekusi secara otomatis menggunakan Selenium IDE dan Selenium WebDriver pada sistem pemantauan kualitas udara CarbonSense, seluruh 38 pengujian dinyatakan berhasil (pass) dengan persentase keberhasilan sebesar 100%. Selama siklus pengujian berlangsung, tim penguji berfokus pada pengujian aspek fungsionalitas dasar seperti modul login dan registrasi, alur wajib pengisian kuesioner onboarding kesehatan, validasi parameter penautan perangkat (QR Code Device Binding), hingga sinkronisasi data sensor MQ135 secara real-time.</p>
-<p>Pada awal tahap pengembangan pengujian, tim penguji sempat mengidentifikasi beberapa defect penting, di antaranya adalah:</p>
+<p>Berdasarkan hasil analisis perancangan, implementasi kode program, serta pengujian fungsionalitas otomatis menggunakan Selenium IDE dan Selenium WebDriver yang telah dipaparkan pada bab-bab sebelumnya, dapat ditarik kesimpulan sebagai berikut:</p>
 <ol>
-  <li>Validasi batas panjang karakter registrasi akun (username dan password) yang belum terikat secara ketat.</li>
-  <li>Penautan perangkat fisik menggunakan tautan URL parameter (login?device=...) yang sempat menerima sembarang kode perangkat.</li>
+  <li><strong>Keberhasilan Pemantauan Kualitas Udara Real-time (Tujuan 1)</strong>: Platform CarbonSense telah sukses membangun ekosistem distributed system untuk memantau telemetry PPM sensor MQ-135 secara nirkabel dan real-time. Arsitektur database relasional (Supabase PostgreSQL / MySQL dengan Sequelize ORM) dan NoSQL (Firebase Realtime Database) terbukti andal dalam merekam telemetri, memfilter riwayat harian melalui DatePicker, serta memproses ekspor laporan harian ke format PDF dan Excel secara presisi.</li>
+  <li><strong>Ketercapaian Antarmuka Pengguna Intuitif (Tujuan 2)</strong>: Alur antarmuka pengguna frontend React dirancang secara user-friendly, responsif, dan dinamis. Pengujian membuktikan modul registrasi, login pengguna biasa, alur kuesioner onboarding wajib, dan modifikasi data profil telah berjalan dengan andal dan terproteksi secara penuh dari potensi bypass URL ilegal ke dashboard.</li>
+  <li><strong>Keandalan Integrasi Asisten AI LLM (Tujuan 3)</strong>: Asisten cerdas bertenaga DeepSeek/Gemini API telah berhasil diintegrasikan ke dalam dashboard pemantauan. Chatbot terbukti mampu memberikan rekomendasi mitigasi kesehatan ruangan secara dinamis berdasarkan memori dialog obrolan sebelumnya serta kuesioner onboarding. Pengujian membuktikan asisten AI juga memiliki safeguard otonom yang menolak memberikan nilai telemetri palsu apabila sensor sedang offline.</li>
+  <li><strong>Keberhasilan Arsitektur Edge-Computing &amp; Alerting (Tujuan 4)</strong>: Penautan perangkat fisik menggunakan parameter QR Code pemindaian URL terbukti efisien dan andal. Mekanisme penanganan kegagalan sensor (fault recovery) berupa deteksi offline secara otonom dan popup panduan reaktivasi 5 langkah di dasbor terbukti mampu membantu pemulihan koneksi sensor secara mandiri oleh pengguna akhir.</li>
 </ol>
-<p>Namun, kendala tersebut telah berhasil diselesaikan secara tuntas. Saat ini, registrasi akun pengguna hanya dapat berhasil jika kata sandi diisi minimal 6 karakter. Sementara itu, untuk penautan alat lewat scan QR, sistem kini memvalidasi parameter Device ID secara ketat terhadap database admin; apabila parameter yang dikirim di luar dari yang didaftarkan oleh admin, halaman penautan secara otomatis dikosongkan demi mencegah terjadinya penautan ilegal.</p>
+<p>Pengujian fungsionalitas otomatis terhadap 38 kasus uji dinyatakan berhasil (pass) secara keseluruhan dengan tingkat keberhasilan sebesar 100%. Selama siklus pengujian berlangsung, tim penguji telah berhasil mengidentifikasi dan menuntaskan dua defect penting, yaitu pengetatan validasi batas panjang karakter registrasi akun (minimal 6 karakter) serta penutupan kerentanan penautan perangkat ilegal lewat scan QR dengan membatasi penerimaan parameter ID perangkat hanya yang telah terdaftar resmi oleh administrator.</p>
 
 <h2>5.2 Saran</h2>
-<p>Untuk pengembangan dan peningkatan sistem di masa mendatang, tim penguji memberikan beberapa saran perbaikan sebagai berikut:</p>
+<p>Untuk pengembangan dan peningkatan sistem CarbonSense di masa mendatang, tim penguji memberikan beberapa saran perbaikan sebagai berikut:</p>
 <ol>
-  <li><strong>Peningkatan Manajemen State Pengguna</strong>: Disarankan untuk menambahkan animasi pemuatan (skeleton loading state) saat sistem menyinkronkan data parameter PPM kualitas udara dari database Supabase PostgreSQL ke dashboard frontend guna meningkatkan kenyamanan visual pengguna.</li>
-  <li><strong>Validasi Sisi Server (Backend Validation)</strong>: Perlu ditambahkan validasi skema yang lebih ketat pada lapisan backend (database constraint) untuk parameter penautan perangkat, sebagai proteksi lapis kedua selain pengosongan halaman pada antarmuka frontend.</li>
+  <li><strong>Peningkatan Manajemen State Pengguna</strong>: Disarankan untuk menambahkan animasi pemuatan (skeleton loading state) saat sistem menyinkronkan data parameter PPM kualitas udara dari database Supabase PostgreSQL ke dashboard frontend guna meningkatkan kenyamanan visual pengguna saat proses transisi loading data.</li>
+  <li><strong>Validasi Sisi Server (Backend Validation)</strong>: Perlu ditambahkan validasi skema yang lebih ketat pada lapisan backend (database constraint) untuk parameter penautan perangkat, sebagai proteksi lapis kedua selain pengosongan halaman pada antarmuka frontend untuk meminimalkan manipulasi data oleh pihak luar.</li>
   <li><strong>Mekanisme Penanganan Gangguan Sensor</strong>: Disarankan untuk menambahkan sistem peringatan berupa notifikasi surat elektronik (e-mail) otomatis kepada pengguna apabila status perangkat terdeteksi Offline atau tidak aktif selama lebih dari 12 jam berturut-turut.</li>
+  <li><strong>Optimasi Responsivitas Antarmuka untuk Perangkat Bergerak (Mobile View Optimization)</strong>: Menyesuaikan tata letak halaman dashboard overview serta menu interaksi chat AI pada peramban perangkat bergerak agar lebih ramah bagi pengguna ponsel pintar, dengan mengoptimalkan ukuran komponen sentuh (touch target) dan efisiensi pemuatan grafik.</li>
+  <li><strong>Ekspansi Repositori Pengetahuan Lokal pada Modul AI</strong>: Meningkatkan akurasi rekomendasi kesehatan asisten AI dengan memperluas basis data dokumen pengetahuan (knowledge base) terkait jenis polutan ruangan baru, pemodelan prediktif sensor, serta penanganan bahaya gas spesifik.</li>
 </ol>
 
 </body>

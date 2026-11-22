@@ -242,17 +242,17 @@ function AnimatedHeading({
 function CO2Logo() {
   return <a href="#home" className="group flex items-center gap-2.5">
       <span className="relative flex h-9 w-9 items-center justify-center rounded-lg" style={{
-      background: 'linear-gradient(140deg, var(--cs-amber), var(--cs-danger))',
-      boxShadow: '0 0 18px -4px var(--cs-amber-glow)'
+      background: 'linear-gradient(140deg, var(--cs-amber), #0369A1)',
+      boxShadow: '0 4px 14px -2px var(--cs-amber-glow)'
     }} aria-hidden="true">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-          <circle cx="6" cy="12" r="2.6" fill="#0c0a08" />
-          <circle cx="18" cy="12" r="2.6" fill="#0c0a08" />
-          <circle cx="12" cy="12" r="3.4" fill="#0c0a08" />
-          <line x1="8.4" y1="11" x2="9.2" y2="11" stroke="#0c0a08" strokeWidth="1" />
-          <line x1="8.4" y1="13" x2="9.2" y2="13" stroke="#0c0a08" strokeWidth="1" />
-          <line x1="14.8" y1="11" x2="15.6" y2="11" stroke="#0c0a08" strokeWidth="1" />
-          <line x1="14.8" y1="13" x2="15.6" y2="13" stroke="#0c0a08" strokeWidth="1" />
+          <circle cx="6" cy="12" r="2.6" fill="#FFFFFF" />
+          <circle cx="18" cy="12" r="2.6" fill="#FFFFFF" />
+          <circle cx="12" cy="12" r="3.4" fill="#FFFFFF" />
+          <line x1="8.4" y1="11" x2="9.2" y2="11" stroke="#FFFFFF" strokeWidth="1.2" />
+          <line x1="8.4" y1="13" x2="9.2" y2="13" stroke="#FFFFFF" strokeWidth="1.2" />
+          <line x1="14.8" y1="11" x2="15.6" y2="11" stroke="#FFFFFF" strokeWidth="1.2" />
+          <line x1="14.8" y1="13" x2="15.6" y2="13" stroke="#FFFFFF" strokeWidth="1.2" />
         </svg>
       </span>
       <span className="flex flex-col leading-none">
@@ -262,7 +262,7 @@ function CO2Logo() {
       }}>
           CARBONSENSE
         </span>
-        <span className="text-[9px] uppercase tracking-[0.28em] text-[var(--cs-amber)]">
+        <span className="text-[9px] uppercase tracking-[0.28em] text-[var(--cs-amber)] font-bold">
           sistem pemantauan udara
         </span>
       </span>
@@ -317,9 +317,9 @@ function HeroDashboard() {
   }, []);
   const arcCircumference = 157;
   return <div className="relative w-full rounded-2xl border p-5 sm:p-6" style={{
-    background: 'linear-gradient(160deg, var(--cs-surface), color-mix(in oklab, var(--cs-surface) 70%, #000))',
-    borderColor: hovered ? 'color-mix(in oklab, var(--cs-amber) 60%, var(--cs-border))' : 'var(--cs-border)',
-    boxShadow: hovered ? '0 40px 80px -40px rgba(0,0,0,0.9), 0 0 60px -20px var(--cs-amber-glow), inset 0 1px 0 rgba(255,255,255,0.03)' : '0 40px 80px -40px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.03)',
+    background: 'linear-gradient(160deg, #FFFFFF, #F0F9FF)',
+    borderColor: hovered ? '#0284C7' : 'var(--cs-border)',
+    boxShadow: hovered ? '0 30px 60px -25px rgba(2, 132, 199, 0.22), 0 0 40px -15px var(--cs-amber-glow)' : '0 24px 50px -20px rgba(15, 23, 42, 0.08)',
     transform: hovered ? 'scale(1.025) translateY(-6px)' : 'scale(1) translateY(0)',
     transition: 'transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 400ms cubic-bezier(0.34, 1.56, 0.64, 1), border-color 400ms ease',
     cursor: 'default'
@@ -329,11 +329,11 @@ function HeroDashboard() {
         <div className="flex items-center gap-2.5">
           <span className="relative flex h-2.5 w-2.5">
             <span className="animate-ping absolute h-2.5 w-2.5 rounded-full" style={{
-            background: 'var(--cs-danger)',
+            background: '#16A34A',
             opacity: 0.6
           }} />
             <span className="h-2.5 w-2.5 rounded-full" style={{
-            background: 'var(--cs-danger)'
+            background: '#16A34A'
           }} />
           </span>
           <span className="text-xs font-medium uppercase tracking-[0.18em] text-[var(--cs-text-dim)]">
@@ -349,7 +349,7 @@ function HeroDashboard() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1.4fr_1fr]">
         <div className="rounded-xl border p-4" style={{
         borderColor: 'var(--cs-border)',
-        background: 'rgba(0,0,0,0.25)'
+        background: '#F9FAFB'
       }}>
           <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--cs-text-dim)]">
             Konsentrasi CO₂
@@ -363,8 +363,8 @@ function HeroDashboard() {
             </span>
             <span className="mb-1 text-xs text-[var(--cs-text-dim)]">ppm</span>
             <span className="mb-1 ml-auto rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase" style={{
-            background: 'color-mix(in oklab, var(--cs-danger) 18%, transparent)',
-            color: 'var(--cs-danger-text)'
+            background: '#FEE2E2',
+            color: '#DC2626'
           }}>
               ▲ 12%
             </span>
@@ -374,18 +374,18 @@ function HeroDashboard() {
             <svg viewBox="0 0 400 140" className="w-full" preserveAspectRatio="none">
               <defs>
                 <linearGradient id="heroFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--cs-amber)" stopOpacity="0.35" />
+                  <stop offset="0%" stopColor="var(--cs-amber)" stopOpacity="0.28" />
                   <stop offset="100%" stopColor="var(--cs-amber)" stopOpacity="0" />
                 </linearGradient>
               </defs>
               <line x1="0" y1="34" x2="400" y2="34" stroke="var(--cs-danger)" strokeWidth="1.2" strokeDasharray="4 4" opacity="0.7" />
-              <text x="2" y="28" fontSize="9" fill="var(--cs-danger-text)">
+              <text x="2" y="28" fontSize="9" fill="var(--cs-danger-text)" fontWeight="bold">
                 KRITIS 400ppm
               </text>
               <path d={`${HERO_PATH} L400 140 L0 140 Z`} fill="url(#heroFill)" style={{
               animation: 'heroBreath 3s ease-in-out infinite'
             }} />
-              <path d={HERO_PATH} fill="none" stroke="var(--cs-amber)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" strokeDasharray={HERO_PATH_LEN} style={{
+              <path d={HERO_PATH} fill="none" stroke="var(--cs-amber)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" strokeDasharray={HERO_PATH_LEN} style={{
               animation: 'heroDraw 2.5s linear infinite'
             }} />
               {/* pulsing danger dot */}
@@ -402,7 +402,7 @@ function HeroDashboard() {
         {/* AQI gauge */}
         <div className="flex flex-col items-center justify-center rounded-xl border p-4" style={{
         borderColor: 'var(--cs-border)',
-        background: 'rgba(0,0,0,0.25)'
+        background: '#F9FAFB'
       }}>
           <p className="mb-1 text-[11px] uppercase tracking-[0.16em] text-[var(--cs-text-dim)]">
             Indeks Kualitas Udara
@@ -410,8 +410,9 @@ function HeroDashboard() {
           <svg width="120" height="72" viewBox="0 0 120 72">
             <defs>
               <linearGradient id="aqiGrad" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="var(--cs-amber)" />
-                <stop offset="100%" stopColor="var(--cs-danger)" />
+                <stop offset="0%" stopColor="#16A34A" />
+                <stop offset="50%" stopColor="#EA580C" />
+                <stop offset="100%" stopColor="#DC2626" />
               </linearGradient>
             </defs>
             <path d="M10 66 A50 50 0 0 1 110 66" fill="none" stroke="var(--cs-border)" strokeWidth="9" strokeLinecap="round" />
@@ -421,12 +422,12 @@ function HeroDashboard() {
           </svg>
           <span className="-mt-3 text-3xl font-semibold" style={{
           fontFamily: 'var(--font-display)',
-          color: 'var(--cs-amber)'
+          color: '#EA580C'
         }}>
             168
           </span>
-          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--cs-danger-text)]">
-            Tidak Sehat
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: '#EA580C' }}>
+            Waspada
           </span>
         </div>
       </div>
@@ -434,26 +435,32 @@ function HeroDashboard() {
       {/* mini stat row */}
       <div className="mt-4 grid grid-cols-3 gap-3">
         {[{
-        k: 'CO',
+        k: 'CO (Aman)',
         v: '34 ppm',
-        warn: true
+        color: '#16A34A',
+        bg: '#F0FDF4',
+        border: '#BBF7D0'
       }, {
-        k: 'PM2.5',
+        k: 'PM2.5 (Waspada)',
         v: '88 µg',
-        warn: true
+        color: '#EA580C',
+        bg: '#FFF7ED',
+        border: '#FED7AA'
       }, {
-        k: 'PM10',
-        v: '52 µg',
-        warn: false
+        k: 'Batas Bahaya',
+        v: '> 400 ppm',
+        color: '#DC2626',
+        bg: '#FEF2F2',
+        border: '#FECACA'
       }].map(s => <div key={s.k} className="rounded-lg border p-2.5" style={{
-        borderColor: 'var(--cs-border)',
-        background: 'rgba(0,0,0,0.2)'
+        borderColor: s.border,
+        background: s.bg
       }}>
-            <p className="text-[10px] uppercase tracking-[0.14em] text-[var(--cs-text-dim)]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.12em]" style={{ color: s.color }}>
               {s.k}
             </p>
-            <p className="text-sm font-semibold" style={{
-          color: s.warn ? 'var(--cs-danger-text)' : 'var(--cs-text)'
+            <p className="text-sm font-bold" style={{
+          color: s.color
         }}>
               {s.v}
             </p>
@@ -478,7 +485,7 @@ function AIProfileForm() {
     return () => clearInterval(interval);
   }, []);
   return <div className="w-full rounded-2xl border p-5" style={{
-    background: 'rgba(0,0,0,0.35)',
+    background: '#FFFFFF',
     borderColor: 'var(--cs-border)'
   }}>
       <div className="mb-4 flex items-center gap-2">
@@ -495,9 +502,9 @@ function AIProfileForm() {
         {AI_QUESTIONS.map(q => {
         const isFocused = focused === q.id;
         return <div key={q.id} className="rounded-xl border p-3 transition-all duration-300" style={{
-          borderColor: isFocused ? 'color-mix(in oklab, var(--cs-amber) 70%, transparent)' : 'var(--cs-border)',
-          background: isFocused ? 'color-mix(in oklab, var(--cs-amber) 6%, rgba(0,0,0,0.3))' : 'rgba(0,0,0,0.2)',
-          boxShadow: isFocused ? '0 0 16px -6px var(--cs-amber-glow)' : 'none'
+          borderColor: isFocused ? 'var(--cs-amber)' : 'var(--cs-border)',
+          background: isFocused ? '#F0F9FF' : '#F9FAFB',
+          boxShadow: isFocused ? '0 4px 14px -4px var(--cs-amber-glow)' : 'none'
         }}>
               <p className="text-[10px] uppercase tracking-[0.12em] text-[var(--cs-text-dim)]">
                 {q.label}
@@ -511,8 +518,9 @@ function AIProfileForm() {
       })}
       </div>
       <div className="mt-4 rounded-lg px-3 py-2 text-xs font-medium" style={{
-      background: 'color-mix(in oklab, var(--cs-amber) 14%, transparent)',
-      color: 'var(--cs-amber)'
+      background: '#F0FDF4',
+      color: '#16A34A',
+      border: '1px solid #BBF7D0'
     }}>
         ✓ Kalibrasi model AI ke lingkungan Anda...
       </div>
@@ -614,7 +622,7 @@ function DeployMockVisual() {
       }].map(row => <div key={row.k} className="flex items-center justify-between gap-3">
             <span className="text-xs text-[var(--cs-text-dim)]">{row.k}</span>
             <span className="rounded-md px-2.5 py-1 text-xs font-medium text-[var(--cs-text)]" style={{
-          background: 'rgba(0,0,0,0.3)',
+          background: '#F9FAFB',
           border: '1px solid var(--cs-border)',
           fontFamily: row.mono ? 'monospace' : 'inherit',
           minHeight: '26px',
@@ -627,9 +635,9 @@ function DeployMockVisual() {
         <div className="flex items-center justify-between gap-3">
           <span className="text-xs text-[var(--cs-text-dim)]">Ambang Batas Peringatan</span>
           <span className="rounded-md px-2.5 py-1 text-xs font-semibold" style={{
-          background: 'rgba(0,0,0,0.3)',
-          border: '1px solid var(--cs-border)',
-          color: 'var(--cs-amber)',
+          background: '#FFF7ED',
+          border: '1px solid #FED7AA',
+          color: '#EA580C',
           animation: 'deployPulse 1.5s ease-in-out infinite'
         }}>
             350 ppm
@@ -638,8 +646,8 @@ function DeployMockVisual() {
       </div>
 
       {/* Confirm row */}
-      <div className="mt-4 flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold text-[#0c0a08]" style={{
-      background: 'linear-gradient(100deg, var(--cs-amber) 0%, color-mix(in oklab, var(--cs-amber) 70%, #fff) 50%, var(--cs-amber) 100%)',
+      <div className="mt-4 flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold text-white" style={{
+      background: 'linear-gradient(100deg, var(--cs-amber) 0%, #0369A1 50%, var(--cs-amber) 100%)',
       backgroundSize: '200% 100%',
       animation: 'deployShimmer 2.2s linear infinite'
     }}>
@@ -766,7 +774,8 @@ function FeedMockVisual() {
       {/* Stream feed */}
       <div className="mt-3 space-y-1">
         {rows.map((row, i) => <div key={row.id} className="flex items-center justify-between gap-3 rounded-md px-2.5 py-1.5" style={{
-        background: i === 0 ? 'color-mix(in oklab, var(--cs-amber) 6%, rgba(0,0,0,0.25))' : 'rgba(0,0,0,0.2)',
+        background: i === 0 ? '#F0F9FF' : '#F9FAFB',
+        border: '1px solid var(--cs-border)',
         animation: i === 0 ? 'feedSlideIn 400ms ease-out' : 'none'
       }}>
             <span className="text-[11px] text-[var(--cs-text-dim)]" style={{
@@ -782,7 +791,7 @@ function FeedMockVisual() {
             </span>
             <span className="text-xs font-semibold" style={{
           fontFamily: 'monospace',
-          color: row.warn ? 'var(--cs-amber)' : 'var(--cs-text-dim)'
+          color: row.warn ? '#EA580C' : '#16A34A'
         }}>
               {row.value}
             </span>
@@ -867,7 +876,7 @@ function AlertMockVisual() {
         }}>
             {reading.toFixed(1)} ppm
           </span>
-          <span className="mb-0.5 rounded px-1.5 py-0.5 text-xs font-semibold text-[#0c0a08]" style={{
+          <span className="mb-0.5 rounded px-1.5 py-0.5 text-xs font-semibold text-white" style={{
           background: 'var(--cs-danger)'
         }}>
             CO
@@ -1010,7 +1019,7 @@ function HowItWorksSection({
                       {/* Step number circle */}
                       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold" style={{
                     background: isOpen ? 'var(--cs-amber)' : 'var(--cs-border)',
-                    color: isOpen ? '#0c0a08' : 'var(--cs-text-dim)',
+                    color: isOpen ? '#FFFFFF' : 'var(--cs-text-dim)',
                     transition: 'background 0.3s, color 0.3s'
                   }}>
                         {s.n}
@@ -1168,8 +1177,8 @@ function TestimonialsSection({
         const props = getCardProps(i);
         return <div key={item.id} onClick={() => setCenter(i)} className="flex flex-col rounded-2xl border p-6" style={{
           background: 'var(--cs-surface)',
-          borderColor: props.borderGlow ? 'color-mix(in oklab, var(--cs-amber) 50%, var(--cs-border))' : 'var(--cs-border)',
-          boxShadow: props.borderGlow ? '0 24px 50px -28px var(--cs-amber-glow), inset -3px 0 0 var(--cs-amber)' : '0 18px 40px -30px rgba(0,0,0,0.8)',
+          borderColor: props.borderGlow ? 'var(--cs-amber)' : 'var(--cs-border)',
+          boxShadow: props.borderGlow ? '0 20px 40px -20px var(--cs-amber-glow), inset -3px 0 0 var(--cs-amber)' : '0 12px 30px -15px rgba(15, 23, 42, 0.08)',
           transform: `scale(${props.scale})`,
           opacity: props.opacity,
           filter: props.blur > 0 ? `blur(${props.blur}px)` : 'none',
@@ -1188,7 +1197,7 @@ function TestimonialsSection({
                 <span>"{item.quote}"</span>
               </p>
               <div className="mt-6 flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-[#0c0a08]" style={{
+                <span className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white" style={{
               background: 'var(--cs-amber)'
             }}>
                   {item.initials}
@@ -1271,15 +1280,15 @@ function LiveCtaDashboard() {
   return <div className="rounded-2xl border p-5" style={{
     background: 'var(--cs-surface)',
     borderColor: 'var(--cs-border)',
-    boxShadow: '0 40px 80px -40px rgba(0,0,0,0.9)'
+    boxShadow: '0 20px 50px -20px rgba(15, 23, 42, 0.12)'
   }}>
       <div className="mb-4 flex items-center justify-between">
         <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--cs-text-dim)]">
           Kadar CO · Zona A-01
         </span>
         <span className="rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide" style={{
-        background: currentStatus === 'RISIKO TERDETEKSI' ? 'var(--cs-danger)' : 'color-mix(in oklab, var(--cs-amber) 22%, transparent)',
-        color: currentStatus === 'RISIKO TERDETEKSI' ? '#0c0a08' : 'var(--cs-amber)',
+        background: currentStatus === 'RISIKO TERDETEKSI' ? '#DC2626' : '#E0F2FE',
+        color: currentStatus === 'RISIKO TERDETEKSI' ? '#FFFFFF' : '#0284C7',
         opacity: statusVisible ? 1 : 0,
         transition: 'opacity 300ms ease, background 300ms ease'
       }}>
@@ -1300,11 +1309,11 @@ function LiveCtaDashboard() {
       <svg viewBox="0 0 400 120" className="mt-3 w-full" preserveAspectRatio="none">
         <defs>
           <linearGradient id="ctaFillA" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--cs-danger)" stopOpacity="0.4" />
+            <stop offset="0%" stopColor="var(--cs-danger)" stopOpacity="0.25" />
             <stop offset="100%" stopColor="var(--cs-danger)" stopOpacity="0" />
           </linearGradient>
           <linearGradient id="ctaFillB" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--cs-danger)" stopOpacity="0.4" />
+            <stop offset="0%" stopColor="var(--cs-danger)" stopOpacity="0.25" />
             <stop offset="100%" stopColor="var(--cs-danger)" stopOpacity="0" />
           </linearGradient>
         </defs>
@@ -1313,7 +1322,7 @@ function LiveCtaDashboard() {
         <line x1="0" y1="30" x2="400" y2="30" stroke="var(--cs-danger)" strokeWidth="1.2" strokeDasharray="4 4" opacity="0.8" style={{
         animation: 'thresholdDrift 2s ease-in-out infinite'
       }} />
-        <text x="2" y="24" fontSize="9" fill="var(--cs-danger-text)">
+        <text x="2" y="24" fontSize="9" fill="var(--cs-danger-text)" fontWeight="bold">
           ZONA BAHAYA
         </text>
 
@@ -1340,23 +1349,23 @@ function LiveCtaDashboard() {
 
       <div className="mt-3 grid grid-cols-2 gap-3">
         <div className="rounded-lg border p-2.5" style={{
-        background: 'rgba(0,0,0,0.25)',
-        borderColor: 'var(--cs-border)'
+        background: '#FEF2F2',
+        borderColor: '#FECACA'
       }}>
-          <p className="text-[10px] uppercase tracking-[0.12em] text-[var(--cs-text-dim)]">AQI</p>
+          <p className="text-[10px] uppercase tracking-[0.12em]" style={{ color: '#DC2626' }}>AQI</p>
           <p className="text-sm font-semibold" style={{
-          color: 'var(--cs-danger-text)'
+          color: '#DC2626'
         }}>
             212 · Sangat Berbahaya
           </p>
         </div>
         <div className="rounded-lg border p-2.5" style={{
-        background: 'rgba(0,0,0,0.25)',
-        borderColor: 'var(--cs-border)'
+        background: '#FFF7ED',
+        borderColor: '#FED7AA'
       }}>
-          <p className="text-[10px] uppercase tracking-[0.12em] text-[var(--cs-text-dim)]">Tren</p>
+          <p className="text-[10px] uppercase tracking-[0.12em]" style={{ color: '#EA580C' }}>Tren</p>
           <p className="text-sm font-semibold" style={{
-          color: 'var(--cs-amber)'
+          color: '#EA580C'
         }}>
             ▲ Meningkat cepat
           </p>
@@ -1403,16 +1412,18 @@ export function CarbonSenseLanding() {
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
 
         .cs-root {
-          --cs-bg: oklch(12% 0.012 60);
-          --cs-surface: oklch(18% 0.015 60);
-          --cs-surface-2: oklch(15% 0.013 60);
-          --cs-amber: oklch(74% 0.16 65);
-          --cs-amber-glow: oklch(74% 0.16 65 / 0.55);
-          --cs-danger: oklch(58% 0.22 25);
-          --cs-danger-text: oklch(70% 0.19 30);
-          --cs-text: oklch(92% 0.01 80);
-          --cs-text-dim: oklch(62% 0.02 70);
-          --cs-border: oklch(25% 0.02 60);
+          --cs-bg: #F0F9FF;
+          --cs-surface: #FFFFFF;
+          --cs-surface-2: #F9FAFB;
+          --cs-amber: #0284C7;
+          --cs-amber-glow: rgba(2, 132, 199, 0.25);
+          --cs-danger: #DC2626;
+          --cs-danger-text: #DC2626;
+          --cs-warning: #EA580C;
+          --cs-success: #16A34A;
+          --cs-text: #0F172A;
+          --cs-text-dim: #475569;
+          --cs-border: #E2E8F0;
           --font-display: 'Bebas Neue', sans-serif;
           --font-body: 'DM Sans', system-ui, sans-serif;
         }
@@ -1425,7 +1436,7 @@ export function CarbonSenseLanding() {
         }
         .cs-feat-card:hover {
           transform: scale(1.02) translateY(-4px);
-          box-shadow: 0 0 30px -8px var(--cs-amber-glow), 0 18px 40px -20px rgba(0,0,0,0.8) !important;
+          box-shadow: 0 20px 40px -15px var(--cs-amber-glow), 0 10px 25px -10px rgba(15, 23, 42, 0.08) !important;
         }
 
         .cs-nav-link {
@@ -1508,7 +1519,7 @@ export function CarbonSenseLanding() {
       pointerEvents: 'none',
       overflow: 'hidden'
     }}>
-        {/* Orb 1 — amber, top-left */}
+        {/* Orb 1 — Ocean Blue, top-left */}
         <div style={{
         position: 'absolute',
         top: '-10%',
@@ -1516,10 +1527,10 @@ export function CarbonSenseLanding() {
         width: '50vw',
         height: '50vw',
         borderRadius: '50%',
-        background: 'radial-gradient(circle, oklch(74% 0.16 65 / 0.07) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(2, 132, 199, 0.08) 0%, transparent 70%)',
         animation: 'orbDriftA 10s ease-in-out infinite alternate'
       }} />
-        {/* Orb 2 — danger red, bottom-right */}
+        {/* Orb 2 — Warm Orange, bottom-right */}
         <div style={{
         position: 'absolute',
         bottom: '-10%',
@@ -1527,10 +1538,10 @@ export function CarbonSenseLanding() {
         width: '45vw',
         height: '45vw',
         borderRadius: '50%',
-        background: 'radial-gradient(circle, oklch(58% 0.22 25 / 0.07) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(234, 88, 12, 0.06) 0%, transparent 70%)',
         animation: 'orbDriftB 12s ease-in-out infinite alternate'
       }} />
-        {/* Orb 3 — dark amber, center */}
+        {/* Orb 3 — Leaf Green, center */}
         <div style={{
         position: 'absolute',
         top: '40%',
@@ -1538,14 +1549,14 @@ export function CarbonSenseLanding() {
         width: '30vw',
         height: '30vw',
         borderRadius: '50%',
-        background: 'radial-gradient(circle, oklch(50% 0.10 55 / 0.05) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(22, 163, 74, 0.06) 0%, transparent 70%)',
         animation: 'orbDriftC 8s ease-in-out infinite alternate'
       }} />
       </div>
 
       {/* ============ NAV ============ */}
       <header className="fixed inset-x-0 top-0 z-50 transition-all duration-300" style={{
-      background: scrolled ? 'color-mix(in oklab, var(--cs-bg) 78%, transparent)' : 'transparent',
+      background: scrolled ? 'rgba(255, 255, 255, 0.9)' : 'transparent',
       backdropFilter: scrolled ? 'blur(14px) saturate(140%)' : 'none',
       borderBottom: scrolled ? '1px solid var(--cs-border)' : '1px solid transparent',
       top: '2px' // below scroll bar
@@ -1563,6 +1574,7 @@ export function CarbonSenseLanding() {
 
           <div className="hidden items-center gap-3 md:flex">
             <button aria-label="Peringatan" className="relative flex h-10 w-10 items-center justify-center rounded-lg border transition-colors hover:border-[var(--cs-amber)]" style={{
+            background: '#FFFFFF',
             borderColor: 'var(--cs-border)',
             color: 'var(--cs-text-dim)'
           }}>
@@ -1571,7 +1583,7 @@ export function CarbonSenseLanding() {
               background: 'var(--cs-danger)'
             }} />
             </button>
-            <Link to="/login" className="group inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-[#0c0a08] transition-all hover:brightness-110" style={{
+            <Link to="/login" className="group inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-all hover:brightness-110" style={{
             background: 'var(--cs-amber)',
             boxShadow: '0 8px 24px -8px var(--cs-amber-glow)'
           }}>
@@ -1581,6 +1593,7 @@ export function CarbonSenseLanding() {
           </div>
 
           <button className="flex h-10 w-10 items-center justify-center rounded-lg border md:hidden" style={{
+          background: '#FFFFFF',
           borderColor: 'var(--cs-border)',
           color: 'var(--cs-text)'
         }} onClick={() => setMenuOpen(v => !v)} aria-label="Toggle menu">
@@ -1589,18 +1602,18 @@ export function CarbonSenseLanding() {
         </nav>
 
         {menuOpen && <div className="md:hidden" style={{
-        background: 'color-mix(in oklab, var(--cs-bg) 92%, transparent)',
+        background: 'rgba(255, 255, 255, 0.96)',
         borderBottom: '1px solid var(--cs-border)',
         backdropFilter: 'blur(14px)'
       }}>
             <ul className="flex flex-col gap-1 px-5 py-4">
               {NAV_LINKS.map(link => <li key={link.href}>
-                  <a href={link.href} onClick={() => setMenuOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--cs-text-dim)] hover:bg-[var(--cs-surface)] hover:text-[var(--cs-amber)]">
+                  <a href={link.href} onClick={() => setMenuOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--cs-text-dim)] hover:bg-[var(--cs-surface-2)] hover:text-[var(--cs-amber)]">
                     {link.label}
                   </a>
                 </li>)}
               <li>
-                <Link to="/login" className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-[#0c0a08]" style={{
+                <Link to="/login" className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white" style={{
               background: 'var(--cs-amber)'
             }}>
                   <span>Dapatkan Peringatan</span>
@@ -1615,9 +1628,9 @@ export function CarbonSenseLanding() {
       <section id="home" className="relative overflow-hidden px-5 pb-20 pt-32 sm:px-8 sm:pt-40" style={{
       zIndex: 1
     }}>
-        {/* smoke/haze background */}
+        {/* soft light sky background */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-0" style={{
-        background: 'radial-gradient(circle at 50% 12%, oklch(28% 0.05 55 / 0.55), transparent 55%), radial-gradient(circle at 80% 40%, oklch(22% 0.06 30 / 0.35), transparent 45%), radial-gradient(circle at 18% 60%, oklch(20% 0.04 65 / 0.4), transparent 50%)'
+        background: 'radial-gradient(circle at 50% 12%, rgba(2, 132, 199, 0.12), transparent 55%), radial-gradient(circle at 80% 40%, rgba(234, 88, 12, 0.06), transparent 45%), radial-gradient(circle at 18% 60%, rgba(22, 163, 74, 0.07), transparent 50%)'
       }} />
         <div ref={hero.ref} className={`cs-reveal relative mx-auto max-w-5xl text-center ${hero.visible ? 'is-visible' : ''}`}>
           <h1 className="leading-[0.86]" style={{
@@ -1654,7 +1667,7 @@ export function CarbonSenseLanding() {
           transform: hero.visible ? 'translateY(0)' : 'translateY(20px)',
           transition: 'opacity 0.6s ease 320ms, transform 0.6s ease 320ms'
         }}>
-            <Link to="/login" className="group inline-flex w-full items-center justify-center gap-2 rounded-lg px-7 py-3.5 text-sm font-semibold text-[#0c0a08] transition-all hover:brightness-110 sm:w-auto" style={{
+            <Link to="/login" className="group inline-flex w-full items-center justify-center gap-2 rounded-lg px-7 py-3.5 text-sm font-semibold text-white transition-all hover:brightness-110 sm:w-auto" style={{
             background: 'var(--cs-amber)',
             boxShadow: '0 14px 36px -12px var(--cs-amber-glow)'
           }}>
@@ -1676,36 +1689,36 @@ export function CarbonSenseLanding() {
 
           {/* Floating alert card — left */}
           <div className="absolute -left-2 top-10 hidden rounded-xl border px-3.5 py-2.5 sm:block lg:-left-12" style={{
-          background: 'var(--cs-surface)',
-          borderColor: 'color-mix(in oklab, var(--cs-amber) 40%, var(--cs-border))',
-          boxShadow: '0 20px 40px -20px rgba(0,0,0,0.8)',
+          background: '#FFFFFF',
+          borderColor: '#FDBA74',
+          boxShadow: '0 15px 35px -10px rgba(234, 88, 12, 0.15)',
           animation: 'floatA 3s ease-in-out infinite'
         }}>
             <div className="flex items-center gap-2">
               <TriangleAlert size={15} style={{
-              color: 'var(--cs-amber)'
+              color: '#EA580C'
             }} />
-              <span className="text-xs font-semibold text-[var(--cs-text)]">Lonjakan CO₂ terdeteksi</span>
+              <span className="text-xs font-semibold text-[var(--cs-text)]">Waspada: Lonjakan CO₂</span>
             </div>
             <p className="mt-0.5 text-[10px] text-[var(--cs-text-dim)]">Zona B-04 · +52 ppm dalam 4 mnt</p>
           </div>
 
           {/* Floating alert card — right */}
           <div className="absolute -right-2 bottom-16 hidden rounded-xl border px-3.5 py-2.5 sm:block lg:-right-12" style={{
-          background: 'var(--cs-surface)',
-          borderColor: 'color-mix(in oklab, var(--cs-danger) 45%, var(--cs-border))',
-          boxShadow: '0 20px 40px -20px rgba(0,0,0,0.8)',
+          background: '#FFFFFF',
+          borderColor: '#FCA5A5',
+          boxShadow: '0 15px 35px -10px rgba(220, 38, 38, 0.15)',
           animation: 'floatB 3s ease-in-out infinite',
           animationDelay: '0.8s'
         }}>
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full" style={{
-              background: 'var(--cs-danger)'
+              background: '#DC2626'
             }} />
               <span className="text-xs font-semibold" style={{
-              color: 'var(--cs-danger-text)'
+              color: '#DC2626'
             }}>
-                PM2.5 tinggi
+                Bahaya: PM2.5 tinggi
               </span>
             </div>
             <p className="mt-0.5 text-[10px] text-[var(--cs-text-dim)]">88 µg/m³ · Sangat Berbahaya</p>
@@ -1757,14 +1770,14 @@ export function CarbonSenseLanding() {
             {FEATURES.map((f, fi) => <div key={f.id} className="cs-feat-card overflow-hidden rounded-2xl border p-6" style={{
             background: 'var(--cs-surface)',
             borderColor: 'var(--cs-border)',
-            borderLeft: '3px solid var(--cs-danger)',
-            boxShadow: '0 18px 40px -30px rgba(0,0,0,0.8)',
+            borderLeft: '3px solid var(--cs-amber)',
+            boxShadow: '0 12px 30px -15px rgba(15, 23, 42, 0.08)',
             opacity: feats.visible ? 1 : 0,
             transform: feats.visible ? 'translateY(0)' : 'translateY(28px)',
             transition: `opacity 0.6s ease ${fi * 80 + 200}ms, transform 0.6s ease ${fi * 80 + 200}ms`
           }}>
                 <span className="flex h-11 w-11 items-center justify-center rounded-lg" style={{
-              background: 'color-mix(in oklab, var(--cs-amber) 18%, transparent)'
+              background: '#E0F2FE'
             }}>
                   <f.icon size={20} style={{
                 color: 'var(--cs-amber)'
@@ -1774,7 +1787,7 @@ export function CarbonSenseLanding() {
                 <p className="mt-2 text-sm leading-relaxed text-[var(--cs-text-dim)]">{f.body}</p>
 
                 <div className="mt-5 rounded-xl border p-4" style={{
-              background: 'rgba(0,0,0,0.25)',
+              background: '#F9FAFB',
               borderColor: 'var(--cs-border)'
             }}>
                   {f.kind === 'gauge' ? <div className="flex items-center justify-between">
@@ -1784,14 +1797,14 @@ export function CarbonSenseLanding() {
                         </p>
                         <p className="text-2xl font-semibold" style={{
                     fontFamily: 'var(--font-display)',
-                    color: 'var(--cs-amber)'
+                    color: '#16A34A'
                   }}>
                           ±0.3 ppm
                         </p>
                       </div>
                       <svg width="90" height="56" viewBox="0 0 90 56">
                         <path d="M8 50 A37 37 0 0 1 82 50" fill="none" stroke="var(--cs-border)" strokeWidth="7" strokeLinecap="round" />
-                        <path d="M8 50 A37 37 0 0 1 78 28" fill="none" stroke="var(--cs-amber)" strokeWidth="7" strokeLinecap="round" />
+                        <path d="M8 50 A37 37 0 0 1 78 28" fill="none" stroke="#16A34A" strokeWidth="7" strokeLinecap="round" />
                       </svg>
                     </div> : <div>
                       <div className="flex items-center justify-between">
@@ -1810,7 +1823,7 @@ export function CarbonSenseLanding() {
                 }}>
                         <div className="h-full rounded-full" style={{
                     width: '88%',
-                    background: 'linear-gradient(90deg, var(--cs-amber), var(--cs-danger))'
+                    background: 'linear-gradient(90deg, #16A34A, #0284C7)'
                   }} />
                       </div>
                       <p className="mt-1.5 text-[10px] text-[var(--cs-text-dim)]">
@@ -1822,9 +1835,10 @@ export function CarbonSenseLanding() {
 
             {/* full-width feature — Mission Critical */}
             <div className="cs-feat-card overflow-hidden rounded-2xl border p-6 md:col-span-2" style={{
-            background: 'linear-gradient(120deg, var(--cs-surface), color-mix(in oklab, var(--cs-surface) 80%, var(--cs-danger)))',
+            background: 'linear-gradient(120deg, #FFFFFF, #F0F9FF)',
             borderColor: 'var(--cs-border)',
-            borderLeft: '3px solid var(--cs-danger)',
+            borderLeft: '3px solid var(--cs-amber)',
+            boxShadow: '0 12px 30px -15px rgba(15, 23, 42, 0.08)',
             opacity: feats.visible ? 1 : 0,
             transform: feats.visible ? 'translateY(0)' : 'translateY(28px)',
             transition: 'opacity 0.6s ease 360ms, transform 0.6s ease 360ms'
@@ -1832,7 +1846,7 @@ export function CarbonSenseLanding() {
               <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
                 <div className="max-w-xl">
                   <span className="flex h-11 w-11 items-center justify-center rounded-lg" style={{
-                  background: 'color-mix(in oklab, var(--cs-amber) 18%, transparent)'
+                  background: '#E0F2FE'
                 }}>
                     <ShieldAlert size={20} style={{
                     color: 'var(--cs-amber)'
@@ -1845,7 +1859,7 @@ export function CarbonSenseLanding() {
                     Dukungan teknisi 24/7 untuk insiden kritis. Tim kami memantau kesehatan jaringan
                     terus-menerus agar Anda tidak pernah menghadapi krisis karbon sendirian.
                   </p>
-                  <a href="mailto:support@carbonsense.io" className="mt-5 inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-[#0c0a08] transition-all hover:brightness-110" style={{
+                  <a href="mailto:support@carbonsense.io" className="mt-5 inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition-all hover:brightness-110" style={{
                   background: 'var(--cs-amber)'
                 }}>
                     Hubungi Dukungan
@@ -1863,7 +1877,7 @@ export function CarbonSenseLanding() {
                   k: 'Cakupan',
                   v: '24/7'
                 }].map(stat => <div key={stat.k} className="rounded-xl border px-4 py-3 text-center" style={{
-                  background: 'rgba(0,0,0,0.3)',
+                  background: '#FFFFFF',
                   borderColor: 'var(--cs-border)'
                 }}>
                       <p className="text-xl font-semibold" style={{
@@ -1921,7 +1935,7 @@ export function CarbonSenseLanding() {
               <p className="mt-2 text-sm leading-relaxed text-[var(--cs-text-dim)]">
                 Tim dukungan teknisi kami tersedia sepanjang waktu untuk insiden kritis.
               </p>
-              <button className="mt-5 inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-[#0c0a08] transition-all hover:brightness-110" style={{
+              <button className="mt-5 inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition-all hover:brightness-110" style={{
               background: 'var(--cs-amber)'
             }}>
                 Hubungi Dukungan
@@ -1966,11 +1980,12 @@ export function CarbonSenseLanding() {
       position: 'relative'
     }}>
         <div ref={cta.ref} className={`cs-reveal relative mx-auto max-w-6xl overflow-hidden rounded-3xl border p-8 sm:p-12 ${cta.visible ? 'is-visible' : ''}`} style={{
-        background: 'oklch(9% 0.012 60)',
-        borderColor: 'var(--cs-border)'
+        background: '#FFFFFF',
+        borderColor: 'var(--cs-border)',
+        boxShadow: '0 24px 60px -20px rgba(2, 132, 199, 0.12)'
       }}>
           <div aria-hidden="true" className="pointer-events-none absolute inset-0" style={{
-          background: 'radial-gradient(circle at 15% 20%, oklch(58% 0.22 25 / 0.28), transparent 45%), radial-gradient(circle at 85% 80%, oklch(74% 0.16 65 / 0.22), transparent 45%)'
+          background: 'radial-gradient(circle at 15% 20%, rgba(2, 132, 199, 0.08), transparent 45%), radial-gradient(circle at 85% 80%, rgba(22, 163, 74, 0.06), transparent 45%)'
         }} />
           <div className="relative grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
             <div>
@@ -1987,7 +2002,7 @@ export function CarbonSenseLanding() {
                 untuk bertindak.
               </p>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <Link to="/login" className="inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3.5 text-sm font-semibold text-[#0c0a08] transition-all hover:brightness-110" style={{
+                <Link to="/login" className="inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3.5 text-sm font-semibold text-white transition-all hover:brightness-110" style={{
                 background: 'var(--cs-amber)',
                 boxShadow: '0 14px 36px -12px var(--cs-amber-glow)'
               }}>
@@ -1996,7 +2011,8 @@ export function CarbonSenseLanding() {
                 </Link>
                 <button className="inline-flex items-center justify-center gap-2 rounded-lg border px-6 py-3.5 text-sm font-semibold transition-colors" style={{
                 borderColor: 'var(--cs-danger)',
-                color: 'var(--cs-danger-text)'
+                color: 'var(--cs-danger-text)',
+                background: '#FEF2F2'
               }}>
                   Hubungi Ahli Kami
                 </button>
@@ -2009,8 +2025,9 @@ export function CarbonSenseLanding() {
       </section>
 
       {/* ============ FOOTER ============ */}
-      <footer className="px-5 pb-10 pt-16 sm:px-8" style={{
-      background: 'oklch(9% 0.012 60)',
+      <footer className="px-5 pb-10 pt-16 sm:px-8 border-t" style={{
+      background: '#FFFFFF',
+      borderColor: 'var(--cs-border)',
       zIndex: 1,
       position: 'relative'
     }}>

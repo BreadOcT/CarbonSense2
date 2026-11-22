@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard Registry - CarbonSense</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- QRCode.js CDN for real QR Code rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body class="bg-[#F0F9FF] text-[#0F172A] font-sans min-h-screen flex flex-col selection:bg-[#0284C7] selection:text-white">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-md shadow-sm">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-[#0284C7] text-white flex items-center justify-center font-bold shadow-md shadow-[#0284C7]/25">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <span class="font-display text-2xl tracking-wider text-[#0F172A]">CarbonSense <span class="text-[#0284C7]">Admin</span></span>
+        </a>
+        <span class="hidden sm:inline px-2.5 py-0.5 rounded-full bg-[#E0F2FE] text-[#0284C7] border border-[#0284C7]/30 text-[10px] font-bold uppercase tracking-wider">
+          Registry Console
+        </span>
+      </div>
+
+      <div class="flex items-center gap-3 text-xs">
+        <a href="dashboard.html" class="px-3 py-1.5 rounded-xl text-[#475569] hover:text-[#0284C7] border border-slate-200 bg-white hover:bg-[#F0F9FF] font-semibold transition">
+          Lihat Client Dashboard &rarr;
+        </a>
+        <a href="admin-login.html" class="text-[#DC2626] font-bold hover:underline">Keluar Sesi Admin</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
+
+    <!-- Metrics Row -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+        <span class="text-xs uppercase font-bold text-[#475569]">Total Alat Terdaftar</span>
+        <div class="text-3xl font-display text-[#0F172A] mt-1" id="stat-total-devices">4 Perangkat</div>
+        <span class="text-[10px] text-[#475569]">Hardware di database</span>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+        <span class="text-xs uppercase font-bold text-[#475569]">Status Online Aktif</span>
+        <div class="text-3xl font-display text-[#16A34A] mt-1" id="stat-online-devices">2 Perangkat</div>
+        <span class="text-[10px] text-[#16A34A] font-semibold">Streaming Firebase RTDB</span>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+        <span class="text-xs uppercase font-bold text-[#475569]">Peringatan / Bahaya</span>
+        <div class="text-3xl font-display text-[#EA580C] mt-1" id="stat-warning-devices">1 Perangkat</div>
+        <span class="text-[10px] text-[#EA580C] font-semibold">Gas melebihi batas aman</span>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+        <span class="text-xs uppercase font-bold text-[#475569]">Pengguna Terdaftar</span>
+        <div class="text-3xl font-display text-[#0284C7] mt-1">2 Akun Klien</div>
+        <span class="text-[10px] text-[#0284C7] font-semibold">Otorisasi hak akses sesi</span>
+      </div>
+    </div>
+
+    <!-- Inventory Management Table Section -->
+    <div class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl">
+      
+      <!-- Table Header & Action Toolbar -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-200 mb-6">
+        <div>
+          <h2 class="text-xl font-bold text-[#0F172A] font-display tracking-wider">Inventori Hardware Sensor Lapangan</h2>
+          <p class="text-xs text-[#475569]">Kelola ID registrasi alat, tautkan akun pemilik, dan cetak QR Code</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <button onclick="openArduinoCodeModal()" class="btn-secondary px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-[#0284C7]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+            </svg>
+            <span>Source Code ESP32 (.ino)</span>
+          </button>
+
+          <button onclick="openAddDeviceModal()" class="btn-primary py-2 px-4 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-[#0284C7]/20">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            <span>+ Daftarkan Alat Baru</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Search & Filters -->
+      <div class="flex flex-col sm:flex-row gap-3 mb-6">
+        <div class="flex-1 relative">
+          <input 
+            type="text" 
+            id="search-device-input" 
+            oninput="filterDevices()" 
+            placeholder="Cari berdasarkan ID alat, nama pemilik, atau email..." 
+            class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-[#0F172A] text-xs focus:outline-none focus:border-[#0284C7]"
+          />
+        </div>
+
+        <select id="filter-status" onchange="filterDevices()" class="px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-[#0F172A] text-xs focus:outline-none focus:border-[#0284C7]">
+          <option value="ALL">Semua Status</option>
+          <option value="Online">Online</option>
+          <option value="Warning">Warning</option>
+          <option value="Offline">Offline</option>
+        </select>
+      </div>
+
+      <!-- Inventory Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="border-b border-slate-200 bg-[#F9FAFB] text-[#475569] uppercase tracking-wider font-bold">
+              <th class="py-3 px-4">Device ID</th>
+              <th class="py-3 px-4">Nama Pemilik / Email</th>
+              <th class="py-3 px-4">Lokasi Ruangan</th>
+              <th class="py-3 px-4">Status</th>
+              <th class="py-3 px-4">PPM Terkini</th>
+              <th class="py-3 px-4">Terakhir Aktif</th>
+              <th class="py-3 px-4 text-right">Aksi Manajemen</th>
+            </tr>
+          </thead>
+          <tbody id="admin-devices-tbody" class="divide-y divide-slate-200 text-[#475569]">
+            <!-- Dynamically populated rows -->
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Modal Tambah Alat Baru -->
+  <div id="add-device-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="w-full max-w-md bg-white p-6 rounded-3xl border border-slate-200 shadow-2xl relative">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 mb-5">
+        <h3 class="text-lg font-bold text-[#0F172A] font-display tracking-wider">Daftarkan Hardware Baru ke Registry</h3>
+        <button onclick="closeAddDeviceModal()" class="text-[#475569] hover:text-[#0F172A] text-xl font-bold">&times;</button>
+      </div>
+
+      <form id="add-device-form" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase text-[#475569] mb-1.5">ID Perangkat (Auto-generate atau ketik)</label>
+          <div class="flex gap-2">
+            <input 
+              type="text" 
+              id="new-dev-id" 
+              required 
+              placeholder="CS-ESP32-KANTOR-05" 
+              class="flex-1 px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-[#0F172A] text-xs uppercase focus:outline-none focus:border-[#0284C7] font-mono"
+            />
+            <button type="button" onclick="generateRandomId()" class="px-3 py-2 bg-[#E0F2FE] hover:bg-[#0284C7] hover:text-white text-xs text-[#0284C7] font-bold rounded-xl border border-[#0284C7]/30 transition">
+              Acak ID
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase text-[#475569] mb-1.5">Nama Lokasi Penempatan</label>
+          <input 
+            type="text" 
+            id="new-dev-location" 
+            required 
+            placeholder="Contoh: Ruang Rapat / Gudang" 
+            class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-[#0F172A] text-xs focus:outline-none focus:border-[#0284C7]"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase text-[#475569] mb-1.5">Email Akun Pemilik</label>
+          <input 
+            type="email" 
+            id="new-dev-owner" 
+            required 
+            placeholder="user@carbonsense.id" 
+            class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-[#0F172A] text-xs focus:outline-none focus:border-[#0284C7]"
+          />
+        </div>
+
+        <div class="flex justify-end gap-3 pt-5 border-t border-slate-200 mt-6">
+          <button type="button" onclick="closeAddDeviceModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-[#475569] hover:text-[#0F172A]">Batal</button>
+          <button type="submit" class="btn-primary py-2.5 px-6 rounded-xl text-xs font-bold shadow-md">Simpan ke Registry</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Lihat QR Code -->
+  <div id="qr-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="w-full max-w-sm bg-white p-6 rounded-3xl border border-slate-200 shadow-2xl text-center relative">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
+        <h3 class="text-base font-bold text-[#0F172A] font-display tracking-wider">Kode QR Pendaftaran Alat</h3>
+        <button onclick="closeQrModal()" class="text-[#475569] hover:text-[#0F172A] text-xl font-bold">&times;</button>
+      </div>
+
+      <div class="p-4 bg-white rounded-2xl border border-slate-200 inline-block mx-auto mb-4 shadow-md" id="qrcode-canvas-container">
+        <!-- Rendered by QRCode.js -->
+      </div>
+
+      <div class="font-mono text-sm font-bold text-[#0284C7] mb-1" id="qr-device-id-label">CS-ESP32-LIVING-01</div>
+      <p class="text-xs text-[#475569] mb-6">Pindai kode QR ini menggunakan kamera ponsel pengguna untuk mengaitkan perangkat secara instan.</p>
+
+      <button onclick="window.print()" class="w-full btn-secondary py-2.5 rounded-xl text-xs font-bold">
+        Cetak Stiker Label QR
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal Arduino C++ Source Code -->
+  <div id="code-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="w-full max-w-3xl bg-white p-6 rounded-3xl border border-slate-200 shadow-2xl relative flex flex-col max-h-[85vh]">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 mb-4">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-[#0284C7]"></span>
+          <h3 class="text-base font-bold text-[#0F172A] font-display tracking-wider">Source Code Firmware ESP32 + MQ-135 (.ino)</h3>
+        </div>
+        <button onclick="closeArduinoCodeModal()" class="text-[#475569] hover:text-[#0F172A] text-xl font-bold">&times;</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto mb-4 bg-[#F9FAFB] p-4 rounded-2xl border border-slate-200 font-mono text-xs text-[#0F172A] leading-relaxed">
+        <pre id="arduino-code-block">#include &lt;WiFi.h&gt;
+#include &lt;Firebase_ESP_Client.h&gt;
+#include &lt;WiFiManager.h&gt;
+
+#include "addons/TokenHelper.h"
+#include "addons/RTDBHelper.h"
+
+#define API_KEY "AIzaSyD421U8mdS4GT-E4ETxBkfz4A3VLgRtlFM"
+#define DATABASE_URL "https://carbonsense-iot-default-rtdb.asia-southeast1.firebasedatabase.app"
+
+FirebaseData fbdo;
+FirebaseAuth auth;
+FirebaseConfig config;
+
+const int sensorPin = 34; // Pin Analog MQ-135
+const int buttonPin = 0;  // Tombol BOOT bawaan ESP32 untuk Reset WiFi
+
+unsigned long previousMillis = 0;
+const long interval = 2000; // Kirim data setiap 2 detik
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(sensorPin, INPUT);
+  pinMode(buttonPin, INPUT_PULLUP);
+
+  Serial.println("\n[CarbonSense] Memulai sistem telemetri...");
+  WiFiManager wm;
+  bool res = wm.autoConnect("Setup_CarbonSense");
+
+  if (!res) {
+    Serial.println("Gagal terhubung ke WiFi. Restarting...");
+    ESP.restart();
+  }
+
+  config.api_key = API_KEY;
+  config.database_url = DATABASE_URL;
+
+  Firebase.begin(&config, &auth);
+  Firebase.reconnectWiFi(true);
+}
+
+void loop() {
+  if (millis() - previousMillis >= interval) {
+    previousMillis = millis();
+
+    int rawValue = analogRead(sensorPin);
+    // Konversi ADC ke skala PPM gas MQ-135
+    float ppm = map(rawValue, 0, 4095, 300, 2000);
+
+    Serial.printf("Kadar PPM Gas Terbaca: %.1f\n", ppm);
+    Firebase.RTDB.setFloat(&fbdo, "/devices/CS-ESP32-LIVING-01/ppm", ppm);
+    Firebase.RTDB.setString(&fbdo, "/devices/CS-ESP32-LIVING-01/lastActive", "Baru saja");
+  }
+}</pre>
+      </div>
+
+      <div class="flex justify-between items-center pt-3 border-t border-slate-200">
+        <span class="text-xs text-[#475569]">Gunakan Arduino IDE dengan Board ESP32 v2.0+</span>
+        <button onclick="copyArduinoCode()" id="btn-copy-code" class="btn-primary px-6 py-2 rounded-xl text-xs font-bold">
+          Salin Kode C++
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="py-6 text-center text-xs text-[#475569] border-t border-slate-200 bg-white mt-12">
+    CarbonSense Decoupled Testing Site &bull; Administrator Registry & Hardware Deployment
+  </footer>
+
+  <!-- Scripts -->
+  <script src="assets/js/mock-data.js"></script>
+  <script src="assets/js/testing-nav.js"></script>
+  <script>
+    function renderAdminTable() {
+      const devices = window.MockStore.getDevices();
+      const tbody = document.getElementById('admin-devices-tbody');
+      tbody.innerHTML = '';
+
+      // Update stats
+      document.getElementById('stat-total-devices').textContent = `${devices.length} Perangkat`;
+      document.getElementById('stat-online-devices').textContent = `${devices.filter(d => d.status === 'Online').length} Perangkat`;
+      document.getElementById('stat-warning-devices').textContent = `${devices.filter(d => d.status === 'Warning' || d.status === 'Bahaya').length} Perangkat`;
+
+      const search = document.getElementById('search-device-input').value.toLowerCase();
+      const filterStatus = document.getElementById('filter-status').value;
+
+      devices.forEach(dev => {
+        if (filterStatus !== 'ALL' && dev.status !== filterStatus) return;
+        if (search) {
+          const match = dev.id.toLowerCase().includes(search) || 
+                        (dev.user && dev.user.toLowerCase().includes(search)) ||
+                        (dev.userEmail && dev.userEmail.toLowerCase().includes(search));
+          if (!match) return;
+        }
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-[#F0F9FF] transition';
+
+        let badge = '<span class="px-2.5 py-0.5 rounded text-[11px] font-bold bg-[#DCFCE7] text-[#16A34A] border border-[#16A34A]/30">Online</span>';
+        if (dev.status === 'Warning') badge = '<span class="px-2.5 py-0.5 rounded text-[11px] font-bold bg-[#FFEDD5] text-[#EA580C] border border-[#EA580C]/30">Warning</span>';
+        if (dev.status === 'Bahaya') badge = '<span class="px-2.5 py-0.5 rounded text-[11px] font-bold bg-[#FEE2E2] text-[#DC2626] border border-[#DC2626]/40 animate-pulse">Bahaya</span>';
+        if (dev.status === 'Offline') badge = '<span class="px-2.5 py-0.5 rounded text-[11px] font-bold bg-slate-200 text-[#475569] border border-slate-300">Offline</span>';
+
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-mono font-bold text-[#0284C7]">${dev.id}</td>
+          <td class="py-3 px-4">
+            <div class="font-bold text-[#0F172A]">${dev.user || 'Belum ditautkan'}</div>
+            <div class="text-[11px] text-[#475569]">${dev.userEmail || '-'}</div>
+          </td>
+          <td class="py-3 px-4 text-[#0F172A] font-medium">${dev.location || '-'}</td>
+          <td class="py-3 px-4">${badge}</td>
+          <td class="py-3 px-4 font-bold text-[#0F172A]">${dev.ppm || 0} PPM</td>
+          <td class="py-3 px-4 text-[#475569] text-[11px]">${dev.lastActive}</td>
+          <td class="py-3 px-4 text-right">
+            <div class="flex items-center justify-end gap-2">
+              <button onclick="showQrForDevice('${dev.id}')" class="px-2.5 py-1 rounded-lg bg-[#E0F2FE] hover:bg-[#0284C7] hover:text-white text-[#0284C7] border border-[#0284C7]/30 font-bold text-[11px] transition" title="Lihat QR Code">
+                QR Code
+              </button>
+              <button onclick="deleteDevice('${dev.id}')" class="px-2.5 py-1 rounded-lg bg-[#FEE2E2] hover:bg-red-200 text-[#DC2626] border border-[#DC2626]/30 font-bold text-[11px] transition" title="Hapus dari Registry">
+                Hapus
+              </button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function filterDevices() {
+      renderAdminTable();
+    }
+
+    function generateRandomId() {
+      const randNum = Math.floor(Math.random() * 90) + 10;
+      document.getElementById('new-dev-id').value = `CS-ESP32-ZONE-${randNum}`;
+    }
+
+    function openAddDeviceModal() {
+      generateRandomId();
+      document.getElementById('add-device-modal').classList.remove('hidden');
+      document.getElementById('add-device-modal').classList.add('flex');
+    }
+
+    function closeAddDeviceModal() {
+      document.getElementById('add-device-modal').classList.add('hidden');
+      document.getElementById('add-device-modal').classList.remove('flex');
+    }
+
+    document.getElementById('add-device-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const id = document.getElementById('new-dev-id').value.trim().toUpperCase();
+      const loc = document.getElementById('new-dev-location').value.trim();
+      const email = document.getElementById('new-dev-owner').value.trim();
+
+      const devices = window.MockStore.getDevices();
+      if (devices.some(d => d.id === id)) {
+        alert('Device ID sudah terdaftar.');
+        return;
+      }
+
+      devices.push({
+        id: id,
+        user: email.split('@')[0],
+        userEmail: email,
+        status: 'Online',
+        ppm: 410,
+        lastActive: 'Baru saja',
+        location: loc,
+        temp: 26.5,
+        humidity: 59.0,
+        voc: 105,
+        firmware: 'v2.4.1-esp32'
+      });
+
+      window.MockStore.saveDevices(devices);
+      closeAddDeviceModal();
+      renderAdminTable();
+      alert(`Hardware ${id} berhasil didaftarkan ke registry!`);
+    });
+
+    function deleteDevice(id) {
+      if (confirm(`Yakin ingin menghapus registrasi perangkat [${id}]?`)) {
+        let devices = window.MockStore.getDevices();
+        devices = devices.filter(d => d.id !== id);
+        window.MockStore.saveDevices(devices);
+        renderAdminTable();
+      }
+    }
+
+    function showQrForDevice(id) {
+      document.getElementById('qr-device-id-label').textContent = id;
+      const container = document.getElementById('qrcode-canvas-container');
+      container.innerHTML = '';
+
+      if (window.QRCode) {
+        new QRCode(container, {
+          text: `https://carbonsense.id/bind?device=${id}`,
+          width: 180,
+          height: 180,
+          colorDark: "#000000",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.H
+        });
+      }
+
+      document.getElementById('qr-modal').classList.remove('hidden');
+      document.getElementById('qr-modal').classList.add('flex');
+    }
+
+    function closeQrModal() {
+      document.getElementById('qr-modal').classList.add('hidden');
+      document.getElementById('qr-modal').classList.remove('flex');
+    }
+
+    function openArduinoCodeModal() {
+      document.getElementById('code-modal').classList.remove('hidden');
+      document.getElementById('code-modal').classList.add('flex');
+    }
+
+    function closeArduinoCodeModal() {
+      document.getElementById('code-modal').classList.add('hidden');
+      document.getElementById('code-modal').classList.remove('flex');
+    }
+
+    function copyArduinoCode() {
+      const code = document.getElementById('arduino-code-block').innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        const btn = document.getElementById('btn-copy-code');
+        btn.textContent = 'Berhasil Disalin!';
+        setTimeout(() => btn.textContent = 'Salin Kode C++', 2000);
+      });
+    }
+
+    renderAdminTable();
+  </script>
+</body>
+</html>
+

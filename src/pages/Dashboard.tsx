@@ -7,10 +7,10 @@ import { useEffect, useState, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Activity, History, AlertTriangle, Wind, Clock, ChevronDown,
-  Trash2, ArrowLeft, Settings as SettingsIcon, Download,
-  Table, Brain, LayoutDashboard, Database, ShoppingCart, Info, Clock as ClockIcon, ShieldAlert,
+  ArrowLeft, Settings as SettingsIcon, Download,
+  Table, Brain, ShoppingCart, Info, Clock as ClockIcon, ShieldAlert,
   Maximize2, Minimize2, User, LogOut, Cpu, Cloud, Monitor, CheckCircle, XCircle, X,
-  Sparkles, Send, MessageSquare, Plug, Wifi
+  Sparkles, Send, Plug, Wifi, Phone, Menu, Check
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
@@ -18,15 +18,19 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { api } from '../lib/api';
-import { ref, onValue, update } from 'firebase/database';
+import { ref, onValue } from 'firebase/database';
 import { rtdb } from '../lib/firebase';
 import { generateSimpleAdvice, generateChatResponse } from '../lib/ai';
 
-// Extend jsPDF with autotable types
 declare module 'jspdf' {
   interface jsPDF {
     autoTable: (options: any) => jsPDF;
   }
+}
+
+interface EmergencyContact {
+  name: string;
+  phone: string;
 }
 
 export default function Dashboard() {
@@ -38,33 +42,50 @@ export default function Dashboard() {
   const [hasShownOfflinePopup, setHasShownOfflinePopup] = useState(false);
   const lastKnownPingRef = useRef<number | null>(null);
   const [activationStep, setActivationStep] = useState(0);
+
+  // Simple mode state
+  const [isSimpleMode, setIsSimpleMode] = useState<boolean>(() => {
+    return localStorage.getItem('cs_simple_mode') === 'true';
+  });
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [emergencyContacts, setEmergencyContacts] = useState<EmergencyContact[]>([
+    { name: 'Kontak Utama', phone: '+6281234567890' }
+  ]);
+
+  const toggleSimpleMode = () => {
+    const next = !isSimpleMode;
+    setIsSimpleMode(next);
+    localStorage.setItem('cs_simple_mode', next ? 'true' : 'false');
+  };
+
   const activationSteps = [
     {
-      title: "1. Sambungkan Catu Daya Perangkat",
-      desc: "Hubungkan kabel Micro-USB atau USB-C ke papan ESP32 CarbonSense Anda dan sambungkan ke adaptor daya listrik. Pastikan lampu LED indikator merah di papan menyala.",
-      icon: <Plug className="w-12 h-12 text-[var(--cs-amber)] animate-pulse" />
+      title: '1. Sambungkan Kabel Listrik Alat',
+      desc: 'Colokkan kabel USB ke alat CarbonSense dan hubungkan ke stopkontak listrik. Pastikan lampu indikator pada alat menyala.',
+      icon: <Plug className="w-10 h-10 text-[#0284C7]" />
     },
     {
-      title: "2. Hubungkan HP/Laptop ke WiFi Alat",
-      desc: "Pada HP atau Laptop Anda, buka pengaturan WiFi dan sambungkan ke jaringan WiFi bernama \"CarbonSense-AP\". Jendela konfigurasi captive portal akan otomatis muncul di browser.",
-      icon: <Wifi className="w-12 h-12 text-[var(--cs-amber)] animate-pulse" />
+      title: '2. Hubungkan HP ke WiFi Alat',
+      desc: 'Buka pengaturan WiFi di HP Anda dan pilih jaringan bernama "Setup_CarbonSense" atau "CarbonSense-AP". Halaman pengaturan akan otomatis terbuka.',
+      icon: <Wifi className="w-10 h-10 text-[#0284C7]" />
     },
     {
-      title: "3. Konfigurasikan WiFi Rumah Anda",
-      desc: "Di halaman portal captive, pilih nama WiFi rumah Anda, masukkan password WiFi Anda, lalu klik \"Save\". Papan ESP32 akan reboot dan terhubung ke internet secara otomatis.",
-      icon: <SettingsIcon className="w-12 h-12 text-[var(--cs-amber)] animate-pulse" />
+      title: '3. Masukkan WiFi Rumah / Tempat Usaha',
+      desc: 'Pilih nama WiFi rumah Anda, ketikkan kata sandi WiFi, lalu tekan "Simpan". Alat akan otomatis tersambung ke internet.',
+      icon: <SettingsIcon className="w-10 h-10 text-[#0284C7]" />
     },
     {
-      title: "4. Kalibrasi Awal & Pre-heating",
-      desc: "Tunggu 1-2 menit agar sensor gas MQ melakukan pemanasan awal agar stabil. Pada saat ini, pembacaan kadar CO akan dimulai dari angka 0 PPM terlebih dahulu sebelum stabil memantau.",
-      icon: <ClockIcon className="w-12 h-12 text-[var(--cs-amber)] animate-pulse" />
+      title: '4. Tunggu Pemanasan Sensor (1-2 Menit)',
+      desc: 'Tunggu sekitar 1 hingga 2 menit agar sensor gas siap bekerja dengan stabil.',
+      icon: <ClockIcon className="w-10 h-10 text-[#0284C7]" />
     },
     {
-      title: "5. Hubungkan ID Perangkat ke Akun",
-      desc: "Masuk ke menu \"Pilih Perangkat\" di website CarbonSense, masukkan ID perangkat fisik Anda (misal: CS-DAPUR-01) untuk menautkannya ke akun Anda, lalu klik Lanjutkan untuk masuk.",
-      icon: <CheckCircle className="w-12 h-12 text-emerald-450 animate-pulse" />
+      title: '5. Alat Siap Memantau 24 Jam',
+      desc: 'Setelah tersambung, status di layar akan berubah menjadi "Terhubung" (Hijau) dan pemantauan berjalan otomatis.',
+      icon: <CheckCircle className="w-10 h-10 text-[#16A34A]" />
     }
   ];
+
   const carbonLevelRef = useRef<number | null>(null);
   useEffect(() => {
     carbonLevelRef.current = carbonLevel;
@@ -74,13 +95,16 @@ export default function Dashboard() {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [aiPersonality, setAiPersonality] = useState<any>(null);
   const [chatMessages, setChatMessages] = useState<any[]>([
-    { sender: 'ai', text: 'Halo! Saya adalah CarbonSense AI Assistant. Berdasarkan profil penempatan sensor dan data telemetri real-time, saya siap membantu Anda menganalisis kelayakan udara dan keselamatan ruangan.' }
+    {
+      sender: 'ai',
+      text: 'Halo! Saya adalah Asisten Keselamatan CarbonSense. Berdasarkan kondisi ruangan dan pembacaan alat saat ini, saya siap membantu Anda menjaga keamanan udara dan mencegah bahaya kebocoran gas.'
+    }
   ]);
   const [isTyping, setIsTyping] = useState(false);
   const [customQuestion, setCustomQuestion] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  const [consecutiveDangerCount, setConsecutiveDangerCount] = useState<number>(0);
+  const [, setConsecutiveDangerCount] = useState<number>(0);
   const [isDangerPopupOpen, setIsDangerPopupOpen] = useState<boolean>(false);
   const [dangerPopupRecommendation, setDangerPopupRecommendation] = useState<string>('');
   const [dangerPopupLoading, setDangerPopupLoading] = useState<boolean>(false);
@@ -98,32 +122,38 @@ export default function Dashboard() {
 
   const loadDangerRecommendation = (ppm: number) => {
     setDangerPopupLoading(true);
-    api.ai.getRecommendation({
-      question: "Berikan rekomendasi keselamatan evakuasi karena terdeteksi kadar karbon kritis!",
-      profile: aiPersonalityRef.current,
-      carbonLevel: ppm
-    }).then(rec => {
-      setDangerPopupRecommendation(rec);
-      setDangerPopupLoading(false);
-      setChatMessages(prev => {
-        const hasAlertMessage = prev.some(m => m.text.includes("ANALISIS DARURAT AI"));
-        if (hasAlertMessage) return prev;
-        return [...prev, {
-          sender: 'ai',
-          text: `🚨 **ANALISIS DARURAT AI (Kadar CO Kritis):**\n\n${rec}`
-        }];
+    api.ai
+      .getRecommendation({
+        question: 'Berikan rekomendasi keselamatan evakuasi karena terdeteksi kadar karbon kritis!',
+        profile: aiPersonalityRef.current,
+        carbonLevel: ppm
+      })
+      .then(rec => {
+        setDangerPopupRecommendation(rec);
+        setDangerPopupLoading(false);
+        setChatMessages(prev => {
+          const hasAlertMessage = prev.some(m => m.text.includes('ANALISIS DARURAT AI'));
+          if (hasAlertMessage) return prev;
+          return [
+            ...prev,
+            {
+              sender: 'ai',
+              text: `**ANALISIS DARURAT AI (Kadar Gas Kritis):**\n\n${rec}`
+            }
+          ];
+        });
+      })
+      .catch(err => {
+        console.error(err);
+        const fallbackRec = `Kadar gas berbahaya terdeteksi tinggi! Segera lakukan tindakan berikut:\n\n1. Buka semua pintu dan jendela lebar-lebar agar gas keluar.\n2. Matikan kompor gas atau lepas regulator tabung LPG. Jangan menyalakan saklar lampu atau korek api.\n3. Bawa seluruh penghuni keluar ruangan menuju tempat terbuka yang segar.`;
+        setDangerPopupRecommendation(fallbackRec);
+        setDangerPopupLoading(false);
       });
-    }).catch(err => {
-      console.error(err);
-      const fallbackRec = `Kadar karbon monoksida mendesak! Segera lakukan tindakan berikut:\n\na. Evakuasi: Pindahkan seluruh penghuni (terutama kelompok rentan) ke area terbuka berudara segar.\nb. Sirkulasi: Buka semua pintu dan jendela lebar-lebar untuk membuang akumulasi gas.\nc. Sumber Gas: Matikan kompor gas atau peralatan masak terdekat.\nd. Pemantauan: Pantau terus sensor ini hingga kadar CO kembali aman di bawah 700 ppm.`;
-      setDangerPopupRecommendation(fallbackRec);
-      setDangerPopupLoading(false);
-    });
   };
 
   const [activeDeviceIds, setActiveDeviceIds] = useState<string[]>([]);
   const [deviceId, setDeviceId] = useState<string>('');
-  const [purchaseStatus, setPurchaseStatus] = useState<string>('none');
+  const [, setPurchaseStatus] = useState<string>('none');
   const [accessDenied, setAccessDenied] = useState(false);
 
   useEffect(() => {
@@ -137,11 +167,13 @@ export default function Dashboard() {
   const isInitialCheckedRef = useRef(false);
   const diagnosticRef = useRef<HTMLDivElement>(null);
 
-  const [historyRegistry, setHistoryRegistry] = useState<Record<string, { timestamp: string; value: number }[]>>({});
+  const [historyRegistry, setHistoryRegistry] = useState<
+    Record<string, { timestamp: string; value: number }[]>
+  >({});
 
   const localHistory = historyRegistry[deviceId] || [];
 
-  const [filterOption, setFilterOption] = useState<string>('today'); // '15', '30', '60', '180', 'live', 'today', 'custom'
+  const [filterOption, setFilterOption] = useState<string>('today');
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const d = new Date();
     const year = d.getFullYear();
@@ -169,16 +201,17 @@ export default function Dashboard() {
     const day = String(d.getDate()).padStart(2, '0');
     setSelectedDate(`${year}-${month}-${day}`);
   };
+
   const [customStart, setCustomStart] = useState<string>(() => {
     const d = new Date(Date.now() - 60 * 60 * 1000);
     const offset = d.getTimezoneOffset();
-    const localDate = new Date(d.getTime() - (offset * 60 * 1000));
+    const localDate = new Date(d.getTime() - offset * 60 * 1000);
     return localDate.toISOString().substring(0, 16);
   });
   const [customEnd, setCustomEnd] = useState<string>(() => {
     const d = new Date();
     const offset = d.getTimezoneOffset();
-    const localDate = new Date(d.getTime() - (offset * 60 * 1000));
+    const localDate = new Date(d.getTime() - offset * 60 * 1000);
     return localDate.toISOString().substring(0, 16);
   });
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -191,9 +224,9 @@ export default function Dashboard() {
     '30': '30 Menit',
     '60': '60 Menit',
     '180': '3 Jam',
-    'live': 'Live Real-time',
-    'today': 'Filter Tanggal',
-    'custom': 'Custom Range'
+    live: 'Live Real-time',
+    today: 'Filter Tanggal',
+    custom: 'Rentang Kustom'
   };
 
   // Load Initial Data
@@ -202,16 +235,36 @@ export default function Dashboard() {
     const activeDevsStr = localStorage.getItem('cs_active_devices');
     const savedPurchase = localStorage.getItem('cs_purchase_status') || 'none';
     const email = localStorage.getItem('cs_user_email');
-    const storedAi = localStorage.getItem('cs_ai_personality');
+    const storedAi =
+      (email && localStorage.getItem(`cs_ai_personality_${email}`)) ||
+      localStorage.getItem('cs_ai_personality');
 
     if (savedUser) setUserProfile(JSON.parse(savedUser));
     if (!savedUser && email) setUserProfile({ username: email.split('@')[0], email });
 
     if (storedAi) {
       try {
-        setAiPersonality(JSON.parse(storedAi));
+        const parsedAi = JSON.parse(storedAi);
+        setAiPersonality(parsedAi);
+        if (Array.isArray(parsedAi?.emergency_contacts) && parsedAi.emergency_contacts.length > 0) {
+          setEmergencyContacts(parsedAi.emergency_contacts);
+        }
       } catch (e) {
         console.error('Failed to parse cs_ai_personality in dashboard:', e);
+      }
+    }
+
+    const storedContacts =
+      (email && localStorage.getItem(`cs_emergency_contacts_${email}`)) ||
+      localStorage.getItem('cs_emergency_contacts');
+    if (storedContacts) {
+      try {
+        const parsedC = JSON.parse(storedContacts);
+        if (Array.isArray(parsedC) && parsedC.length > 0) {
+          setEmergencyContacts(parsedC);
+        }
+      } catch (e) {
+        console.error('Failed to parse emergency contacts in dashboard:', e);
       }
     }
 
@@ -257,11 +310,9 @@ export default function Dashboard() {
   }, [isDiagnosticOpen]);
 
   // Load history when deviceId changes and fetch initial status from MySQL
-  // Load initial status from backend MySQL on device selection
   useEffect(() => {
     if (!deviceId) return;
 
-    // Reset initial check states
     isInitialCheckedRef.current = false;
     initialPingRef.current = null;
     lastKnownPingRef.current = null;
@@ -270,7 +321,6 @@ export default function Dashboard() {
     const saved = localStorage.getItem(key);
     let hist = saved ? JSON.parse(saved) : [];
 
-    // Prune data older than 7 days on load to keep cache thin
     const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
     hist = hist.filter((item: any) => parseInt(item.timestamp) > sevenDaysAgo);
     localStorage.setItem(key, JSON.stringify(hist));
@@ -307,64 +357,65 @@ export default function Dashboard() {
     let isInitialLoad = true;
     const deviceRef = ref(rtdb, deviceId);
 
-    const unsubscribe = onValue(deviceRef, (snapshot) => {
+    const unsubscribe = onValue(deviceRef, snapshot => {
       const data = snapshot.val();
       if (!data) return;
 
-      const ppmVal = data.nilai_ppm !== undefined && data.nilai_ppm !== '--' ? Number(data.nilai_ppm) : null;
+      const ppmVal =
+        data.nilai_ppm !== undefined && data.nilai_ppm !== '--' ? Number(data.nilai_ppm) : null;
       const statusVal = data.status || 'Offline';
       const isFbOffline = statusVal === 'Offline';
 
-      // Automatically bring online or offline in real-time based on Firebase status parameter
       setIsDeviceOffline(isFbOffline);
 
-      // Always populate the initial carbonLevel from Firebase RTDB (data masuk selalu dari Firebase!)
       if (ppmVal !== null && carbonLevelRef.current === null) {
         setCarbonLevel(ppmVal);
       }
 
-      // If this is a subsequent telemetry write while device is offline in Firebase, immediately bring it online
       if (!isInitialLoad && isFbOffline && ppmVal !== null) {
-        api.devices.updateTelemetry({
-          id: deviceId,
-          ppm: ppmVal,
-          status: ppmVal > 1200 ? 'Warning' : 'Online'
-        }).catch(err => console.error('Failed to automatically transition offline device to online:', err));
+        api.devices
+          .updateTelemetry({
+            id: deviceId,
+            ppm: ppmVal,
+            status: ppmVal > 1200 ? 'Warning' : 'Online'
+          })
+          .catch(err =>
+            console.error('Failed to automatically transition offline device to online:', err)
+          );
       }
 
       isInitialLoad = false;
 
-      // If valid telemetry value is received, update local carbonLevel and record in history
       if (ppmVal !== null) {
         setCarbonLevel(ppmVal);
 
-        // Record in historical cache
         setHistoryRegistry(registry => {
           const hist = registry[deviceId] || [];
           const nowStr = Date.now().toString();
           const lastEntry = hist[hist.length - 1];
-          if (lastEntry && (Date.now() - Number(lastEntry.timestamp) < 2000) && lastEntry.value === ppmVal) {
+          if (
+            lastEntry &&
+            Date.now() - Number(lastEntry.timestamp) < 2000 &&
+            lastEntry.value === ppmVal
+          ) {
             return registry;
           }
           const newEntry = { timestamp: nowStr, value: ppmVal };
 
-          // Prune data older than 7 days to avoid cache bloating
           const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
           const updated = [...hist, newEntry]
             .filter(item => parseInt(item.timestamp) > sevenDaysAgo)
-            .slice(-5000); // capped safety limit
+            .slice(-5000);
 
           localStorage.setItem(`cs_history_${deviceId}`, JSON.stringify(updated));
           return { ...registry, [deviceId]: updated };
         });
 
-        // If device is online, update inactivity timer, alerts, and DB sync
         if (!isFbOffline) {
           setLastUpdateTime(Date.now());
 
-          // Hysteresis & Danger threshold checks
           if (ppmVal > 1200) {
-            setConsecutiveDangerCount((c) => {
+            setConsecutiveDangerCount(c => {
               const nextCount = c + 1;
               if (nextCount >= 3 && !hasTriggeredDangerRef.current) {
                 setHasTriggeredDanger(true);
@@ -380,18 +431,22 @@ export default function Dashboard() {
             }
           }
 
-          // Sync with MySQL DB so admin dashboard sees it ONLY if values actually changed to prevent duplicate requests
           const targetStatus = ppmVal > 1200 ? 'Warning' : 'Online';
-          if (ppmVal !== lastSyncedPpmRef.current || targetStatus !== lastSyncedStatusRef.current) {
+          if (
+            ppmVal !== lastSyncedPpmRef.current ||
+            targetStatus !== lastSyncedStatusRef.current
+          ) {
             lastSyncedPpmRef.current = ppmVal;
             lastSyncedStatusRef.current = targetStatus;
 
-            api.devices.updateTelemetry({
-              id: deviceId,
-              ppm: ppmVal,
-              status: targetStatus,
-              skipFirebaseSync: true
-            }).catch(err => console.error('Failed to sync telemetry to MySQL:', err));
+            api.devices
+              .updateTelemetry({
+                id: deviceId,
+                ppm: ppmVal,
+                status: targetStatus,
+                skipFirebaseSync: true
+              })
+              .catch(err => console.error('Failed to sync telemetry to MySQL:', err));
           }
         }
       }
@@ -402,24 +457,24 @@ export default function Dashboard() {
     };
   }, [deviceId, accessDenied]);
 
-  // Client-side 5-minute inactivity check (timeout to Offline)
+  // Client-side 5-minute inactivity check
   useEffect(() => {
     if (!deviceId || accessDenied || isDeviceOffline) return;
 
     const interval = setInterval(() => {
       const fiveMinutes = 5 * 60 * 1000;
       if (Date.now() - lastUpdateTime > fiveMinutes) {
-        // Timeout exceeded! Go offline
         setIsDeviceOffline(true);
 
-        // Sync the offline status to the MySQL backend with last known carbon level
-        api.devices.updateTelemetry({
-          id: deviceId,
-          ppm: carbonLevel !== null ? carbonLevel : 0,
-          status: 'Offline'
-        }).catch(err => console.error('Failed to sync offline status to MySQL:', err));
+        api.devices
+          .updateTelemetry({
+            id: deviceId,
+            ppm: carbonLevel !== null ? carbonLevel : 0,
+            status: 'Offline'
+          })
+          .catch(err => console.error('Failed to sync offline status to MySQL:', err));
       }
-    }, 10000); // Check every 10 seconds
+    }, 10000);
 
     return () => clearInterval(interval);
   }, [deviceId, accessDenied, isDeviceOffline, lastUpdateTime, carbonLevel]);
@@ -434,27 +489,22 @@ export default function Dashboard() {
     }
   }, [isDeviceOffline, hasShownOfflinePopup]);
 
-  // Handling Purchase
   const handlePurchase = () => {
     localStorage.setItem('cs_purchase_status', 'pending');
     setPurchaseStatus('pending');
   };
 
-  // Dynamic AI Advice text generator for the header indicator
-  const aiAdvice = useMemo(() => {
+  useMemo(() => {
     return generateSimpleAdvice(aiPersonality, carbonLevel, isDeviceOffline);
   }, [carbonLevel, aiPersonality, isDeviceOffline]);
 
-  // AI LLM generator for Chat messages
   const handleAskAI = (questionText: string) => {
     if (!questionText.trim() || isTyping) return;
 
-    // Add User Message
     const updatedMessages = [...chatMessages, { sender: 'user', text: questionText }];
     setChatMessages(updatedMessages);
     setIsTyping(true);
 
-    // Simulated LLM delay
     setTimeout(async () => {
       const currentPpm = carbonLevelRef.current;
       try {
@@ -468,7 +518,10 @@ export default function Dashboard() {
         setChatMessages(prev => [...prev, { sender: 'ai', text: aiResponse }]);
       } catch (err) {
         console.error(err);
-        setChatMessages(prev => [...prev, { sender: 'ai', text: "Gagal memproses respons asisten AI." }]);
+        setChatMessages(prev => [
+          ...prev,
+          { sender: 'ai', text: 'Gagal memproses respons asisten AI.' }
+        ]);
       }
       setIsTyping(false);
     }, 800);
@@ -481,16 +534,15 @@ export default function Dashboard() {
     if (filterOption === 'custom' && customStart && customEnd) {
       const startMs = new Date(customStart).getTime();
       const endMs = new Date(customEnd).getTime();
-      return (endMs - startMs) >= 60 * 60 * 1000;
+      return endMs - startMs >= 60 * 60 * 1000;
     }
     return false;
   }, [filterOption, customStart, customEnd]);
 
-  // Aggregation Logic based on dynamic Time Buckets
   const processedChartData = useMemo(() => {
     let filtered = [...localHistory];
 
-    let startTime = Date.now() - 30 * 60 * 1000; // default 30 mins
+    let startTime = Date.now() - 30 * 60 * 1000;
     let endTime = Date.now();
 
     if (filterOption === '15') {
@@ -503,8 +555,24 @@ export default function Dashboard() {
       startTime = Date.now() - 180 * 60 * 1000;
     } else if (filterOption === 'today') {
       const dateParts = selectedDate.split('-');
-      const dStart = new Date(Number(dateParts[0]), Number(dateParts[1]) - 1, Number(dateParts[2]), 0, 0, 0, 0);
-      const dEnd = new Date(Number(dateParts[0]), Number(dateParts[1]) - 1, Number(dateParts[2]), 23, 59, 59, 999);
+      const dStart = new Date(
+        Number(dateParts[0]),
+        Number(dateParts[1]) - 1,
+        Number(dateParts[2]),
+        0,
+        0,
+        0,
+        0
+      );
+      const dEnd = new Date(
+        Number(dateParts[0]),
+        Number(dateParts[1]) - 1,
+        Number(dateParts[2]),
+        23,
+        59,
+        59,
+        999
+      );
       startTime = dStart.getTime();
       endTime = dEnd.getTime();
     } else if (filterOption === 'custom') {
@@ -522,12 +590,15 @@ export default function Dashboard() {
           return {
             timestamp: item.timestamp,
             value: item.value,
-            timeFormatted: d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+            timeFormatted: d.toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit'
+            })
           };
         });
     }
 
-    // Filter points in selected range
     filtered = filtered.filter(item => {
       const ts = parseInt(item.timestamp);
       return ts >= startTime && ts <= endTime;
@@ -555,11 +626,17 @@ export default function Dashboard() {
         const minutes = d.getMinutes().toString().padStart(2, '0');
         timeFormatted = `${hours}:${minutes}`;
       } else {
-        timeFormatted = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        timeFormatted = d.toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
       }
 
       if (pointsInSlot.length > 0) {
-        const avg = Math.round(pointsInSlot.reduce((sum, item) => sum + item.value, 0) / pointsInSlot.length);
+        const avg = Math.round(
+          pointsInSlot.reduce((sum, item) => sum + item.value, 0) / pointsInSlot.length
+        );
         aggregated.push({
           timestamp: slotMid.toString(),
           value: avg,
@@ -575,7 +652,15 @@ export default function Dashboard() {
     }
 
     return aggregated;
-  }, [localHistory, filterOption, dataPointsLimit, isGreaterOrEqual60Min, customStart, customEnd, selectedDate]);
+  }, [
+    localHistory,
+    filterOption,
+    dataPointsLimit,
+    isGreaterOrEqual60Min,
+    customStart,
+    customEnd,
+    selectedDate
+  ]);
 
   const displayedHistory = useMemo(() => {
     let filtered = [...localHistory];
@@ -592,8 +677,24 @@ export default function Dashboard() {
       startTime = Date.now() - 180 * 60 * 1000;
     } else if (filterOption === 'today') {
       const dateParts = selectedDate.split('-');
-      const dStart = new Date(Number(dateParts[0]), Number(dateParts[1]) - 1, Number(dateParts[2]), 0, 0, 0, 0);
-      const dEnd = new Date(Number(dateParts[0]), Number(dateParts[1]) - 1, Number(dateParts[2]), 23, 59, 59, 999);
+      const dStart = new Date(
+        Number(dateParts[0]),
+        Number(dateParts[1]) - 1,
+        Number(dateParts[2]),
+        0,
+        0,
+        0,
+        0
+      );
+      const dEnd = new Date(
+        Number(dateParts[0]),
+        Number(dateParts[1]) - 1,
+        Number(dateParts[2]),
+        23,
+        59,
+        59,
+        999
+      );
       startTime = dStart.getTime();
       endTime = dEnd.getTime();
     } else if (filterOption === 'custom') {
@@ -602,7 +703,7 @@ export default function Dashboard() {
         endTime = new Date(customEnd).getTime();
       }
     } else if (filterOption === 'live') {
-      startTime = Date.now() - 5 * 60 * 1000; // default last 5 mins for live
+      startTime = Date.now() - 5 * 60 * 1000;
     }
 
     filtered = filtered.filter(item => {
@@ -623,13 +724,26 @@ export default function Dashboard() {
   }, [processedChartData, filterOption]);
 
   const isAlert = carbonLevel !== null && carbonLevel > 1200;
+  const isWarning = carbonLevel !== null && carbonLevel >= 700 && carbonLevel <= 1200;
+
+  // WhatsApp Emergency Message Helper
+  const sendWhatsAppEmergency = (contact?: EmergencyContact) => {
+    const target = contact || emergencyContacts[0] || { name: 'Kontak Darurat', phone: '+6281234567890' };
+    const cleanPhone = (target.phone || '').replace(/[^0-9]/g, '');
+    const roomName = aiPersonality?.lokasi || 'Ruangan Utama';
+    const currentPpm = carbonLevel !== null ? carbonLevel : 1200;
+    const message = encodeURIComponent(
+      `[PERINGATAN DARURAT CARBONSENSE]\nHalo ${target.name}, terdeteksi indikasi KEBOCORAN GAS / UDARA BERBAHAYA di *${roomName}* (Alat: ${deviceId}) dengan kadar *${currentPpm} PPM* pada pukul ${new Date().toLocaleTimeString('id-ID')}.\n\nMohon segera bantu periksa kondisi ruangan, buka ventilasi, dan matikan sumber gas!`
+    );
+    window.open(`https://wa.me/${cleanPhone || '6281234567890'}?text=${message}`, '_blank', 'noopener,noreferrer');
+  };
 
   // Export functions
   const exportToExcel = () => {
     const data = displayedHistory.map(item => ({
       Waktu: new Date(parseInt(item.timestamp)).toLocaleString(),
       'Kadar CO (ppm)': item.value,
-      Status: item.value < 700 ? 'Aman' : item.value < 1200 ? 'Waspada' : 'Bahaya'
+      Status: item.value < 700 ? 'Aman' : item.value <= 1200 ? 'Waspada' : 'Bahaya'
     }));
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
@@ -640,35 +754,38 @@ export default function Dashboard() {
   const exportToPDF = () => {
     const doc = new jsPDF();
     doc.setFontSize(18);
-    // Use orange/amber (RGB: 245, 158, 11) for title header
-    doc.setTextColor(245, 158, 11);
-    doc.text('Laporan Monitoring CarbonSense', 14, 20);
+    doc.setTextColor(2, 132, 199); // Ocean Blue #0284C7
+    doc.text('Laporan Pemantauan CarbonSense', 14, 20);
 
     doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text(`User: ${userProfile?.username || 'Guest'}`, 14, 30);
-    doc.text(`Device ID: ${deviceId}`, 14, 35);
-    doc.text(`Tanggal Cetak: ${new Date().toLocaleString()}`, 14, 40);
+    doc.setTextColor(71, 85, 105);
+    doc.text(`Pengguna: ${userProfile?.username || 'Pelanggan'}`, 14, 30);
+    doc.text(`Kode Alat: ${deviceId}`, 14, 35);
+    doc.text(`Tanggal Cetak: ${new Date().toLocaleString('id-ID')}`, 14, 40);
 
-    const tableData = displayedHistory.map((item) => [
-      new Date(parseInt(item.timestamp)).toLocaleString(),
+    const tableData = displayedHistory.map(item => [
+      new Date(parseInt(item.timestamp)).toLocaleString('id-ID'),
       `${item.value} ppm`,
-      item.value < 700 ? 'Aman (Normal)' : item.value < 1200 ? 'Waspada (Meningkat)' : 'Bahaya (Gas Leak Detected!)'
+      item.value < 700
+        ? 'Aman (Normal)'
+        : item.value <= 1200
+        ? 'Waspada (Perlu Ventilasi)'
+        : 'Bahaya (Indikasi Gas Bocor!)'
     ]);
 
     autoTable(doc, {
       startY: 50,
-      head: [['Waktu Kontrol', 'Kadar PPM', 'Analisis Status']],
+      head: [['Waktu Pencatatan', 'Kadar PPM', 'Status Keamanan']],
       body: tableData,
       theme: 'grid',
-      headStyles: { fillColor: [245, 158, 11], textColor: 255 },
+      headStyles: { fillColor: [2, 132, 199], textColor: 255 },
       styles: { fontSize: 9 },
       didDrawCell: (data: any) => {
         if (data.section === 'body' && data.column.index === 2) {
           const txt = data.cell.text[0];
           if (txt.includes('Bahaya')) doc.setTextColor(220, 38, 38);
-          else if (txt.includes('Waspada')) doc.setTextColor(217, 119, 6);
-          else doc.setTextColor(5, 150, 105);
+          else if (txt.includes('Waspada')) doc.setTextColor(234, 88, 12);
+          else doc.setTextColor(22, 163, 74);
         }
       }
     });
@@ -676,187 +793,195 @@ export default function Dashboard() {
     doc.save(`Report_CarbonSense_${deviceId}.pdf`);
   };
 
-  return (
-    <div className="min-h-screen text-[var(--cs-text)] font-sans overflow-x-hidden" style={{ background: 'var(--cs-bg)' }}>
-      {/* Background Ambience */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        {accessDenied ? (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-red-600 blur-[150px] rounded-full opacity-10" />
-        ) : deviceId ? (
-          <>
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] transition-colors duration-1000 blur-[120px] rounded-full opacity-20" style={{ background: isAlert ? 'var(--cs-danger)' : 'var(--cs-amber-glow)' }} />
-            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] transition-colors duration-1000 blur-[100px] rounded-full opacity-10" style={{ background: isAlert ? 'var(--cs-danger)' : 'var(--cs-amber-glow)' }} />
-          </>
-        ) : (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] blur-[150px] rounded-full opacity-5" style={{ background: 'var(--cs-amber-glow)' }} />
-        )}
-      </div>
+  const roomName = aiPersonality?.lokasi || 'Ruangan Utama';
 
-      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b" style={{ background: 'color-mix(in oklab, var(--cs-bg) 80%, transparent)', borderColor: 'var(--cs-border)' }}>
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link to="/select-device" className="p-2 hover:bg-zinc-800 rounded-lg transition-colors text-[var(--cs-text-dim)] group" title="Kembalilah ke Pilih Perangkat">
+  return (
+    <div className="min-h-screen bg-[#F0F9FF] text-[#0F172A] font-sans overflow-x-hidden flex flex-col justify-between">
+      {/* Top Navbar */}
+      <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
+          {/* Left: Back & Brand + Device Switcher */}
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Link
+              to="/select-device"
+              className="p-2 hover:bg-slate-100 rounded-xl transition-colors text-[#475569] hover:text-[#0284C7] group shrink-0"
+              title="Kembali ke Pilih Alat"
+            >
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
             </Link>
-            <span className="relative flex h-9 w-9 items-center justify-center rounded-lg" style={{
-              background: 'linear-gradient(140deg, var(--cs-amber), var(--cs-danger))',
-              boxShadow: '0 0 18px -4px var(--cs-amber-glow)'
-            }} aria-hidden="true">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <circle cx="6" cy="12" r="2.6" fill="#0c0a08" />
-                <circle cx="18" cy="12" r="2.6" fill="#0c0a08" />
-                <circle cx="12" cy="12" r="3.4" fill="#0c0a08" />
-                <line x1="8.4" y1="11" x2="9.2" y2="11" stroke="#0c0a08" strokeWidth="1" />
-                <line x1="8.4" y1="13" x2="9.2" y2="13" stroke="#0c0a08" strokeWidth="1" />
-                <line x1="14.8" y1="11" x2="15.6" y2="11" stroke="#0c0a08" strokeWidth="1" />
-                <line x1="14.8" y1="13" x2="15.6" y2="13" stroke="#0c0a08" strokeWidth="1" />
-              </svg>
-            </span>
-            <span className="flex flex-col leading-none text-left">
-              <span className="text-[19px] font-semibold tracking-wide text-[var(--cs-text)]" style={{
-                fontFamily: 'var(--font-display)',
-                letterSpacing: '0.04em'
-              }}>
+            <Link to="/" className="flex items-center gap-2 shrink-0">
+              <span
+                className="flex h-9 w-9 items-center justify-center rounded-xl shadow-md"
+                style={{ background: 'linear-gradient(135deg, #0284C7, #0369A1)' }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <circle cx="6" cy="12" r="2.5" fill="#FFFFFF" />
+                  <circle cx="18" cy="12" r="2.5" fill="#FFFFFF" />
+                  <circle cx="12" cy="12" r="3.2" fill="#FFFFFF" />
+                </svg>
+              </span>
+              <span className="font-black text-base tracking-tight hidden sm:block text-[#0F172A]">
                 CARBONSENSE
               </span>
-              <span className="text-[9px] uppercase tracking-[0.28em] text-[var(--cs-amber)] font-mono">
-                air integrity system
-              </span>
-            </span>
+            </Link>
+
+            {/* Quick Device Dropdown */}
+            {!accessDenied && activeDeviceIds.length > 0 && (
+              <select
+                value={deviceId}
+                onChange={(e) => setDeviceId(e.target.value)}
+                aria-label="Pilih Perangkat"
+                className="ml-1 bg-[#F9FAFB] border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-[#0F172A] focus:outline-none focus:border-[#0284C7] max-w-[160px] sm:max-w-[220px] truncate cursor-pointer"
+              >
+                {activeDeviceIds.map(id => (
+                  <option key={id} value={id}>
+                    {id} ({roomName})
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
-          <div className="flex items-center gap-3">
+
+          {/* Right: Mode Toggle, Diagnostics Pill, Links, Mobile Menu Button */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Simple Mode Toggle Button */}
+            {deviceId && !accessDenied && (
+              <button
+                type="button"
+                onClick={toggleSimpleMode}
+                className={`text-xs px-3 py-1.5 rounded-xl border transition-all flex items-center gap-1.5 font-bold cursor-pointer ${
+                  isSimpleMode
+                    ? 'border-[#0284C7] bg-[#E0F2FE] text-[#0284C7]'
+                    : 'border-slate-300 bg-white text-[#475569] hover:border-[#0284C7] hover:text-[#0284C7]'
+                }`}
+                title="Ganti Mode Tampilan (Sederhana / Detail Teknis)"
+              >
+                <span>{isSimpleMode ? 'Mode Sederhana' : 'Mode Detail'}</span>
+              </button>
+            )}
+
+            {/* Diagnostics Dropdown */}
             {deviceId && !accessDenied && (
               <div ref={diagnosticRef} className="relative">
                 <button
+                  type="button"
                   onClick={() => setIsDiagnosticOpen(!isDiagnosticOpen)}
-                  className={`flex items-center gap-2 px-3.5 py-1.5 border rounded-full text-[10px] font-mono uppercase font-bold tracking-wider transition-all cursor-pointer select-none active:scale-95 shadow-md ${isDeviceOffline
-                      ? 'bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20'
-                      : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-450 hover:bg-emerald-500/20'
-                    }`}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-full text-[11px] font-bold transition-all cursor-pointer select-none ${
+                    isDeviceOffline
+                      ? 'bg-[#FEF2F2] border-[#FECACA] text-[#DC2626]'
+                      : 'bg-[#DCFCE7] border-[#86EFAC] text-[#16A34A]'
+                  }`}
                 >
-                  <span className={`w-2 h-2 rounded-full ${isDeviceOffline ? 'bg-red-500' : 'bg-emerald-500 animate-ping'}`} />
-                  Device: {isDeviceOffline ? 'Offline' : 'Online'}
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      isDeviceOffline ? 'bg-[#DC2626]' : 'bg-[#16A34A] animate-ping'
+                    }`}
+                  />
+                  <span className="hidden md:inline">Alat:</span>
+                  <span>{isDeviceOffline ? 'Terputus' : 'Terhubung'}</span>
                 </button>
 
                 <AnimatePresence>
                   {isDiagnosticOpen && (
                     <motion.div
-                      initial={{ opacity: 0, y: -15, scale: 0.95 }}
+                      initial={{ opacity: 0, y: -10, scale: 0.96 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -15, scale: 0.95 }}
-                      transition={{ duration: 0.2, ease: "easeOut" }}
-                      className="absolute right-0 mt-3 w-80 p-5 rounded-[2rem] border shadow-2xl z-50 overflow-hidden"
-                      style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}
+                      exit={{ opacity: 0, y: -10, scale: 0.96 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute right-0 mt-3 w-80 p-5 rounded-3xl bg-white border border-slate-200 shadow-2xl z-50"
                     >
-                      <div className="flex flex-col gap-4">
-                        <div className="text-[10px] font-mono text-[var(--cs-text-dim)] uppercase tracking-wider">
-                          Status Koneksi Jalur Data
+                      <div className="flex flex-col gap-3">
+                        <div className="text-[11px] font-mono text-[#475569] uppercase tracking-wider font-bold">
+                          Pemeriksaan Jalur Koneksi Alat
                         </div>
 
-                        <div className="flex items-center justify-between px-2 py-4 relative">
-                          {/* Background Connecting Lines */}
-                          <div className="absolute left-8 right-8 top-1/2 -translate-y-1/2 h-0.5 bg-zinc-800 z-0">
-                            {/* Active Line (Green if online) */}
+                        <div className="flex items-center justify-between px-2 py-3 relative">
+                          <div className="absolute left-8 right-8 top-1/2 -translate-y-1/2 h-1 bg-slate-200 z-0 rounded-full">
                             <div
-                              className={`h-full transition-all duration-500 ${isDeviceOffline ? 'w-0' : 'w-full bg-emerald-500'}`}
+                              className={`h-full transition-all duration-500 rounded-full ${
+                                isDeviceOffline ? 'w-0' : 'w-full bg-[#16A34A]'
+                              }`}
                             />
                           </div>
 
-                          {/* Node 1: Device */}
-                          <div className="flex flex-col items-center gap-1.5 z-10">
+                          {/* Node 1: Alat */}
+                          <div className="flex flex-col items-center gap-1 z-10">
                             <div
-                              className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all ${isDeviceOffline
-                                  ? 'border-zinc-800 text-zinc-500'
-                                  : 'border-emerald-500 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
-                                }`}
-                              style={{
-                                backgroundColor: isDeviceOffline
-                                  ? 'var(--cs-surface-2)'
-                                  : 'color-mix(in oklab, var(--cs-surface) 88%, #10b981)'
-                              }}
+                              className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
+                                isDeviceOffline
+                                  ? 'bg-slate-100 border-slate-300 text-slate-400'
+                                  : 'bg-[#DCFCE7] border-[#16A34A] text-[#16A34A]'
+                              }`}
                             >
                               <Cpu className="w-5 h-5" />
                             </div>
-                            <span className="text-[9px] font-bold uppercase tracking-wider">Alat</span>
+                            <span className="text-[10px] font-bold text-[#0F172A]">Alat</span>
                           </div>
 
-                          {/* X indicator on connection 1 if offline */}
                           {isDeviceOffline && (
                             <div className="absolute left-[30%] top-1/2 -translate-y-1/2 z-20">
-                              <div className="w-5 h-5 bg-red-950 border border-red-500 rounded-full flex items-center justify-center shadow-lg animate-bounce">
-                                <X className="w-3 h-3 text-red-500" />
+                              <div className="w-5 h-5 bg-[#DC2626] rounded-full flex items-center justify-center shadow">
+                                <X className="w-3 h-3 text-white" />
                               </div>
                             </div>
                           )}
 
-                          {/* Node 2: Firebase */}
-                          <div className="flex flex-col items-center gap-1.5 z-10">
+                          {/* Node 2: Server */}
+                          <div className="flex flex-col items-center gap-1 z-10">
                             <div
-                              className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all ${isDeviceOffline
-                                  ? 'border-zinc-800 text-zinc-500'
-                                  : 'border-emerald-500 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
-                                }`}
-                              style={{
-                                backgroundColor: isDeviceOffline
-                                  ? 'var(--cs-surface-2)'
-                                  : 'color-mix(in oklab, var(--cs-surface) 88%, #10b981)'
-                              }}
+                              className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
+                                isDeviceOffline
+                                  ? 'bg-slate-100 border-slate-300 text-slate-400'
+                                  : 'bg-[#DCFCE7] border-[#16A34A] text-[#16A34A]'
+                              }`}
                             >
                               <Cloud className="w-5 h-5" />
                             </div>
-                            <span className="text-[9px] font-bold uppercase tracking-wider">Firebase</span>
+                            <span className="text-[10px] font-bold text-[#0F172A]">Server</span>
                           </div>
 
-                          {/* X indicator on connection 2 if offline */}
-                          {isDeviceOffline && (
-                            <div className="absolute right-[30%] top-1/2 -translate-y-1/2 z-20">
-                              <div className="w-5 h-5 bg-red-950 border border-red-500 rounded-full flex items-center justify-center shadow-lg animate-bounce delay-150">
-                                <X className="w-3 h-3 text-red-500" />
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Node 3: Dashboard */}
-                          <div className="flex flex-col items-center gap-1.5 z-10">
+                          {/* Node 3: Layar */}
+                          <div className="flex flex-col items-center gap-1 z-10">
                             <div
-                              className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all ${isDeviceOffline
-                                  ? 'border-zinc-800 text-zinc-500'
-                                  : 'border-emerald-500 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
-                                }`}
-                              style={{
-                                backgroundColor: isDeviceOffline
-                                  ? 'var(--cs-surface-2)'
-                                  : 'color-mix(in oklab, var(--cs-surface) 88%, #10b981)'
-                              }}
+                              className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
+                                isDeviceOffline
+                                  ? 'bg-slate-100 border-slate-300 text-slate-400'
+                                  : 'bg-[#DCFCE7] border-[#16A34A] text-[#16A34A]'
+                              }`}
                             >
                               <Monitor className="w-5 h-5" />
                             </div>
-                            <span className="text-[9px] font-bold uppercase tracking-wider">Monitor</span>
+                            <span className="text-[10px] font-bold text-[#0F172A]">Layar</span>
                           </div>
                         </div>
 
-                        <div className="border-t pt-3 text-xs leading-relaxed" style={{ borderColor: 'var(--cs-border)' }}>
+                        <div className="border-t border-slate-200 pt-3 text-xs leading-relaxed">
                           {isDeviceOffline ? (
-                            <div className="text-red-400 flex flex-col gap-1">
-                              <div className="font-bold flex items-center gap-1">
-                                <XCircle className="w-4 h-4" /> Alat Terputus / Offline
+                            <div className="text-[#DC2626] space-y-1.5">
+                              <div className="font-bold flex items-center gap-1.5">
+                                <XCircle className="w-4 h-4" /> Alat Sedang Mati / Terputus
                               </div>
-                              <p className="text-[11px] text-zinc-400">
-                                Sensor terdeteksi mati atau tidak mengirim data dalam 5 menit terakhir.
+                              <p className="text-[11px] text-[#475569]">
+                                Alat tidak mengirim data dalam 5 menit terakhir. Pastikan kabel daya menyala dan WiFi rumah aktif.
                               </p>
-                              <div className="text-[10px] text-zinc-500 mt-2 font-mono list-decimal pl-4">
-                                <li>Pastikan catu daya ESP32 menyala</li>
-                                <li>Pastikan ESP32 terhubung ke WiFi</li>
-                                <li>Unggah firmware terbaru dari tab Admin</li>
-                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setIsDiagnosticOpen(false);
+                                  setShowReactivationPopup(true);
+                                }}
+                                className="mt-2 w-full py-2 rounded-xl bg-[#FEF2F2] border border-[#FECACA] text-[#DC2626] font-bold text-xs cursor-pointer hover:bg-[#FEE2E2]"
+                              >
+                                Buka Panduan Sambung WiFi
+                              </button>
                             </div>
                           ) : (
-                            <div className="text-emerald-400 flex flex-col gap-1">
-                              <div className="font-bold flex items-center gap-1">
-                                <CheckCircle className="w-4 h-4" /> Koneksi Terjamin & Aman
+                            <div className="text-[#16A34A] space-y-1">
+                              <div className="font-bold flex items-center gap-1.5">
+                                <CheckCircle className="w-4 h-4" /> Koneksi Alat Lancar &amp; Aktif
                               </div>
-                              <p className="text-[11px] text-zinc-400">
-                                Seluruh jalur transmisi data berfungsi dengan baik. Telemetri aktif disinkronkan ke monitor.
+                              <p className="text-[11px] text-[#475569]">
+                                Data kualitas udara dikirim secara langsung dari sensor ke layar Anda.
                               </p>
                             </div>
                           )}
@@ -867,328 +992,536 @@ export default function Dashboard() {
                 </AnimatePresence>
               </div>
             )}
-            <Link to="/profile" className="p-2 hover:bg-zinc-800 rounded-lg transition-colors text-[var(--cs-text-dim)]" title="Profil Pengguna">
-              <User className="w-5 h-5 animate-pulse" style={{ color: 'var(--cs-amber)' }} />
-            </Link>
-            <Link to="/settings" className="p-2 hover:bg-zinc-800 rounded-lg transition-colors text-[var(--cs-text-dim)]" title="Pengaturan">
-              <SettingsIcon className="w-5 h-5" />
-            </Link>
+
+            {/* Desktop Nav Actions */}
+            <div className="hidden lg:flex items-center gap-2">
+              <Link
+                to="/settings"
+                className="text-xs px-3 py-1.5 rounded-xl border border-slate-300 bg-white hover:border-[#0284C7] text-[#475569] hover:text-[#0284C7] transition-all font-semibold flex items-center gap-1.5"
+              >
+                <SettingsIcon className="w-3.5 h-3.5" />
+                Pengaturan Ruangan
+              </Link>
+              <Link
+                to="/profile"
+                className="text-xs px-3 py-1.5 rounded-xl border border-[#0284C7]/30 bg-[#E0F2FE] text-[#0284C7] font-bold flex items-center gap-1.5"
+              >
+                <User className="w-3.5 h-3.5" />
+                <span>{userProfile?.username || 'Profil'}</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => setShowReactivationPopup(true)}
+                className="text-xs px-3 py-1.5 rounded-xl border border-slate-300 bg-white hover:border-[#0284C7] text-[#475569] hover:text-[#0284C7] font-semibold cursor-pointer"
+              >
+                Panduan WiFi
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  localStorage.removeItem('cs_user');
+                  localStorage.removeItem('cs_user_email');
+                  localStorage.removeItem('cs_user_token');
+                  localStorage.removeItem('cs_active_devices');
+                  localStorage.removeItem('cs_ai_personality');
+                  localStorage.removeItem('cs_onboarding_answers');
+                  localStorage.removeItem('cs_purchase_status');
+                  navigate('/login');
+                }}
+                className="p-2 hover:bg-[#FEF2F2] text-[#DC2626] rounded-xl transition-colors cursor-pointer"
+                title="Keluar Sesi"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Mobile Hamburger Button */}
             <button
-              onClick={() => {
-                localStorage.removeItem('cs_user');
-                localStorage.removeItem('cs_user_email');
-                localStorage.removeItem('cs_user_token');
-                localStorage.removeItem('cs_active_devices');
-                localStorage.removeItem('cs_ai_personality');
-                localStorage.removeItem('cs_onboarding_answers');
-                localStorage.removeItem('cs_purchase_status');
-                navigate('/login');
-              }}
-              className="p-2 hover:bg-zinc-800 text-red-400 hover:text-red-300 rounded-lg transition-colors cursor-pointer"
-              title="Keluar Sesi"
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 rounded-xl border border-slate-300 bg-white text-[#0F172A] cursor-pointer"
+              aria-label="Menu Navigasi"
             >
-              <LogOut className="w-5 h-5" />
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
-      </nav>
 
-      <main className="relative pt-24 pb-20 px-6 max-w-6xl mx-auto">
-
-        {/* Device Tabs */}
-        {!accessDenied && activeDeviceIds.length > 1 && (
-          <div className="flex gap-2 mb-8 overflow-x-auto pb-2 custom-scrollbar">
-            {activeDeviceIds.map(id => (
-              <button
-                key={id}
-                onClick={() => setDeviceId(id)}
-                className="px-6 py-3 rounded-full font-bold transition-all whitespace-nowrap text-sm border cursor-pointer"
-                style={{
-                  background: deviceId === id ? 'var(--cs-amber)' : 'var(--cs-surface)',
-                  color: deviceId === id ? '#0c0a08' : 'var(--cs-text-dim)',
-                  borderColor: deviceId === id ? 'var(--cs-amber)' : 'var(--cs-border)',
-                  boxShadow: deviceId === id ? '0 8px 24px -8px var(--cs-amber-glow)' : 'none'
-                }}
-              >
-                {id}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {accessDenied ? (
-          <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+        {/* Mobile Dropdown Menu */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="max-w-md w-full p-10 border rounded-[2rem] shadow-2xl relative overflow-hidden"
-              style={{ background: 'color-mix(in oklab, var(--cs-danger) 5%, var(--cs-surface))', borderColor: 'color-mix(in oklab, var(--cs-danger) 30%, var(--cs-border))' }}
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="lg:hidden border-t border-slate-200 bg-white px-4 py-3 space-y-2"
             >
-              <div className="flex flex-col items-center">
-                <div className="w-20 h-20 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center mb-6">
-                  <ShieldAlert className="w-10 h-10 text-red-500" />
-                </div>
-                <h2 className="text-2xl font-bold mb-3 tracking-normal text-red-500" style={{ fontFamily: 'var(--font-display)' }}>Akses Ditolak</h2>
-                <p className="text-red-200/70 text-sm leading-relaxed mb-8">
-                  Perangkat ini tidak terdaftar pada akun Anda. Sistem keamanan memblokir akses ke ID Perangkat yang tidak sesuai dengan otorisasi Anda.
-                </p>
-                <button
-                  onClick={() => setSearchParams({})}
-                  className="w-full py-4 px-6 bg-red-600 hover:bg-red-500 text-white font-bold flex items-center justify-center gap-3 rounded-xl transition-all active:scale-95 shadow-xl shadow-red-900/20 cursor-pointer"
+              <div className="grid grid-cols-2 gap-2">
+                <Link
+                  to="/settings"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-xs px-3 py-2.5 rounded-xl border border-slate-200 bg-[#F9FAFB] text-[#0F172A] font-semibold text-center"
                 >
-                  Kembali ke Dashboard Anda
+                  Pengaturan Ruangan
+                </Link>
+                <Link
+                  to="/profile"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-xs px-3 py-2.5 rounded-xl border border-[#0284C7]/30 bg-[#E0F2FE] text-[#0284C7] font-bold text-center"
+                >
+                  Profil ({userProfile?.username || 'Akun'})
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setShowReactivationPopup(true);
+                  }}
+                  className="text-xs px-3 py-2.5 rounded-xl border border-slate-200 bg-[#F9FAFB] text-[#0F172A] font-semibold text-center cursor-pointer"
+                >
+                  Panduan WiFi Alat
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    localStorage.removeItem('cs_user');
+                    localStorage.removeItem('cs_user_email');
+                    localStorage.removeItem('cs_user_token');
+                    localStorage.removeItem('cs_active_devices');
+                    localStorage.removeItem('cs_ai_personality');
+                    localStorage.removeItem('cs_onboarding_answers');
+                    localStorage.removeItem('cs_purchase_status');
+                    navigate('/login');
+                  }}
+                  className="text-xs px-3 py-2.5 rounded-xl border border-[#FECACA] bg-[#FEF2F2] text-[#DC2626] font-bold text-center cursor-pointer"
+                >
+                  Keluar Akun
                 </button>
               </div>
             </motion.div>
+          )}
+        </AnimatePresence>
+      </nav>
+
+      {/* Main Content */}
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        {accessDenied ? (
+          <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+            <div className="max-w-md w-full p-8 bg-white border-2 border-[#DC2626] rounded-3xl shadow-xl">
+              <div className="w-16 h-16 bg-[#FEE2E2] rounded-2xl flex items-center justify-center mx-auto mb-4 text-[#DC2626]">
+                <ShieldAlert className="w-8 h-8" />
+              </div>
+              <h2 className="text-2xl font-extrabold text-[#DC2626] mb-2">Akses Alat Ditolak</h2>
+              <p className="text-[#475569] text-xs leading-relaxed mb-6">
+                Perangkat ini belum ditautkan ke akun Anda. Silakan pilih perangkat yang terdaftar pada akun Anda.
+              </p>
+              <button
+                onClick={() => setSearchParams({})}
+                className="w-full py-3.5 px-6 bg-[#0284C7] hover:bg-[#0369A1] text-white font-extrabold text-xs rounded-xl transition-all cursor-pointer"
+              >
+                Kembali ke Perangkat Saya
+              </button>
+            </div>
           </div>
         ) : !deviceId ? (
           <div className="flex flex-col items-center justify-center min-h-[60vh] text-center w-full">
-            <header className="mb-8">
-              <h1 className="text-4xl sm:text-5xl uppercase font-semibold tracking-tight mb-2 leading-none" style={{ fontFamily: 'var(--font-display)' }}>Halo, {userProfile?.username || 'Pahlawan Udara'}!</h1>
-              <p className="text-zinc-500 text-sm">Harap siapkan dan hubungkan perangkat CarbonSense Anda.</p>
+            <header className="mb-6">
+              <h1 className="text-3xl font-extrabold text-[#0F172A] mb-1">
+                Halo, {userProfile?.username || 'Pelanggan'}!
+              </h1>
+              <p className="text-[#475569] text-xs">
+                Ikuti panduan singkat berikut untuk menyalakan alat CarbonSense Anda.
+              </p>
             </header>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="max-w-md w-full p-8 border rounded-[2rem] shadow-2xl relative overflow-hidden"
-              style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}
-            >
-              <div className="w-full text-left">
-                <h3 className="text-xs font-mono text-[var(--cs-amber)] uppercase tracking-[0.25em] mb-4">Panduan Menyalakan Alat</h3>
+            <div className="max-w-md w-full p-8 bg-white border border-slate-200 rounded-3xl shadow-xl text-left">
+              <h3 className="text-xs font-mono text-[#0284C7] uppercase tracking-widest font-bold mb-4">
+                Panduan Menyalakan Alat
+              </h3>
 
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={activationStep}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.35 }}
-                    className="space-y-4 min-h-[160px] flex flex-col justify-between"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 rounded-2xl border bg-black/40" style={{ borderColor: 'var(--cs-border)' }}>
-                        {activationSteps[activationStep].icon}
-                      </div>
-                      <h3 className="text-sm font-bold text-white uppercase font-sans tracking-tight">
-                        {activationSteps[activationStep].title}
-                      </h3>
-                    </div>
-                    <p className="text-xs text-[var(--cs-text-dim)] leading-relaxed">
-                      {activationSteps[activationStep].desc}
-                    </p>
-                  </motion.div>
-                </AnimatePresence>
-
-                <div className="flex items-center justify-between mt-6 pt-4 border-t border-zinc-800/60">
-                  <button
-                    onClick={() => setActivationStep(prev => Math.max(0, prev - 1))}
-                    disabled={activationStep === 0}
-                    className="px-4 py-1.5 border border-zinc-800 rounded-lg text-xs font-bold text-zinc-500 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors"
-                  >
-                    Sebelumnya
-                  </button>
-                  <span className="text-[10px] font-mono text-zinc-500">
-                    Langkah {activationStep + 1} dari {activationSteps.length}
-                  </span>
-                  {activationStep < activationSteps.length - 1 ? (
-                    <button
-                      onClick={() => setActivationStep(prev => prev + 1)}
-                      className="px-4 py-1.5 bg-[var(--cs-amber)] hover:brightness-110 text-black font-bold rounded-lg text-xs transition-all active:scale-95"
-                    >
-                      Lanjut
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => setActivationStep(0)}
-                      className="px-4 py-1.5 border border-[var(--cs-amber)] text-[var(--cs-amber)] hover:bg-[var(--cs-amber)] hover:text-black font-bold rounded-lg text-xs transition-all active:scale-95"
-                    >
-                      Ulangi
-                    </button>
-                  )}
+              <div className="space-y-4 min-h-[140px] flex flex-col justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD]">
+                    {activationSteps[activationStep].icon}
+                  </div>
+                  <h4 className="text-sm font-extrabold text-[#0F172A]">
+                    {activationSteps[activationStep].title}
+                  </h4>
                 </div>
+                <p className="text-xs text-[#475569] leading-relaxed">
+                  {activationSteps[activationStep].desc}
+                </p>
               </div>
 
-              <div className="border-t border-zinc-850 mt-6 pt-6 text-center">
-                <p className="text-xs text-zinc-500 mb-4">Belum memiliki alat fisik CarbonSense?</p>
+              <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-200">
+                <button
+                  onClick={() => setActivationStep(prev => Math.max(0, prev - 1))}
+                  disabled={activationStep === 0}
+                  className="px-4 py-2 border border-slate-300 rounded-xl text-xs font-bold text-[#475569] disabled:opacity-40 cursor-pointer"
+                >
+                  Sebelumnya
+                </button>
+                <span className="text-[11px] font-mono text-[#475569]">
+                  Langkah {activationStep + 1} / {activationSteps.length}
+                </span>
+                {activationStep < activationSteps.length - 1 ? (
+                  <button
+                    onClick={() => setActivationStep(prev => prev + 1)}
+                    className="px-4 py-2 bg-[#0284C7] text-white font-bold rounded-xl text-xs cursor-pointer"
+                  >
+                    Lanjut
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setActivationStep(0)}
+                    className="px-4 py-2 border border-[#0284C7] text-[#0284C7] font-bold rounded-xl text-xs cursor-pointer"
+                  >
+                    Ulangi
+                  </button>
+                )}
+              </div>
+
+              <div className="border-t border-slate-200 mt-6 pt-5 text-center">
+                <p className="text-xs text-[#475569] mb-3">Belum memiliki alat fisik CarbonSense?</p>
                 <button
                   onClick={handlePurchase}
-                  className="w-full py-3 px-6 text-black font-bold flex items-center justify-center gap-3 rounded-xl transition-all active:scale-95 shadow-xl cursor-pointer hover:brightness-110"
-                  style={{ background: 'var(--cs-amber)', boxShadow: '0 8px 24px -8px var(--cs-amber-glow)' }}
+                  className="w-full py-3 px-6 bg-[#0284C7] hover:bg-[#0369A1] text-white font-extrabold text-xs flex items-center justify-center gap-2 rounded-xl transition-all cursor-pointer"
                 >
-                  <ShoppingCart className="w-5 h-5" />
-                  Beli Perangkat Sekarang
+                  <ShoppingCart className="w-4 h-4" />
+                  Pesan Perangkat Sekarang
                 </button>
               </div>
-            </motion.div>
+            </div>
+          </div>
+        ) : isSimpleMode ? (
+          /* ============================================================================
+             SIMPLE MODE VIEW (CLEAN & FOCUSED — ONLY THIS SECTION + NAVBAR)
+             ============================================================================ */
+          <div className="max-w-2xl mx-auto my-2">
+            {/* Big Status Card */}
+            <div
+              className={`rounded-3xl p-8 sm:p-10 text-center border-2 transition-all duration-300 shadow-lg mb-5 ${
+                isDeviceOffline
+                  ? 'bg-[#FEF2F2] border-[#FECACA]'
+                  : isAlert
+                  ? 'bg-[#FEF2F2] border-[#DC2626]'
+                  : isWarning
+                  ? 'bg-[#FFF7ED] border-[#FDBA74]'
+                  : 'bg-[#F0FDF4] border-[#86EFAC]'
+              }`}
+            >
+              {/* Status Icon */}
+              <div
+                className={`w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-5 border-2 ${
+                  isDeviceOffline
+                    ? 'bg-[#FEE2E2] border-[#DC2626]/30 text-[#DC2626]'
+                    : isAlert
+                    ? 'bg-[#FEE2E2] border-[#DC2626] text-[#DC2626] animate-bounce'
+                    : isWarning
+                    ? 'bg-[#FFEDD5] border-[#EA580C]/40 text-[#EA580C]'
+                    : 'bg-[#DCFCE7] border-[#16A34A]/30 text-[#16A34A]'
+                }`}
+              >
+                {isDeviceOffline ? (
+                  <Wifi className="w-12 h-12" />
+                ) : isAlert || isWarning ? (
+                  <AlertTriangle className="w-12 h-12" />
+                ) : (
+                  <Check className="w-12 h-12 stroke-[3]" />
+                )}
+              </div>
+
+              {/* Giant Status Label */}
+              <h2
+                className={`text-4xl sm:text-5xl font-black tracking-tight mb-3 ${
+                  isDeviceOffline || isAlert
+                    ? 'text-[#DC2626]'
+                    : isWarning
+                    ? 'text-[#EA580C]'
+                    : 'text-[#16A34A]'
+                }`}
+              >
+                {isDeviceOffline
+                  ? 'ALAT MATI'
+                  : isAlert
+                  ? 'BAHAYA!'
+                  : isWarning
+                  ? 'WASPADA'
+                  : 'AMAN'}
+              </h2>
+
+              {/* Plain Layman Explanation */}
+              <p className="text-base sm:text-lg text-[#0F172A] font-semibold max-w-md mx-auto leading-relaxed">
+                {isDeviceOffline
+                  ? 'Alat pemantau sedang mati atau terputus dari WiFi rumah. Pastikan kabel listrik alat menyala.'
+                  : isAlert
+                  ? 'TERDETEKSI KEBOCORAN GAS! Segera buka pintu dan jendela, matikan kompor, dan keluar ruangan!'
+                  : isWarning
+                  ? 'Udara mulai kurang bersih. Sebaiknya segera buka jendela atau pintu agar udara segar masuk.'
+                  : 'Udara di ruangan ini bersih dan tidak berbahaya. Anda dan keluarga aman.'}
+              </p>
+
+              {/* Room / Device Pill */}
+              <div className="mt-5 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-slate-200 text-xs text-[#475569] font-semibold shadow-sm">
+                <span>Alat di:</span>
+                <strong className="text-[#0F172A]">{roomName}</strong>
+                <span className="font-mono text-[11px] text-[#0284C7]">({deviceId})</span>
+              </div>
+
+              {/* Action Button if Offline or Danger */}
+              {isDeviceOffline && (
+                <div className="mt-5">
+                  <button
+                    type="button"
+                    onClick={() => setShowReactivationPopup(true)}
+                    className="px-6 py-3 rounded-2xl bg-[#DC2626] hover:bg-red-700 text-white font-extrabold text-xs shadow-md cursor-pointer"
+                  >
+                    Lihat Cara Menyambungkan Alat
+                  </button>
+                </div>
+              )}
+
+              {isAlert && !isDeviceOffline && (
+                <div className="mt-5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsDangerPopupOpen(true);
+                      if (!dangerPopupRecommendation) {
+                        loadDangerRecommendation(carbonLevel || 1200);
+                      }
+                    }}
+                    className="px-6 py-3 rounded-2xl bg-[#DC2626] hover:bg-red-700 text-white font-extrabold text-xs shadow-md cursor-pointer animate-pulse"
+                  >
+                    Buka Langkah Penyelamatan Darurat
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 2 Action Cards: Tips & WhatsApp Help */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              {/* Safety Tips Card */}
+              <div
+                className={`p-5 rounded-2xl border flex flex-col justify-between ${
+                  isAlert
+                    ? 'bg-[#FEF2F2] border-[#FECACA]'
+                    : isWarning
+                    ? 'bg-[#FFF7ED] border-[#FED7AA]'
+                    : 'bg-[#F0FDF4] border-[#BBF7D0]'
+                }`}
+              >
+                <div>
+                  <p
+                    className={`text-sm font-extrabold mb-3 flex items-center gap-2 ${
+                      isAlert
+                        ? 'text-[#DC2626]'
+                        : isWarning
+                        ? 'text-[#EA580C]'
+                        : 'text-[#16A34A]'
+                    }`}
+                  >
+                    <CheckCircle className="w-4 h-4 shrink-0" />
+                    <span>
+                      {isAlert
+                        ? 'TINDAKAN DARURAT SEKARANG:'
+                        : isWarning
+                        ? 'Langkah Pencegahan Sekarang:'
+                        : 'Tips Keselamatan Hari Ini:'}
+                    </span>
+                  </p>
+                  <ul className="text-xs sm:text-sm text-[#0F172A] space-y-2 leading-relaxed font-medium">
+                    {isAlert ? (
+                      <>
+                        <li>• <strong>Buka semua pintu &amp; jendela</strong> lebar-lebar</li>
+                        <li>• <strong>Matikan kompor</strong> &amp; jangan nyalakan saklar listrik</li>
+                        <li>• <strong>Segera keluar ruangan</strong> ke tempat terbuka</li>
+                      </>
+                    ) : isWarning ? (
+                      <>
+                        <li>• Buka jendela dan pintu ruangan sekarang</li>
+                        <li>• Nyalakan kipas angin atau penghisap asap dapur</li>
+                        <li>• Periksa apakah kompor gas masih menyala</li>
+                      </>
+                    ) : (
+                      <>
+                        <li>• Buka jendela setiap pagi minimal 15 menit</li>
+                        <li>• Pastikan lubang udara tidak terhalang barang</li>
+                        <li>• Periksa selang &amp; regulator tabung gas secara rutin</li>
+                      </>
+                    )}
+                  </ul>
+                </div>
+              </div>
+
+              {/* WhatsApp Quick Emergency Card */}
+              <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between">
+                <div>
+                  <p className="text-sm font-extrabold text-[#0F172A] mb-1">Butuh Bantuan Cepat?</p>
+                  <p className="text-xs text-[#475569] mb-4 leading-relaxed">
+                    Kirim pesan peringatan otomatis ke nomor WhatsApp keluarga yang sudah terdaftar (
+                    <strong className="text-[#0F172A]">{emergencyContacts[0]?.name || 'Kontak Utama'}</strong>).
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => sendWhatsAppEmergency(emergencyContacts[0])}
+                  className="w-full py-4 rounded-xl bg-[#16A34A] hover:bg-green-700 text-white font-extrabold text-sm transition-all flex items-center justify-center gap-2 shadow-md shadow-[#16A34A]/20 cursor-pointer active:scale-95"
+                >
+                  <Phone className="w-4 h-4" />
+                  <span>Kirim Pesan Darurat WhatsApp</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Footer Info & Switch to Technical Mode */}
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#475569] px-2 pt-2">
+              <span>
+                Terakhir diperbarui: {new Date(lastUpdateTime).toLocaleTimeString('id-ID')}
+              </span>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsDangerPopupOpen(true);
+                    if (!dangerPopupRecommendation) {
+                      loadDangerRecommendation(carbonLevel || 1200);
+                    }
+                  }}
+                  className="text-[#DC2626] font-bold hover:underline cursor-pointer"
+                >
+                  Uji Tampilan Peringatan Bahaya
+                </button>
+                <span>•</span>
+                <button
+                  type="button"
+                  onClick={toggleSimpleMode}
+                  className="text-[#0284C7] font-bold hover:underline cursor-pointer"
+                >
+                  Beralih ke Mode Detail Teknis -&gt;
+                </button>
+              </div>
+            </div>
           </div>
         ) : (
-          /* State: Full Access (Device Bound) */
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* Main Visual & Stats */}
-            <div className="lg:col-span-12 xl:col-span-7 space-y-8">
-              <header>
-                <h1 className="text-5xl sm:text-6xl lg:text-7xl uppercase font-semibold tracking-tight leading-none" style={{ fontFamily: 'var(--font-display)' }}>Halo, {userProfile?.username || 'Pahlawan Udara'}!</h1>
-                <p className="text-[var(--cs-text-dim)] mt-2">Berikut adalah kondisi udara real-time di area monitor Anda (ID: {deviceId}).</p>
-              </header>
-
-              <motion.div
-                animate={isDeviceOffline ? {
-                  borderColor: ["rgba(220, 38, 38, 0.2)", "rgba(220, 38, 38, 0.4)", "rgba(220, 38, 38, 0.2)"],
-                  backgroundColor: ["rgba(24, 24, 27, 0.4)", "rgba(127, 29, 29, 0.05)", "rgba(24, 24, 27, 0.4)"]
-                } : isAlert ? {
-                  boxShadow: ["0 0 20px rgba(220, 38, 38, 0.1)", "0 0 60px rgba(220, 38, 38, 0.5)", "0 0 20px rgba(220, 38, 38, 0.1)"],
-                  borderColor: ["rgba(220, 38, 38, 0.2)", "rgba(220, 38, 38, 0.8)", "rgba(220, 38, 38, 0.2)"],
-                  backgroundColor: ["rgba(24, 24, 27, 0.4)", "rgba(127, 29, 29, 0.2)", "rgba(24, 24, 27, 0.4)"]
-                } : {}}
-                transition={{ repeat: Infinity, duration: 1.5 }}
-                className="p-10 rounded-[3rem] border relative overflow-hidden flex flex-col items-center justify-center min-h-[350px] shadow-2xl transition-colors duration-500"
-                style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}
-              >
-                <div className="absolute top-8 left-8 flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: isDeviceOffline ? 'var(--cs-danger)' : isAlert ? 'var(--cs-danger)' : 'var(--cs-amber)' }} />
-                  <span className="text-[10px] font-bold text-[var(--cs-text-dim)] uppercase tracking-widest">
-                    {isDeviceOffline ? 'Offline Mode' : 'Active Monitoring'}
-                  </span>
-                </div>
-
-                <div className="text-center relative z-10">
-                  <p className="text-xs font-mono text-[var(--cs-text-dim)] uppercase tracking-[0.3em] mb-6">Carbon Level Intensity</p>
-
-                  <div className="flex items-baseline justify-center">
-                    <motion.h2
-                      key={carbonLevel}
-                      animate={isAlert ? { scale: [1, 1.1, 1], filter: ["brightness(1)", "brightness(1.5)", "brightness(1)"] } : {}}
-                      className="text-[9rem] leading-none font-black tracking-tight"
-                      style={{
-                        fontFamily: 'var(--font-display)',
-                        color: isDeviceOffline ? 'color-mix(in oklab, var(--cs-danger) 50%, var(--cs-text-dim))' : isAlert ? 'var(--cs-danger-text)' : 'var(--cs-text)'
-                      }}
-                    >
-                      {carbonLevel !== null ? carbonLevel : '0'}
-                    </motion.h2>
-                    <span className="text-2xl font-bold text-zinc-700 ml-4">ppm</span>
-                  </div>
-
-                  <div className="mt-8 flex justify-center">
-                    {isDeviceOffline ? (
-                      <div className="flex flex-col items-center gap-3">
-                        <div className="px-6 py-2 bg-red-950/20 border border-red-500/30 text-red-400 rounded-full font-bold flex items-center gap-2 animate-pulse">
-                          <AlertTriangle className="w-5 h-5" />
-                          Status: Alat Terputus / Offline
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setShowReactivationPopup(true)}
-                          className="px-4 py-1.5 bg-red-950/45 border border-red-500/35 text-red-400 hover:bg-red-900/20 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 shadow-md animate-bounce mt-1"
-                        >
-                          <Wifi className="w-3.5 h-3.5 animate-pulse text-red-400" />
-                          Buka Panduan Reaktivasi
-                        </button>
-                      </div>
-                    ) : isAlert ? (
-                      <div className="flex flex-col items-center gap-3">
-                        <div className="px-6 py-2 bg-red-600 text-white rounded-full font-bold flex items-center gap-2 animate-bounce">
-                          <AlertTriangle className="w-5 h-5" />
-                          Danger: Gas Leak Detected!
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIsDangerPopupOpen(true);
-                            if (!dangerPopupRecommendation) {
-                              loadDangerRecommendation(carbonLevel || 1200);
-                            }
-                          }}
-                          className="px-4 py-1.5 bg-red-950/40 border border-red-500/35 text-red-400 hover:bg-red-900/20 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 shadow-md"
-                        >
-                          <AlertTriangle className="w-3.5 h-3.5 animate-pulse" />
-                          Lihat Rekomendasi Evakuasi AI
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="px-6 py-2 rounded-full font-bold flex items-center gap-2 border" style={{ background: 'color-mix(in oklab, var(--cs-amber) 12%, transparent)', borderColor: 'color-mix(in oklab, var(--cs-amber) 30%, var(--cs-border))', color: 'var(--cs-amber)' }}>
-                        <Activity className="w-5 h-5 animate-pulse" />
-                        Status: Udara Aman & Terjamin
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Premium Interactive AI LLM Assistant Widget */}
-              <div className="p-6 md:p-8 rounded-[2.5rem] border relative overflow-hidden flex flex-col justify-between" style={{ background: 'linear-gradient(135deg, rgba(28,28,28,0.7) 0%, rgba(16,16,16,0.5) 100%)', borderColor: 'var(--cs-border)', minHeight: '520px' }}>
-
-                {/* Card Background Ambient Sparkles */}
-                <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-                  <Brain className="w-40 h-40 text-white" />
-                </div>
-
-                {/* Card Header */}
-                <div className="flex items-center justify-between border-b pb-4 mb-4 relative z-10" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl border flex items-center justify-center" style={{ background: 'color-mix(in oklab, var(--cs-amber) 10%, transparent)', borderColor: 'var(--cs-border)' }}>
-                      <Brain className="w-5 h-5 text-[var(--cs-amber)] animate-pulse" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold uppercase tracking-wider text-sm text-white flex items-center gap-1.5">
-                        CarbonSense LLM AI Assistant
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                      </h3>
-                      <p className="text-[9px] font-mono text-[var(--cs-amber)] uppercase tracking-wider mt-0.5">Model: CarbonSensing-v2.0</p>
-                    </div>
-                  </div>
-                  {/* Risk Level Badge */}
-                  <div className="px-3 py-1 rounded-lg border text-[9px] font-black uppercase tracking-widest"
-                    style={{
-                      background: isAlert ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)',
-                      borderColor: isAlert ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)',
-                      color: isAlert ? '#f87171' : '#10b981'
-                    }}>
-                    {isAlert ? 'BAHAYA KRITIS' : carbonLevel && carbonLevel > 700 ? 'WASPADA' : 'UDARA AMAN'}
-                  </div>
-                </div>
-
-                {/* URGENT EVACUATION PROTOCOL PANEL (Active Warning Overlay if PPM > 700) */}
-                {(carbonLevel !== null && carbonLevel > 700) && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="p-4 rounded-2xl border mb-4 space-y-3 animate-pulse text-left"
-                    style={{
-                      background: 'rgba(239, 68, 68, 0.08)',
-                      borderColor: 'rgba(239, 68, 68, 0.35)'
-                    }}
+          /* ============================================================================
+             DETAILED TECHNICAL MODE VIEW (OCEAN BLUE LIGHT PALETTE)
+             ============================================================================ */
+          <div>
+            {/* Device Tabs if multiple devices */}
+            {activeDeviceIds.length > 1 && (
+              <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+                {activeDeviceIds.map(id => (
+                  <button
+                    key={id}
+                    onClick={() => setDeviceId(id)}
+                    className={`px-5 py-2.5 rounded-full font-bold transition-all whitespace-nowrap text-xs border cursor-pointer ${
+                      deviceId === id
+                        ? 'bg-[#0284C7] text-white border-[#0284C7] shadow-md shadow-[#0284C7]/25'
+                        : 'bg-white text-[#475569] border-slate-200 hover:border-[#0284C7]'
+                    }`}
                   >
-                    <div className="flex items-center gap-2 text-xs font-black text-red-400 uppercase tracking-widest">
-                      <ShieldAlert className="w-4.5 h-4.5 text-red-500 flex-shrink-0" />
-                      ⚠️ PROTOKOL KESELAMATAN & EVAKUASI AI AKTIF
+                    {id}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              {/* Left Column: Main PPM Readout & AI Assistant */}
+              <div className="lg:col-span-12 xl:col-span-7 space-y-6">
+                <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A]">
+                      Halo, {userProfile?.username || 'Pelanggan'}!
+                    </h1>
+                    <p className="text-xs text-[#475569] mt-0.5">
+                      Pemantauan kadar gas &amp; kebersihan udara langsung di <strong>{roomName}</strong> (Kode Alat: <span className="font-mono font-bold text-[#0284C7]">{deviceId}</span>).
+                    </p>
+                  </div>
+                </header>
+
+                {/* Main PPM Display Card */}
+                <div
+                  className={`p-8 rounded-3xl bg-white border-2 relative overflow-hidden shadow-lg transition-all ${
+                    isDeviceOffline
+                      ? 'border-[#FECACA]'
+                      : isAlert
+                      ? 'border-[#DC2626]'
+                      : isWarning
+                      ? 'border-[#FDBA74]'
+                      : 'border-slate-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`w-2.5 h-2.5 rounded-full ${
+                          isDeviceOffline || isAlert
+                            ? 'bg-[#DC2626] animate-ping'
+                            : isWarning
+                            ? 'bg-[#EA580C] animate-pulse'
+                            : 'bg-[#16A34A] animate-pulse'
+                        }`}
+                      />
+                      <span className="text-xs font-bold text-[#475569] uppercase tracking-wider">
+                        {isDeviceOffline ? 'Alat Tidak Terhubung' : 'Pemantauan Langsung Aktif'}
+                      </span>
                     </div>
-                    <div className="text-[11px] text-zinc-300 space-y-2 leading-relaxed font-medium">
-                      {aiPersonality?.rentan && aiPersonality.rentan !== 'Tidak Ada' && (
-                        <div className="flex items-start gap-1.5">
-                          <span className="text-red-400 flex-shrink-0">•</span>
-                          <span><strong>Kelompok Rentan:</strong> Segera evakuasi <span className="text-white underline">{aiPersonality.rentan}</span> dari area {aiPersonality.lokasi || 'ini'} ke tempat berudara terbuka segar.</span>
-                        </div>
-                      )}
-                      <div className="flex items-start gap-1.5">
-                        <span className="text-red-400 flex-shrink-0">•</span>
-                        <span><strong>Sirkulasi:</strong> Status ventilasi saat ini '{aiPersonality?.sirkulasi || 'AC Tertutup'}'. Segera buka pintu/jendela selebar mungkin dan matikan pendingin ruangan (AC).</span>
-                      </div>
-                      {aiPersonality?.luas_ruang === 'Kecil (< 10 m²)' && (
-                        <div className="flex items-start gap-1.5">
-                          <span className="text-red-400 flex-shrink-0">•</span>
-                          <span><strong>Dimensi Ruang:</strong> Ruangan dinilai <strong>Kecil</strong>. Akumulasi gas CO terjadi 3x lebih cepat. Batasi jumlah orang ({aiPersonality?.kapasitas}) di dalam ruangan.</span>
-                        </div>
-                      )}
-                      {aiPersonality?.polutan && aiPersonality.polutan.length > 0 && aiPersonality.polutan[0] !== 'Tidak Ada' && (
-                        <div className="flex items-start gap-1.5">
-                          <span className="text-red-400 flex-shrink-0">•</span>
-                          <span><strong>Sumber Emisi:</strong> Matikan kompor gas atau jauhkan aktivitas merokok/kendaraan ({aiPersonality.polutan.join(', ')}) dari sekitar sensor.</span>
-                        </div>
-                      )}
-                      {carbonLevel !== null && carbonLevel > 1200 && (
-                        <div className="mt-3 border-t border-red-900/30 pt-3">
+                    <span className="text-[11px] font-mono text-[#475569]">
+                      Diperbarui: {new Date(lastUpdateTime).toLocaleTimeString('id-ID')}
+                    </span>
+                  </div>
+
+                  <div className="text-center my-4">
+                    <p className="text-xs font-bold text-[#475569] uppercase tracking-widest mb-2">
+                      Kadar Gas Karbon Terukur Saat Ini
+                    </p>
+                    <div className="flex items-baseline justify-center">
+                      <motion.h2
+                        key={carbonLevel}
+                        className="text-7xl sm:text-8xl font-black tracking-tight leading-none"
+                        style={{
+                          color: isDeviceOffline
+                            ? '#94A3B8'
+                            : isAlert
+                            ? '#DC2626'
+                            : isWarning
+                            ? '#EA580C'
+                            : '#0F172A'
+                        }}
+                      >
+                        {carbonLevel !== null ? carbonLevel : '0'}
+                      </motion.h2>
+                      <span className="text-xl font-extrabold text-[#475569] ml-2">PPM</span>
+                    </div>
+                    <p className="text-[11px] text-[#475569] mt-2">
+                      (PPM = satuan kepekatan gas di udara. Semakin kecil angkanya, semakin bersih udaranya)
+                    </p>
+
+                    {/* Status Pill */}
+                    <div className="mt-6 flex flex-col items-center gap-2.5">
+                      {isDeviceOffline ? (
+                        <>
+                          <div className="px-5 py-2 bg-[#FEF2F2] border border-[#FECACA] text-[#DC2626] rounded-full text-xs font-extrabold flex items-center gap-2">
+                            <AlertTriangle className="w-4 h-4" />
+                            Status: Alat Terputus / Offline
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setShowReactivationPopup(true)}
+                            className="px-4 py-1.5 bg-[#0284C7] hover:bg-[#0369A1] text-white rounded-full text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                          >
+                            <Wifi className="w-3.5 h-3.5" />
+                            Buka Panduan Sambung WiFi
+                          </button>
+                        </>
+                      ) : isAlert ? (
+                        <>
+                          <div className="px-5 py-2 bg-[#DC2626] text-white rounded-full text-xs font-extrabold flex items-center gap-2 animate-bounce">
+                            <AlertTriangle className="w-4 h-4" />
+                            BAHAYA: Indikasi Kebocoran Gas!
+                          </div>
                           <button
                             type="button"
                             onClick={() => {
@@ -1197,334 +1530,551 @@ export default function Dashboard() {
                                 loadDangerRecommendation(carbonLevel || 1200);
                               }
                             }}
-                            className="w-full py-2 bg-red-950/30 hover:bg-red-900/20 border border-red-500/30 text-red-400 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-98"
+                            className="px-4 py-1.5 bg-[#FEF2F2] border border-[#DC2626] text-[#DC2626] hover:bg-[#FEE2E2] rounded-full text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
                           >
-                            <AlertTriangle className="w-3.5 h-3.5 animate-pulse" />
-                            Buka Kembali Popup Evakuasi AI
+                            <AlertTriangle className="w-3.5 h-3.5" />
+                            Lihat Langkah Evakuasi &amp; Peringatan Darurat
                           </button>
+                        </>
+                      ) : isWarning ? (
+                        <div className="px-5 py-2 bg-[#FFF7ED] border border-[#FDBA74] text-[#EA580C] rounded-full text-xs font-extrabold flex items-center gap-2">
+                          <AlertTriangle className="w-4 h-4" />
+                          Status: Waspada — Segera Buka Ventilasi / Jendela
+                        </div>
+                      ) : (
+                        <div className="px-5 py-2 bg-[#DCFCE7] border border-[#86EFAC] text-[#16A34A] rounded-full text-xs font-extrabold flex items-center gap-2">
+                          <CheckCircle className="w-4 h-4" />
+                          Status: Kondisi Udara Aman &amp; Bersih
                         </div>
                       )}
                     </div>
-                  </motion.div>
-                )}
+                  </div>
 
-                {/* Message Window */}
-                <div className="flex-1 overflow-y-auto max-h-[220px] mb-4 space-y-3.5 pr-2 custom-scrollbar text-left relative z-10" style={{ minHeight: '160px' }}>
-                  {chatMessages.map((msg, idx) => {
-                    const isAi = msg.sender === 'ai';
-                    return (
-                      <div key={idx} className={`flex items-start gap-2.5 ${isAi ? 'justify-start' : 'justify-end'}`}>
-                        {isAi && (
-                          <div className="w-8 h-8 rounded-lg border flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.1)' }}>
-                            <Brain className="w-4 h-4 text-[var(--cs-amber)]" />
-                          </div>
-                        )}
-                        <div
-                          className="p-3.5 rounded-2xl text-xs max-w-[85%] leading-relaxed font-medium"
-                          style={{
-                            background: isAi ? 'var(--cs-surface-2)' : 'color-mix(in oklab, var(--cs-amber) 15%, var(--cs-surface-2))',
-                            border: isAi ? '1px solid rgba(255,255,255,0.04)' : '1px solid var(--cs-amber)',
-                            color: isAi ? 'rgba(255,255,255,0.9)' : '#fff',
-                            borderRadius: isAi ? '0px 16px 16px 16px' : '16px 0px 16px 16px'
-                          }}
-                          dangerouslySetInnerHTML={{ __html: msg.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }}
-                        />
-                        {!isAi && (
-                          <div className="w-8 h-8 rounded-lg border flex items-center justify-center flex-shrink-0" style={{ background: 'color-mix(in oklab, var(--cs-amber) 10%, transparent)', borderColor: 'var(--cs-amber)' }}>
-                            <User className="w-4 h-4 text-[var(--cs-amber)]" />
-                          </div>
-                        )}
+                  {/* 3-Zone Visual Threshold Bar */}
+                  <div className="mt-6 pt-5 border-t border-slate-200">
+                    <div className="grid grid-cols-3 gap-2 text-[11px] font-bold">
+                      <div className="p-2.5 rounded-xl bg-[#F0FDF4] border border-[#BBF7D0] text-[#16A34A] text-center">
+                        0 – 700 PPM: Aman
                       </div>
-                    );
-                  })}
+                      <div className="p-2.5 rounded-xl bg-[#FFF7ED] border border-[#FED7AA] text-[#EA580C] text-center">
+                        700 – 1200 PPM: Waspada
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-[#FEF2F2] border border-[#FECACA] text-[#DC2626] text-center">
+                        &gt; 1200 PPM: Bahaya
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-                  {/* Typing Indicator */}
-                  {isTyping && (
-                    <div className="flex items-start gap-2.5 justify-start">
-                      <div className="w-8 h-8 rounded-lg border flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.1)' }}>
-                        <Brain className="w-4 h-4 text-[var(--cs-amber)] animate-spin" />
+                {/* Asisten Saran Keselamatan (AI Assistant Widget) */}
+                <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-lg flex flex-col justify-between min-h-[460px]">
+                  {/* Header */}
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-4 mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 rounded-xl bg-[#E0F2FE] border border-[#0284C7]/30 flex items-center justify-center text-[#0284C7]">
+                        <Brain className="w-5 h-5" />
                       </div>
-                      <div className="p-3.5 rounded-2xl bg-zinc-900 border border-zinc-800 text-[10px] font-mono text-[var(--cs-amber)] flex items-center gap-1.5 rounded-tl-none animate-pulse">
-                        Asisten sedang menganalisis kondisi udara...
+                      <div>
+                        <h3 className="font-extrabold text-sm text-[#0F172A] flex items-center gap-2">
+                          Asisten Saran Keselamatan CarbonSense
+                          <span className="w-2 h-2 rounded-full bg-[#16A34A]" />
+                        </h3>
+                        <p className="text-[11px] text-[#475569]">
+                          Tanyakan saran menjaga udara tetap bersih atau langkah mengatasi bau gas
+                        </p>
+                      </div>
+                    </div>
+                    <div
+                      className={`px-3 py-1 rounded-lg border text-[10px] font-extrabold uppercase tracking-wider ${
+                        isAlert
+                          ? 'bg-[#FEF2F2] border-[#FECACA] text-[#DC2626]'
+                          : isWarning
+                          ? 'bg-[#FFF7ED] border-[#FED7AA] text-[#EA580C]'
+                          : 'bg-[#DCFCE7] border-[#86EFAC] text-[#16A34A]'
+                      }`}
+                    >
+                      {isAlert ? 'BAHAYA KRITIS' : isWarning ? 'WASPADA' : 'UDARA AMAN'}
+                    </div>
+                  </div>
+
+                  {/* Active Warning Overlay if PPM >= 700 */}
+                  {carbonLevel !== null && carbonLevel >= 700 && (
+                    <div
+                      className={`p-4 rounded-2xl border mb-4 space-y-2 text-left ${
+                        isAlert ? 'bg-[#FEF2F2] border-[#FECACA]' : 'bg-[#FFF7ED] border-[#FED7AA]'
+                      }`}
+                    >
+                      <div
+                        className={`flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider ${
+                          isAlert ? 'text-[#DC2626]' : 'text-[#EA580C]'
+                        }`}
+                      >
+                        <ShieldAlert className="w-4 h-4 shrink-0" />
+                        PANDUAN KESELAMATAN &amp; VENTILASI AKTIF
+                      </div>
+                      <div className="text-xs text-[#0F172A] space-y-1.5 leading-relaxed">
+                        <p>
+                          • <strong>Pertukaran Udara:</strong> Kondisi ruangan tercatat{' '}
+                          <strong>{aiPersonality?.sirkulasi || 'Jendela Sering Dibuka'}</strong>. Segera buka pintu dan jendela lebar-lebar.
+                        </p>
+                        {aiPersonality?.polutan &&
+                          aiPersonality.polutan.length > 0 &&
+                          aiPersonality.polutan[0] !== 'Tidak Ada' && (
+                            <p>
+                              • <strong>Sumber Gas/Asap:</strong> Periksa segera{' '}
+                              <strong>{aiPersonality.polutan.join(', ')}</strong> di sekitar alat pemantau.
+                            </p>
+                          )}
                       </div>
                     </div>
                   )}
-                  <div ref={chatEndRef} />
-                </div>
 
-                {/* Quick Chips Row */}
-                <div className="mb-4 relative z-10 text-left">
-                  <div className="text-[9px] uppercase font-mono tracking-widest text-zinc-500 mb-2 flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-[var(--cs-amber)]" /> Rekomendasi Pertanyaan Cepat:
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {[
-                      { text: '📊 Kualitas Udara Saat Ini', label: 'Bagaimana status kelayakan udara saat ini?' },
-                      { text: '👶 Analisis Kelompok Rentan', label: 'Adakah kelompok rentan yang perlu diwaspadai di ruangan ini?' },
-                      { text: '🚨 Panduan Kebocoran Gas', label: 'Apa tindakan yang harus saya lakukan jika terdeteksi kebocoran gas?' },
-                      { text: '📐 Dampak Luas & Ventilasi', label: 'Bagaimana pengaruh ventilasi dan luas ruangan terhadap gas karbon?' }
-                    ].map((chip) => (
-                      <button
-                        type="button"
-                        key={chip.text}
-                        onClick={() => handleAskAI(chip.label)}
-                        disabled={isTyping}
-                        className="px-3 py-1.5 rounded-full border text-[10px] font-semibold text-zinc-400 hover:text-white hover:border-[var(--cs-amber)] hover:bg-zinc-800/40 transition-all cursor-pointer disabled:opacity-50"
-                        style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}
-                      >
-                        {chip.text}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                  {/* Chat Messages Window */}
+                  <div className="flex-1 overflow-y-auto max-h-[230px] mb-4 space-y-3 pr-1 custom-scrollbar text-left">
+                    {chatMessages.map((msg, idx) => {
+                      const isAi = msg.sender === 'ai';
+                      return (
+                        <div
+                          key={idx}
+                          className={`flex items-start gap-2.5 ${
+                            isAi ? 'justify-start' : 'justify-end'
+                          }`}
+                        >
+                          {isAi && (
+                            <div className="w-8 h-8 rounded-xl bg-[#E0F2FE] border border-[#0284C7]/30 flex items-center justify-center shrink-0 text-[#0284C7]">
+                              <Brain className="w-4 h-4" />
+                            </div>
+                          )}
+                          <div
+                            className={`p-3.5 rounded-2xl text-xs max-w-[85%] leading-relaxed font-medium border ${
+                              isAi
+                                ? 'bg-[#F9FAFB] border-slate-200 text-[#0F172A] rounded-tl-none'
+                                : 'bg-[#0284C7] border-[#0284C7] text-white rounded-tr-none'
+                            }`}
+                            dangerouslySetInnerHTML={{
+                              __html: msg.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                            }}
+                          />
+                          {!isAi && (
+                            <div className="w-8 h-8 rounded-xl bg-[#F0F9FF] border border-[#0284C7]/30 flex items-center justify-center shrink-0 text-[#0284C7]">
+                              <User className="w-4 h-4" />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
 
-                {/* Input form */}
-                <div className="flex gap-2 relative z-10">
-                  <input
-                    type="text"
-                    placeholder="Tanyakan sesuatu ke asisten AI..."
-                    value={customQuestion}
-                    onChange={(e) => setCustomQuestion(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleAskAI(customQuestion);
-                        setCustomQuestion('');
-                      }
-                    }}
-                    disabled={isTyping}
-                    className="flex-1 bg-black/40 border px-4 py-3 rounded-xl text-xs font-semibold focus:outline-none focus:border-[var(--cs-amber)] text-white focus:ring-1 focus:ring-[var(--cs-amber-glow)] transition-all disabled:opacity-50"
-                    style={{ borderColor: 'var(--cs-border)' }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleAskAI(customQuestion);
-                      setCustomQuestion('');
-                    }}
-                    disabled={isTyping || !customQuestion.trim()}
-                    className="px-4 py-3 rounded-xl text-black font-black flex items-center justify-center transition-all cursor-pointer hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100"
-                    style={{ background: 'var(--cs-amber)' }}
-                  >
-                    <Send className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Controls & History */}
-            <div className="lg:col-span-12 xl:col-span-5 space-y-6">
-
-              {/* Action Bar */}
-              <div className="grid grid-cols-2 gap-4">
-                {/* Dropdown Periods */}
-                <div className="relative">
-                  <button
-                    onClick={() => setIsHistoryDropdownOpen(!isHistoryDropdownOpen)}
-                    className="w-full flex items-center justify-between p-4 rounded-2xl hover:bg-zinc-800 transition-colors text-xs text-left border cursor-pointer"
-                    style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}
-                  >
-                    <span className="flex items-center gap-2 text-[var(--cs-text-dim)]"><Clock className="w-4 h-4" /> Rentang:</span>
-                    <span className="font-bold truncate max-w-[80px]" style={{ color: 'var(--cs-amber)' }}>{filterOptionLabels[filterOption]}</span>
-                    <ChevronDown className={`w-3 h-3 text-zinc-600 flex-shrink-0 transition-transform ${isHistoryDropdownOpen ? 'rotate-180' : ''}`} />
-                  </button>
-                  <AnimatePresence>
-                    {isHistoryDropdownOpen && (
-                      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="absolute top-full left-0 right-0 mt-2 border rounded-xl overflow-hidden shadow-2xl z-50" style={{ background: '#121212', borderColor: 'var(--cs-border)' }}>
-                        {Object.entries(filterOptionLabels).map(([key, label]) => (
-                          <button key={key} onClick={() => { setFilterOption(key); setIsHistoryDropdownOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors text-xs border-b last:border-0 font-medium cursor-pointer" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-                            {label}
-                          </button>
-                        ))}
-                      </motion.div>
+                    {isTyping && (
+                      <div className="flex items-start gap-2.5 justify-start">
+                        <div className="w-8 h-8 rounded-xl bg-[#E0F2FE] border border-[#0284C7]/30 flex items-center justify-center shrink-0 text-[#0284C7]">
+                          <Brain className="w-4 h-4 animate-spin" />
+                        </div>
+                        <div className="p-3.5 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] text-xs font-semibold text-[#0284C7] rounded-tl-none">
+                          Asisten sedang menyusun saran keselamatan...
+                        </div>
+                      </div>
                     )}
-                  </AnimatePresence>
-                </div>
+                    <div ref={chatEndRef} />
+                  </div>
 
-                {/* Dropdown Points */}
-                <div className="relative">
-                  <button
-                    onClick={() => setIsPointsDropdownOpen(!isPointsDropdownOpen)}
-                    className="w-full flex items-center justify-between p-4 rounded-2xl hover:bg-zinc-800 transition-colors text-xs text-left border cursor-pointer"
-                    style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}
-                  >
-                    <span className="flex items-center gap-2 text-[var(--cs-text-dim)]"><Activity className="w-4 h-4" /> Titik:</span>
-                    <span className="font-bold" style={{ color: 'var(--cs-amber)' }}>{dataPointsLimit}</span>
-                    <ChevronDown className={`w-3 h-3 text-zinc-600 flex-shrink-0 transition-transform ${isPointsDropdownOpen ? 'rotate-180' : ''}`} />
-                  </button>
-                  <AnimatePresence>
-                    {isPointsDropdownOpen && (
-                      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="absolute top-full left-0 right-0 mt-2 border rounded-xl overflow-hidden shadow-2xl z-50" style={{ background: '#121212', borderColor: 'var(--cs-border)' }}>
-                        {[5, 10, 20, 50, 100].map(p => (
-                          <button key={p} onClick={() => { setDataPointsLimit(p); setIsPointsDropdownOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors text-xs border-b last:border-0 font-medium cursor-pointer" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-                            Tampilkan {p} Titik Data
-                          </button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                {/* Reports */}
-                <button onClick={exportToExcel} className="p-4 border rounded-2xl hover:brightness-110 transition-all text-xs font-bold flex items-center justify-center gap-2 cursor-pointer" style={{ background: 'color-mix(in oklab, var(--cs-amber) 12%, transparent)', borderColor: 'color-mix(in oklab, var(--cs-amber) 20%, var(--cs-border))', color: 'var(--cs-amber)' }}>
-                  <Table className="w-4 h-4" /> Download XLSX
-                </button>
-                <button onClick={exportToPDF} className="p-4 rounded-2xl hover:bg-zinc-800 border transition-all text-xs font-bold flex items-center justify-center gap-2 cursor-pointer" style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)', color: 'var(--cs-text)' }}>
-                  <Download className="w-4 h-4" /> Save PDF
-                </button>
-              </div>
-
-              {/* Custom Datetime Input Fields */}
-              {filterOption === 'custom' && (
-                <div className="p-5 border rounded-2xl space-y-3" style={{ background: 'rgba(25, 25, 25, 0.6)', borderColor: 'var(--cs-border)' }}>
-                  <p className="text-xs font-bold text-[var(--cs-text-dim)] uppercase tracking-wider">Pilih Rentang Waktu Kustom</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[10px] text-zinc-500 font-bold uppercase mb-1">Mulai</label>
-                      <input
-                        type="datetime-local"
-                        value={customStart}
-                        onChange={(e) => setCustomStart(e.target.value)}
-                        className="w-full bg-black/40 border px-3 py-2 rounded-xl text-xs font-semibold focus:outline-none focus:border-[var(--cs-amber)] text-white"
-                        style={{ borderColor: 'var(--cs-border)' }}
-                      />
+                  {/* Quick Question Chips (No emojis) */}
+                  <div className="mb-4 text-left">
+                    <div className="text-[10px] uppercase font-mono tracking-wider text-[#475569] font-bold mb-2 flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5 text-[#0284C7]" /> Pilihan Pertanyaan Cepat:
                     </div>
-                    <div>
-                      <label className="block text-[10px] text-zinc-500 font-bold uppercase mb-1">Hingga</label>
-                      <input
-                        type="datetime-local"
-                        value={customEnd}
-                        onChange={(e) => setCustomEnd(e.target.value)}
-                        className="w-full bg-black/40 border px-3 py-2 rounded-xl text-xs font-semibold focus:outline-none focus:border-[var(--cs-amber)] text-white"
-                        style={{ borderColor: 'var(--cs-border)' }}
-                      />
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        {
+                          text: 'Kondisi Udara Saat Ini',
+                          label: 'Bagaimana status keamanan udara di ruangan saya saat ini?'
+                        },
+                        {
+                          text: 'Cara Mengatasi Bau Gas',
+                          label: 'Apa tindakan pertama yang harus saya lakukan jika tercium bau gas?'
+                        },
+                        {
+                          text: 'Saran Ventilasi Ruangan',
+                          label: 'Bagaimana cara mengatur ventilasi ruangan agar gas tidak mudah menumpuk?'
+                        },
+                        {
+                          text: 'Perawatan Tabung & Kompor',
+                          label: 'Bagaimana tips memeriksa keamanan selang dan regulator kompor gas?'
+                        }
+                      ].map(chip => (
+                        <button
+                          type="button"
+                          key={chip.text}
+                          onClick={() => handleAskAI(chip.label)}
+                          disabled={isTyping}
+                          className="px-3 py-1.5 rounded-full border border-slate-200 bg-[#F9FAFB] text-xs font-semibold text-[#475569] hover:text-[#0284C7] hover:border-[#0284C7] hover:bg-[#F0F9FF] transition-all cursor-pointer disabled:opacity-50"
+                        >
+                          {chip.text}
+                        </button>
+                      ))}
                     </div>
                   </div>
-                </div>
-              )}
 
-              {/* Date Navigation Controls for Daily Filter */}
-              {filterOption === 'today' && (
-                <div className="p-5 border rounded-2xl space-y-3" style={{ background: 'rgba(25, 25, 25, 0.6)', borderColor: 'var(--cs-border)' }}>
-                  <p className="text-xs font-bold text-[var(--cs-text-dim)] uppercase tracking-wider">Navigasi Tanggal Histori</p>
-                  <div className="flex items-center justify-between gap-3">
-                    <button
-                      onClick={handlePrevDay}
-                      className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer border"
-                      style={{ borderColor: 'var(--cs-border)' }}
-                    >
-                      ← Kemarin
-                    </button>
+                  {/* Chat Input */}
+                  <div className="flex gap-2">
                     <input
-                      type="date"
-                      value={selectedDate}
-                      onChange={(e) => setSelectedDate(e.target.value)}
-                      className="bg-black/40 border px-3 py-2 rounded-xl text-xs font-semibold focus:outline-none focus:border-[var(--cs-amber)] text-white text-center flex-1 cursor-pointer"
-                      style={{ borderColor: 'var(--cs-border)' }}
+                      type="text"
+                      placeholder="Ketik pertanyaan seputar keamanan udara atau gas..."
+                      value={customQuestion}
+                      onChange={(e) => setCustomQuestion(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleAskAI(customQuestion);
+                          setCustomQuestion('');
+                        }
+                      }}
+                      disabled={isTyping}
+                      className="flex-1 bg-[#F9FAFB] border border-slate-300 px-4 py-3 rounded-xl text-xs font-semibold focus:outline-none focus:border-[#0284C7] focus:bg-white text-[#0F172A] transition-all disabled:opacity-50"
                     />
                     <button
-                      onClick={handleNextDay}
-                      className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer border"
-                      style={{ borderColor: 'var(--cs-border)' }}
+                      type="button"
+                      onClick={() => {
+                        handleAskAI(customQuestion);
+                        setCustomQuestion('');
+                      }}
+                      disabled={isTyping || !customQuestion.trim()}
+                      className="px-4 py-3 rounded-xl bg-[#0284C7] hover:bg-[#0369A1] text-white font-bold flex items-center justify-center transition-all cursor-pointer disabled:opacity-50"
                     >
-                      Besok →
+                      <Send className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
-              )}
+              </div>
 
-              {/* Chart Area */}
-              <div className="p-6 border rounded-[2rem]" style={{ background: 'rgba(25, 25, 25, 0.4)', borderColor: 'var(--cs-border)' }}>
-                <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center gap-2">
-                    <History className="w-4 h-4 animate-pulse" style={{ color: 'var(--cs-amber)' }} />
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500">Live Historical Data</h3>
-                  </div>
-                  <div className="flex items-center gap-2">
+              {/* Right Column: Controls, Chart & History Table */}
+              <div className="lg:col-span-12 xl:col-span-5 space-y-6">
+                {/* Action Bar */}
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Dropdown Periods */}
+                  <div className="relative">
                     <button
+                      type="button"
+                      onClick={() => setIsHistoryDropdownOpen(!isHistoryDropdownOpen)}
+                      className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-[#0284C7] transition-colors text-xs text-left cursor-pointer shadow-sm"
+                    >
+                      <span className="flex items-center gap-1.5 text-[#475569] font-semibold">
+                        <Clock className="w-4 h-4 text-[#0284C7]" /> Waktu:
+                      </span>
+                      <span className="font-bold text-[#0284C7] truncate max-w-[90px]">
+                        {filterOptionLabels[filterOption]}
+                      </span>
+                      <ChevronDown
+                        className={`w-3.5 h-3.5 text-[#475569] shrink-0 transition-transform ${
+                          isHistoryDropdownOpen ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </button>
+                    <AnimatePresence>
+                      {isHistoryDropdownOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -8 }}
+                          className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xl z-50"
+                        >
+                          {Object.entries(filterOptionLabels).map(([key, label]) => (
+                            <button
+                              type="button"
+                              key={key}
+                              onClick={() => {
+                                setFilterOption(key);
+                                setIsHistoryDropdownOpen(false);
+                              }}
+                              className="w-full text-left px-4 py-2.5 hover:bg-[#F0F9FF] text-[#0F172A] hover:text-[#0284C7] transition-colors text-xs border-b border-slate-100 last:border-0 font-semibold cursor-pointer"
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Dropdown Points */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setIsPointsDropdownOpen(!isPointsDropdownOpen)}
+                      className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-[#0284C7] transition-colors text-xs text-left cursor-pointer shadow-sm"
+                    >
+                      <span className="flex items-center gap-1.5 text-[#475569] font-semibold">
+                        <Activity className="w-4 h-4 text-[#0284C7]" /> Titik Data:
+                      </span>
+                      <span className="font-bold text-[#0284C7]">{dataPointsLimit}</span>
+                      <ChevronDown
+                        className={`w-3.5 h-3.5 text-[#475569] shrink-0 transition-transform ${
+                          isPointsDropdownOpen ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </button>
+                    <AnimatePresence>
+                      {isPointsDropdownOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -8 }}
+                          className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xl z-50"
+                        >
+                          {[5, 10, 20, 50, 100].map(p => (
+                            <button
+                              type="button"
+                              key={p}
+                              onClick={() => {
+                                setDataPointsLimit(p);
+                                setIsPointsDropdownOpen(false);
+                              }}
+                              className="w-full text-left px-4 py-2.5 hover:bg-[#F0F9FF] text-[#0F172A] hover:text-[#0284C7] transition-colors text-xs border-b border-slate-100 last:border-0 font-semibold cursor-pointer"
+                            >
+                              Tampilkan {p} Titik Data
+                            </button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Export Buttons */}
+                  <button
+                    type="button"
+                    onClick={exportToExcel}
+                    className="p-3.5 rounded-2xl bg-[#E0F2FE] hover:bg-[#BAE6FD] border border-[#0284C7]/30 text-[#0284C7] transition-all text-xs font-extrabold flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Table className="w-4 h-4" /> Unduh Excel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={exportToPDF}
+                    className="p-3.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200 text-[#0F172A] transition-all text-xs font-extrabold flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                  >
+                    <Download className="w-4 h-4 text-[#0284C7]" /> Simpan PDF
+                  </button>
+                </div>
+
+                {/* Custom Datetime Input Fields */}
+                {filterOption === 'custom' && (
+                  <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-3 shadow-sm">
+                    <p className="text-xs font-bold text-[#475569] uppercase tracking-wider">
+                      Pilih Rentang Waktu Kustom
+                    </p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] text-[#475569] font-bold uppercase mb-1">
+                          Mulai
+                        </label>
+                        <input
+                          type="datetime-local"
+                          value={customStart}
+                          onChange={(e) => setCustomStart(e.target.value)}
+                          className="w-full bg-[#F9FAFB] border border-slate-300 px-3 py-2 rounded-xl text-xs font-semibold focus:outline-none focus:border-[#0284C7] text-[#0F172A]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-[#475569] font-bold uppercase mb-1">
+                          Hingga
+                        </label>
+                        <input
+                          type="datetime-local"
+                          value={customEnd}
+                          onChange={(e) => setCustomEnd(e.target.value)}
+                          className="w-full bg-[#F9FAFB] border border-slate-300 px-3 py-2 rounded-xl text-xs font-semibold focus:outline-none focus:border-[#0284C7] text-[#0F172A]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Date Navigation Controls for Daily Filter */}
+                {filterOption === 'today' && (
+                  <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-3 shadow-sm">
+                    <p className="text-xs font-bold text-[#475569] uppercase tracking-wider">
+                      Navigasi Tanggal Riwayat
+                    </p>
+                    <div className="flex items-center justify-between gap-2">
+                      <button
+                        type="button"
+                        onClick={handlePrevDay}
+                        className="px-3.5 py-2 bg-[#F9FAFB] hover:bg-slate-100 text-[#0F172A] rounded-xl text-xs font-bold transition-all border border-slate-200 cursor-pointer"
+                      >
+                        &lt;- Kemarin
+                      </button>
+                      <input
+                        type="date"
+                        value={selectedDate}
+                        onChange={(e) => setSelectedDate(e.target.value)}
+                        className="bg-[#F9FAFB] border border-slate-300 px-3 py-2 rounded-xl text-xs font-bold focus:outline-none focus:border-[#0284C7] text-[#0F172A] text-center flex-1 cursor-pointer"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleNextDay}
+                        className="px-3.5 py-2 bg-[#F9FAFB] hover:bg-slate-100 text-[#0F172A] rounded-xl text-xs font-bold transition-all border border-slate-200 cursor-pointer"
+                      >
+                        Besok -&gt;
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Chart Area */}
+                <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-md">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-2">
+                      <History className="w-4 h-4 text-[#0284C7]" />
+                      <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#0F172A]">
+                        Grafik Riwayat Kadar Gas (PPM)
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
                       onClick={() => setIsFullscreen(true)}
-                      className="text-zinc-500 hover:text-[var(--cs-amber)] p-1.5 hover:bg-zinc-800 rounded-lg transition-all cursor-pointer"
-                      title="Lihat Fullscreen"
+                      className="text-[#475569] hover:text-[#0284C7] p-1.5 hover:bg-slate-100 rounded-lg transition-all cursor-pointer"
+                      title="Perbesar Grafik"
                     >
                       <Maximize2 className="w-4 h-4" />
                     </button>
                   </div>
+
+                  <div className="h-64 w-full">
+                    {!hasChartData ? (
+                      <div className="w-full h-full flex flex-col items-center justify-center border border-dashed border-slate-300 rounded-2xl bg-[#F9FAFB]">
+                        <Wind className="w-9 h-9 text-slate-400 mb-2" />
+                        <p className="text-xs font-bold text-[#0F172A]">Belum Ada Riwayat Data</p>
+                        <p className="text-[11px] text-[#475569] mt-1 text-center px-4">
+                          {filterOption === 'today'
+                            ? (() => {
+                                const parts = selectedDate.split('-');
+                                const d = new Date(
+                                  Number(parts[0]),
+                                  Number(parts[1]) - 1,
+                                  Number(parts[2])
+                                );
+                                return `Belum ada pencatatan data pada ${d.toLocaleDateString('id-ID', {
+                                  day: 'numeric',
+                                  month: 'long',
+                                  year: 'numeric'
+                                })}`;
+                              })()
+                            : 'Coba pilih rentang waktu atau tanggal lainnya'}
+                        </p>
+                      </div>
+                    ) : (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={processedChartData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
+                          <XAxis
+                            dataKey="timeFormatted"
+                            stroke="#475569"
+                            fontSize={10}
+                            axisLine={false}
+                            tickLine={false}
+                            tickMargin={10}
+                          />
+                          <YAxis
+                            stroke="#475569"
+                            fontSize={10}
+                            axisLine={false}
+                            tickLine={false}
+                          />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: '#FFFFFF',
+                              border: '1px solid #CBD5E1',
+                              borderRadius: '12px',
+                              color: '#0F172A',
+                              boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.1)'
+                            }}
+                            itemStyle={{ color: '#0284C7', fontWeight: 'bold' }}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="value"
+                            connectNulls={true}
+                            stroke="#0284C7"
+                            strokeWidth={3.5}
+                            dot={{ r: 4, fill: '#0284C7', strokeWidth: 0 }}
+                            activeDot={{ r: 6, stroke: '#FFFFFF', strokeWidth: 2, fill: '#0284C7' }}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    )}
+                  </div>
                 </div>
 
-                <div className="h-64 w-full">
-                  {!hasChartData ? (
-                    <div className="w-full h-full flex flex-col items-center justify-center border border-dashed rounded-2xl bg-black/20" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-                      <Wind className="w-10 h-10 text-zinc-650 animate-pulse mb-3" />
-                      <p className="text-xs font-bold text-zinc-400">Tidak Ada Data Telemetri</p>
-                      <p className="text-[11px] text-zinc-500 mt-1">
-                        {filterOption === 'today'
-                          ? (() => {
-                              const parts = selectedDate.split('-');
-                              const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-                              return `Belum ada riwayat masuk pada ${d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`;
-                            })()
-                          : 'Coba pilih rentang waktu atau tanggal lainnya'}
+                {/* Recent Log Table */}
+                <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-md">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#0F172A]">
+                      Catatan Pembacaan Terakhir
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsDangerPopupOpen(true);
+                        if (!dangerPopupRecommendation) {
+                          loadDangerRecommendation(carbonLevel || 1200);
+                        }
+                      }}
+                      className="text-[11px] font-bold text-[#DC2626] hover:underline cursor-pointer"
+                    >
+                      Uji Alert Bahaya
+                    </button>
+                  </div>
+                  {displayedHistory.length === 0 ? (
+                    <div className="py-8 text-center flex flex-col items-center justify-center border border-dashed border-slate-300 rounded-2xl bg-[#F9FAFB]">
+                      <Info className="w-6 h-6 text-slate-400 mb-2" />
+                      <p className="text-xs text-[#475569]">
+                        Tidak ada riwayat pembacaan pada tanggal/rentang ini.
                       </p>
                     </div>
                   ) : (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={processedChartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
-                        <XAxis
-                          dataKey="timeFormatted"
-                          stroke="#4b5563"
-                          fontSize={10}
-                          axisLine={false}
-                          tickLine={false}
-                          tickMargin={10}
-                        />
-                        <YAxis
-                          stroke="#4b5563"
-                          fontSize={10}
-                          axisLine={false}
-                          tickLine={false}
-                        />
-                        <Tooltip
-                          contentStyle={{ backgroundColor: '#000', border: '1px solid var(--cs-border)', borderRadius: '12px' }}
-                          itemStyle={{ color: '#fbbf24', fontWeight: 'bold' }} // Using gold hex fallback for tooltip text
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="value"
-                          connectNulls={true}
-                          stroke="#fbbf24" // Using gold hex fallback for line stroke
-                          strokeWidth={4}
-                          dot={{ r: 4, fill: '#fbbf24', strokeWidth: 0 }}
-                          activeDot={{ r: 6, stroke: '#000', strokeWidth: 2 }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
+                    <div className="space-y-2 max-h-[190px] overflow-y-auto pr-1 custom-scrollbar">
+                      {displayedHistory.map((item, idx) => {
+                        const isItemDanger = item.value > 1200;
+                        const isItemWarn = item.value >= 700 && item.value <= 1200;
+                        return (
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between p-3 bg-[#F9FAFB] border border-slate-200 rounded-xl"
+                          >
+                            <span className="text-xs font-mono text-[#475569]">
+                              {new Date(parseInt(item.timestamp)).toLocaleTimeString('id-ID')}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`text-sm font-black ${
+                                  isItemDanger
+                                    ? 'text-[#DC2626]'
+                                    : isItemWarn
+                                    ? 'text-[#EA580C]'
+                                    : 'text-[#16A34A]'
+                                }`}
+                              >
+                                {item.value}{' '}
+                                <span className="text-[10px] font-semibold text-[#475569]">PPM</span>
+                              </span>
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                  isItemDanger
+                                    ? 'bg-[#FEE2E2] text-[#DC2626]'
+                                    : isItemWarn
+                                    ? 'bg-[#FFEDD5] text-[#EA580C]'
+                                    : 'bg-[#DCFCE7] text-[#16A34A]'
+                                }`}
+                              >
+                                {isItemDanger ? 'Bahaya' : isItemWarn ? 'Waspada' : 'Aman'}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
               </div>
-
-              {/* Recent Log Table */}
-              <div className="p-6 border rounded-[2rem]" style={{ background: 'rgba(25, 25, 25, 0.4)', borderColor: 'var(--cs-border)' }}>
-                <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-4">Aktivitas Terakhir</h3>
-                {displayedHistory.length === 0 ? (
-                  <div className="py-8 text-center flex flex-col items-center justify-center border border-dashed rounded-2xl bg-black/10" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-                    <Info className="w-6 h-6 text-zinc-650 mb-2" />
-                    <p className="text-xs text-zinc-500">Tidak ada riwayat aktivitas pada tanggal/rentang ini.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2 max-h-[180px] overflow-y-auto pr-2 custom-scrollbar">
-                    {displayedHistory.map((item, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-3 border rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.05)' }}>
-                        <span className="text-[10px] font-mono text-zinc-500">{new Date(parseInt(item.timestamp)).toLocaleTimeString()}</span>
-                        <span className="text-sm font-black" style={{ color: item.value > 1200 ? 'var(--cs-danger)' : 'var(--cs-amber)' }}>
-                          {item.value} <span className="text-[10px] font-normal text-zinc-600">ppm</span>
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
             </div>
-
           </div>
         )}
       </main>
@@ -1536,175 +2086,323 @@ export default function Dashboard() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-[#070707]/95 backdrop-blur-md z-[1000] p-6 md:p-10 flex flex-col justify-between"
+            className="fixed inset-0 bg-[#F0F9FF]/98 backdrop-blur-md z-[1000] p-6 md:p-10 flex flex-col justify-between"
           >
-            <div className="flex items-center justify-between border-b pb-4 mb-6" style={{ borderColor: 'var(--cs-border)' }}>
+            <div className="flex items-center justify-between border-b border-slate-200 pb-4 mb-6">
               <div>
-                <h3 className="text-xl font-black tracking-normal text-white flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
-                  <Activity className="w-5 h-5 animate-pulse" style={{ color: 'var(--cs-amber)' }} />
-                  Grafik Monitor Historis Fullscreen — {deviceId}
+                <h3 className="text-xl font-extrabold text-[#0F172A] flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-[#0284C7]" />
+                  Grafik Riwayat Kadar Gas Fullscreen — {deviceId}
                 </h3>
-                <p className="text-xs text-zinc-400 mt-1">
-                  Rentang: <span className="font-bold" style={{ color: 'var(--cs-amber)' }}>{filterOptionLabels[filterOption]}</span> | {processedChartData.length} sampel titik data | {filterOption === 'live' ? 'Data Asli Real-time' : 'Nilai Rata-rata Interval'}
+                <p className="text-xs text-[#475569] mt-1">
+                  Rentang: <span className="font-bold text-[#0284C7]">{filterOptionLabels[filterOption]}</span> |{' '}
+                  {processedChartData.length} titik data
                 </p>
               </div>
               <button
+                type="button"
                 onClick={() => setIsFullscreen(false)}
-                className="p-3 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-xl transition-all font-bold flex items-center gap-2 text-sm active:scale-95 border cursor-pointer"
-                style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}
+                className="px-4 py-2.5 bg-white hover:bg-slate-100 text-[#0F172A] rounded-xl transition-all font-bold flex items-center gap-2 text-xs border border-slate-300 cursor-pointer shadow-sm"
               >
                 <Minimize2 className="w-4 h-4" /> Tutup Fullscreen
               </button>
             </div>
 
-            <div className="flex-1 w-full flex items-center justify-center border rounded-3xl p-6 min-h-0" style={{ background: 'rgba(25, 25, 25, 0.2)', borderColor: 'var(--cs-border)' }}>
+            <div className="flex-1 w-full flex items-center justify-center bg-white border border-slate-200 rounded-3xl p-6 min-h-0 shadow-lg">
               {!hasChartData ? (
                 <div className="flex flex-col items-center justify-center text-center">
-                  <Wind className="w-12 h-12 text-zinc-650 animate-pulse mb-4" />
-                  <h4 className="text-md font-bold text-zinc-400">Tidak Ada Data Terpantau</h4>
-                  <p className="text-xs text-zinc-500 mt-1">
-                    {filterOption === 'today'
-                      ? (() => {
-                          const parts = selectedDate.split('-');
-                          const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-                          return `Tidak ada aktivitas data pada tanggal ${d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`;
-                        })()
-                      : 'Silakan pilih rentang waktu atau navigasi ke hari lain.'}
+                  <Wind className="w-12 h-12 text-slate-400 mb-3" />
+                  <h4 className="text-base font-bold text-[#0F172A]">Tidak Ada Data Terpantau</h4>
+                  <p className="text-xs text-[#475569] mt-1">
+                    Silakan pilih rentang waktu atau navigasi ke hari lain.
                   </p>
                 </div>
               ) : (
                 <div className="w-full h-full min-h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={processedChartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
                       <XAxis
                         dataKey="timeFormatted"
-                        stroke="#9ca3af"
+                        stroke="#475569"
                         fontSize={11}
                         axisLine={false}
                         tickLine={false}
                         tickMargin={12}
                       />
                       <YAxis
-                        stroke="#9ca3af"
+                        stroke="#475569"
                         fontSize={11}
                         axisLine={false}
                         tickLine={false}
                       />
                       <Tooltip
-                        contentStyle={{ backgroundColor: '#000', border: '1px solid var(--cs-border)', borderRadius: '16px', padding: '12px' }}
-                        itemStyle={{ color: '#fbbf24', fontWeight: 'bold' }}
+                        contentStyle={{
+                          backgroundColor: '#FFFFFF',
+                          border: '1px solid #CBD5E1',
+                          borderRadius: '16px',
+                          padding: '12px',
+                          color: '#0F172A'
+                        }}
+                        itemStyle={{ color: '#0284C7', fontWeight: 'bold' }}
                       />
                       <Line
                         type="monotone"
                         dataKey="value"
                         connectNulls={true}
-                        stroke="#fbbf24"
-                        strokeWidth={5}
-                        dot={{ r: 6, fill: '#fbbf24', strokeWidth: 0 }}
-                        activeDot={{ r: 8, stroke: '#000', strokeWidth: 3 }}
+                        stroke="#0284C7"
+                        strokeWidth={4}
+                        dot={{ r: 5, fill: '#0284C7', strokeWidth: 0 }}
+                        activeDot={{ r: 7, stroke: '#FFFFFF', strokeWidth: 2, fill: '#0284C7' }}
                       />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
               )}
             </div>
-            <div className="flex items-center justify-between text-[10px] uppercase font-mono tracking-wider text-zinc-500 mt-6 border-t pt-4" style={{ borderColor: 'var(--cs-border)' }}>
-              <span>*Tampilan dimutakhirkan secara otomatis seiring berjalan waktu</span>
-              <span>CarbonSense High Precision Visualization Engine</span>
-            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Danger Emergency Alert Modal Popup */}
+      {/* ============================================================================
+         HIGH-CONTRAST READABLE DANGER EMERGENCY ALERT MODAL (SIMPLE & DETAILED)
+         ============================================================================ */}
       <AnimatePresence>
         {isDangerPopupOpen && (
-          <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
-            {/* Blur Backdrop */}
+          <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 overflow-y-auto">
+            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-[#0c0505]/90 backdrop-blur-lg pointer-events-auto"
+              className="fixed inset-0 bg-slate-900/75 backdrop-blur-md pointer-events-auto"
             />
 
-            {/* Warning Modal Container */}
+            {/* Modal Box */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 30 }}
+              initial={{ opacity: 0, scale: 0.94, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 30 }}
-              transition={{ duration: 0.35, ease: "easeOut" }}
-              className="w-full max-w-2xl border rounded-[2.5rem] p-8 md:p-10 relative overflow-hidden shadow-[0_0_60px_rgba(239,68,68,0.25)] flex flex-col justify-between"
-              style={{
-                background: 'linear-gradient(145deg, #180909 0%, #0a0303 100%)',
-                borderColor: 'rgba(239, 68, 68, 0.4)'
-              }}
+              exit={{ opacity: 0, scale: 0.94, y: 20 }}
+              transition={{ duration: 0.25 }}
+              className="w-full max-w-xl bg-white border-[3px] border-[#DC2626] rounded-3xl p-6 sm:p-8 relative z-10 shadow-2xl my-auto"
             >
-              {/* Visual Hazard Overlay Glow */}
-              <div className="absolute -top-12 -right-12 w-64 h-64 bg-red-600 blur-[120px] rounded-full opacity-25 pointer-events-none" />
-
-              <div className="relative z-10 space-y-6">
-                {/* Title Bar */}
-                <div className="flex items-center gap-3 border-b border-red-900/40 pb-4">
-                  <div className="w-12 h-12 bg-red-950/40 border border-red-500/40 rounded-2xl flex items-center justify-center flex-shrink-0">
-                    <AlertTriangle className="w-6 h-6 text-red-500 animate-pulse" />
+              {isSimpleMode ? (
+                /* ---------- SIMPLE MODE DANGER ALERT (SINGKAT, TEPAT, TEGAS) ---------- */
+                <div className="text-center space-y-5">
+                  <div className="w-16 h-16 rounded-2xl bg-[#FEE2E2] border-2 border-[#DC2626] flex items-center justify-center mx-auto text-[#DC2626]">
+                    <AlertTriangle className="w-9 h-9" />
                   </div>
-                  <div className="text-left">
-                    <h2 className="text-xl font-black text-red-500 tracking-normal uppercase" style={{ fontFamily: 'var(--font-display)' }}>
-                      Peringatan Evakuasi Darurat
+
+                  <div>
+                    <span className="inline-block px-3.5 py-1 rounded-full bg-[#DC2626] text-white text-xs font-extrabold uppercase tracking-wider mb-2">
+                      PERINGATAN DARURAT
+                    </span>
+                    <h2 className="text-3xl sm:text-4xl font-black text-[#DC2626] tracking-tight">
+                      BAHAYA! GAS BOCOR!
                     </h2>
-                    <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest mt-0.5">Status: Kebocoran Karbon Monoksida</p>
+                    <p className="text-sm font-bold text-[#0F172A] mt-1">
+                      Terdeteksi di <span>{roomName}</span> — Segera Bertindak!
+                    </p>
+                  </div>
+
+                  {/* 3 Direct Steps */}
+                  <div className="p-5 rounded-2xl bg-[#FEF2F2] border-2 border-[#FCA5A5] text-left space-y-3">
+                    <p className="text-xs font-extrabold uppercase tracking-wider text-[#DC2626]">
+                      LAKUKAN 3 HAL INI SEKARANG:
+                    </p>
+                    <ol className="space-y-2.5 text-sm sm:text-base font-bold text-[#0F172A]">
+                      <li className="flex items-start gap-2.5">
+                        <span className="w-6 h-6 rounded-full bg-[#DC2626] text-white text-xs font-extrabold flex items-center justify-center shrink-0 mt-0.5">
+                          1
+                        </span>
+                        <span>Buka semua pintu dan jendela sekarang.</span>
+                      </li>
+                      <li className="flex items-start gap-2.5">
+                        <span className="w-6 h-6 rounded-full bg-[#DC2626] text-white text-xs font-extrabold flex items-center justify-center shrink-0 mt-0.5">
+                          2
+                        </span>
+                        <span>Matikan kompor, jangan nyalakan listrik atau api.</span>
+                      </li>
+                      <li className="flex items-start gap-2.5">
+                        <span className="w-6 h-6 rounded-full bg-[#DC2626] text-white text-xs font-extrabold flex items-center justify-center shrink-0 mt-0.5">
+                          3
+                        </span>
+                        <span>Segera keluar ruangan ke tempat terbuka.</span>
+                      </li>
+                    </ol>
+                  </div>
+
+                  {/* 2 Clear Action Buttons */}
+                  <div className="space-y-2.5 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => sendWhatsAppEmergency(emergencyContacts[0])}
+                      className="w-full py-4 rounded-2xl bg-[#16A34A] hover:bg-green-700 text-white font-black text-base transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <Phone className="w-5 h-5" />
+                      <span>Kirim Pesan Darurat WhatsApp</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsDangerPopupOpen(false)}
+                      className="w-full py-3.5 rounded-2xl bg-[#0F172A] hover:bg-slate-800 text-white font-bold text-sm transition-all cursor-pointer"
+                    >
+                      Sudah Aman / Tutup Peringatan
+                    </button>
                   </div>
                 </div>
-
-                {/* Carbon Level Display */}
-                <div className="p-6 bg-red-950/20 border border-red-900/30 rounded-2xl flex items-center justify-between">
-                  <div className="text-left">
-                    <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">Kadar Terdeteksi (Real-time)</span>
-                    <h3 className="text-4xl font-black text-red-400 mt-1">{carbonLevel || '1200+'} <span className="text-lg font-bold text-red-700 ml-1">ppm</span></h3>
+              ) : (
+                /* ---------- DETAILED MODE DANGER ALERT (HIGH-CONTRAST & EASY TO READ) ---------- */
+                <div className="space-y-5 text-left">
+                  {/* Top Header */}
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                    <span className="px-3 py-1 rounded-full bg-[#FEF2F2] border border-[#FCA5A5] text-[#DC2626] text-xs font-extrabold uppercase tracking-wider">
+                      PERINGATAN EVAKUASI DARURAT
+                    </span>
+                    <span className="text-xs font-mono font-bold text-[#475569]">
+                      Pukul: {new Date().toLocaleTimeString('id-ID')}
+                    </span>
                   </div>
-                  <div className="px-4 py-2 bg-red-600 text-white text-[10px] font-black tracking-widest uppercase rounded-lg animate-bounce">
-                    KRITIS
-                  </div>
-                </div>
 
-                {/* Recommendation Content */}
-                <div className="space-y-4">
-                  <h4 className="text-xs font-mono text-zinc-400 uppercase tracking-widest text-left">Rekomendasi Tindakan AI (DeepSeek AI Engine):</h4>
-
-                  {dangerPopupLoading ? (
-                    <div className="py-12 flex flex-col items-center justify-center gap-3">
-                      <Brain className="w-10 h-10 text-red-500 animate-spin" />
-                      <span className="text-xs font-mono text-zinc-500 uppercase tracking-wider animate-pulse">Menghubungi DeepSeek AI untuk merumuskan protokol evakuasi...</span>
+                  {/* Center Alert Title & PPM */}
+                  <div className="text-center">
+                    <div className="w-14 h-14 rounded-2xl bg-[#FEE2E2] border-2 border-[#DC2626] flex items-center justify-center mx-auto mb-3 text-[#DC2626]">
+                      <AlertTriangle className="w-7 h-7" />
                     </div>
-                  ) : (
-                    <div className="p-5 rounded-2xl border border-red-900/20 bg-black/40 max-h-[260px] overflow-y-auto custom-scrollbar text-left text-zinc-300 text-sm leading-relaxed font-medium">
-                      <p className="whitespace-pre-line" dangerouslySetInnerHTML={{ __html: dangerPopupRecommendation.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+                    <h2 className="text-2xl sm:text-3xl font-black text-[#DC2626] tracking-tight">
+                      KEBOCORAN GAS BERBAHAYA TERDETEKSI!
+                    </h2>
+                    <div className="mt-2 inline-flex items-center gap-2 px-4 py-1.5 rounded-xl bg-[#F8FAFC] border border-slate-300">
+                      <span className="text-xs font-semibold text-[#475569]">Kadar gas terukur:</span>
+                      <strong className="text-base font-black text-[#0F172A]">
+                        {carbonLevel || '1200+'} PPM
+                      </strong>
+                      <span className="text-xs font-semibold text-[#475569]">di {roomName}</span>
                     </div>
-                  )}
-                </div>
+                  </div>
 
-                {/* Environmental Metadata Checked */}
-                <div className="text-[10px] font-mono text-zinc-500 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-zinc-900 pt-4 text-left">
-                  <span>LOKASI: {aiPersonality?.lokasi || '—'}</span>
-                  <span>SIRKULASI: {aiPersonality?.sirkulasi || '—'}</span>
-                  <span>RISIKO: {aiPersonality?.rentan || '—'}</span>
-                  <span>LUAS: {aiPersonality?.luas_ruang || '—'}</span>
-                </div>
-              </div>
+                  {/* Ordered Emergency Steps */}
+                  <div className="p-4 rounded-2xl bg-[#FFF7ED] border border-[#FDBA74] space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-extrabold text-[#9A3412] uppercase tracking-wider">
+                        LANGKAH DARURAT YANG HARUS SEGERA DILAKUKAN:
+                      </span>
+                      <span className="text-[10px] font-mono font-bold text-[#475569] uppercase">
+                        IKUTI URUTAN BERIKUT
+                      </span>
+                    </div>
+                    <ol className="text-xs text-[#0F172A] space-y-2 leading-relaxed">
+                      <li className="flex items-start gap-2.5">
+                        <span className="w-5 h-5 rounded-full bg-[#EA580C] text-white font-extrabold text-[11px] flex items-center justify-center shrink-0 mt-0.5">
+                          1
+                        </span>
+                        <span>
+                          <strong>Buka Semua Jendela &amp; Pintu:</strong> Segera buat ventilasi agar gas keluar ke udara bebas.
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-2.5">
+                        <span className="w-5 h-5 rounded-full bg-[#EA580C] text-white font-extrabold text-[11px] flex items-center justify-center shrink-0 mt-0.5">
+                          2
+                        </span>
+                        <span>
+                          <strong>Matikan Kompor &amp; Lepas Regulator Gas:</strong> Jangan nyalakan saklar lampu atau korek api.
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-2.5">
+                        <span className="w-5 h-5 rounded-full bg-[#EA580C] text-white font-extrabold text-[11px] flex items-center justify-center shrink-0 mt-0.5">
+                          3
+                        </span>
+                        <span>
+                          <strong>Evakuasi Semua Orang:</strong> Segera bawa semua keluarga dan karyawan keluar ruangan ke tempat terbuka.
+                        </span>
+                      </li>
+                    </ol>
+                  </div>
 
-              {/* Dismiss Action Button */}
-              <div className="relative z-10 mt-8 pt-4 border-t border-red-950/40">
-                <button
-                  type="button"
-                  onClick={() => setIsDangerPopupOpen(false)}
-                  disabled={dangerPopupLoading}
-                  className="w-full py-4 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white font-black rounded-xl transition-all shadow-xl shadow-red-950/30 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
-                >
-                  Saya Mengerti & Mulai Evakuasi
-                </button>
-              </div>
+                  {/* AI Recommendation Box */}
+                  <div className="p-4 rounded-2xl bg-[#F8FAFC] border border-slate-200 space-y-1.5">
+                    <span className="text-[11px] font-extrabold text-[#0284C7] uppercase tracking-wider block">
+                      Analisis &amp; Rekomendasi Asisten AI:
+                    </span>
+                    {dangerPopupLoading ? (
+                      <div className="py-4 flex items-center gap-2 text-xs text-[#475569] font-semibold">
+                        <Brain className="w-4 h-4 text-[#0284C7] animate-spin" />
+                        <span>Menyusun protokol evakuasi ruangan...</span>
+                      </div>
+                    ) : (
+                      <div className="max-h-[110px] overflow-y-auto custom-scrollbar text-xs text-[#0F172A] leading-relaxed">
+                        <p
+                          className="whitespace-pre-line"
+                          dangerouslySetInnerHTML={{
+                            __html: (
+                              dangerPopupRecommendation ||
+                              'Segera buka pintu dan jendela, matikan sumber gas, dan evakuasi penghuni ke area terbuka.'
+                            ).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* WhatsApp Emergency Contacts Box */}
+                  <div className="p-4 rounded-2xl bg-[#F0FDF4] border border-[#86EFAC] space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-extrabold text-[#14532D] uppercase tracking-wider">
+                        KONTAK WHATSAPP TANGGAP DARURAT:
+                      </span>
+                      <span className="text-[10px] font-mono bg-[#DCFCE7] text-[#15803D] px-2.5 py-0.5 rounded-full font-bold">
+                        {emergencyContacts.length} Kontak Terdaftar
+                      </span>
+                    </div>
+                    <div className="space-y-1.5 max-h-28 overflow-y-auto pr-1">
+                      {emergencyContacts.map((c, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between p-2.5 rounded-xl bg-white border border-slate-200 text-xs"
+                        >
+                          <div>
+                            <strong className="text-[#0F172A]">{c.name || `Kontak #${idx + 1}`}</strong>
+                            <span className="font-mono text-[#475569] ml-2">{c.phone}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => sendWhatsAppEmergency(c)}
+                            className="px-3 py-1 rounded-lg bg-[#16A34A] hover:bg-green-700 text-white font-bold text-[11px] cursor-pointer"
+                          >
+                            Kirim WA
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => sendWhatsAppEmergency(emergencyContacts[0])}
+                      className="w-full py-3 rounded-xl bg-[#16A34A] hover:bg-green-700 text-white font-extrabold text-xs transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+                    >
+                      <Phone className="w-4 h-4" />
+                      <span>Kirim Pesan Bahaya ke WhatsApp Kontak Utama</span>
+                    </button>
+                  </div>
+
+                  {/* Bottom Dismiss / Action Buttons */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setIsDangerPopupOpen(false)}
+                      className="py-3.5 px-4 rounded-xl bg-[#0F172A] hover:bg-slate-800 text-white font-extrabold text-xs transition-all cursor-pointer"
+                    >
+                      Langkah Selesai &amp; Tutup Peringatan
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => sendWhatsAppEmergency(emergencyContacts[0])}
+                      className="py-3.5 px-4 rounded-xl bg-[#EA580C] hover:bg-orange-700 text-white font-extrabold text-xs transition-all cursor-pointer"
+                    >
+                      Minta Bantuan ke Orang Terdekat
+                    </button>
+                  </div>
+                </div>
+              )}
             </motion.div>
           </div>
         )}
@@ -1714,83 +2412,78 @@ export default function Dashboard() {
       <AnimatePresence>
         {showReactivationPopup && (
           <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
-            {/* Blur Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowReactivationPopup(false)}
-              className="absolute inset-0 bg-[#070202]/85 backdrop-blur-md pointer-events-auto"
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm pointer-events-auto"
             />
 
-            {/* Modal Container */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 30 }}
+              initial={{ opacity: 0, scale: 0.94, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 30 }}
-              transition={{ duration: 0.35, ease: "easeOut" }}
-              className="w-full max-w-md border rounded-[2.5rem] p-8 relative overflow-hidden shadow-2xl flex flex-col justify-between"
-              style={{
-                background: 'var(--cs-surface)',
-                borderColor: 'var(--cs-border)'
-              }}
+              exit={{ opacity: 0, scale: 0.94, y: 20 }}
+              transition={{ duration: 0.25 }}
+              className="w-full max-w-md bg-white border border-slate-200 rounded-3xl p-7 relative overflow-hidden shadow-2xl flex flex-col justify-between"
             >
-              {/* Close Button */}
               <button
+                type="button"
                 onClick={() => setShowReactivationPopup(false)}
-                className="absolute top-6 right-6 p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                className="absolute top-5 right-5 p-2 rounded-xl hover:bg-slate-100 text-[#475569] hover:text-[#0F172A] transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="relative z-10 space-y-6 text-left">
-                {/* Title Bar */}
-                <div className="flex items-center gap-3 border-b border-zinc-800 pb-4">
-                  <div className="w-10 h-10 bg-red-950/30 border border-red-500/30 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <Wifi className="w-5 h-5 text-red-400 animate-pulse" />
+              <div className="relative z-10 space-y-5 text-left">
+                <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
+                  <div className="w-10 h-10 bg-[#E0F2FE] border border-[#0284C7]/30 rounded-xl flex items-center justify-center shrink-0 text-[#0284C7]">
+                    <Wifi className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-md font-bold text-white uppercase font-sans tracking-tight">
-                      Panduan Reaktivasi Alat
+                    <h3 className="text-base font-extrabold text-[#0F172A]">
+                      Panduan Menyambungkan Alat ke WiFi
                     </h3>
-                    <p className="text-[9px] font-mono text-[var(--cs-amber)] uppercase tracking-wider mt-0.5">CarbonSense Onboarding Flow</p>
+                    <p className="text-[10px] font-mono text-[#0284C7] uppercase tracking-wider font-bold">
+                      Langkah Mudah Aktivasi Perangkat
+                    </p>
                   </div>
                 </div>
 
-                {/* Step Display */}
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={activationStep}
-                    initial={{ opacity: 0, x: 20 }}
+                    initial={{ opacity: 0, x: 15 }}
                     animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.35 }}
-                    className="space-y-4 min-h-[150px] flex flex-col justify-between"
+                    exit={{ opacity: 0, x: -15 }}
+                    transition={{ duration: 0.25 }}
+                    className="space-y-3 min-h-[140px] flex flex-col justify-between"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="p-3.5 rounded-2xl border bg-black/40" style={{ borderColor: 'var(--cs-border)' }}>
+                    <div className="flex items-center gap-3.5">
+                      <div className="p-3 rounded-2xl border border-[#BAE6FD] bg-[#F0F9FF]">
                         {activationSteps[activationStep].icon}
                       </div>
                       <div>
-                        <h4 className="text-sm font-bold text-white uppercase tracking-tight">
+                        <h4 className="text-sm font-extrabold text-[#0F172A]">
                           {activationSteps[activationStep].title}
                         </h4>
-                        <span className="text-[9px] font-mono text-zinc-500">Langkah {activationStep + 1} dari {activationSteps.length}</span>
+                        <span className="text-[11px] font-mono text-[#475569]">
+                          Langkah {activationStep + 1} dari {activationSteps.length}
+                        </span>
                       </div>
                     </div>
-                    <p className="text-xs text-[var(--cs-text-dim)] leading-relaxed">
+                    <p className="text-xs text-[#475569] leading-relaxed">
                       {activationSteps[activationStep].desc}
                     </p>
                   </motion.div>
                 </AnimatePresence>
 
-                {/* Navigation buttons */}
-                <div className="flex items-center justify-between pt-4 border-t border-zinc-800">
+                <div className="flex items-center justify-between pt-4 border-t border-slate-200">
                   <button
                     type="button"
                     onClick={() => setActivationStep(prev => Math.max(0, prev - 1))}
                     disabled={activationStep === 0}
-                    className="px-4 py-1.5 border border-zinc-800 rounded-lg text-xs font-bold text-zinc-500 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                    className="px-4 py-2 border border-slate-300 rounded-xl text-xs font-bold text-[#475569] hover:text-[#0F172A] disabled:opacity-40 disabled:pointer-events-none transition-colors cursor-pointer"
                   >
                     Sebelumnya
                   </button>
@@ -1798,18 +2491,15 @@ export default function Dashboard() {
                     <button
                       type="button"
                       onClick={() => setActivationStep(prev => prev + 1)}
-                      className="px-4 py-1.5 bg-[var(--cs-amber)] hover:brightness-110 text-black font-bold rounded-lg text-xs transition-all active:scale-95 cursor-pointer"
+                      className="px-5 py-2 bg-[#0284C7] hover:bg-[#0369A1] text-white font-extrabold rounded-xl text-xs transition-all cursor-pointer"
                     >
                       Lanjut
                     </button>
                   ) : (
                     <button
                       type="button"
-                      onClick={() => {
-                        setShowReactivationPopup(false);
-                        window.location.reload();
-                      }}
-                      className="px-4 py-1.5 bg-[var(--cs-amber)] hover:brightness-110 text-black font-bold rounded-lg text-xs transition-all active:scale-95 cursor-pointer font-sans"
+                      onClick={() => setShowReactivationPopup(false)}
+                      className="px-5 py-2 bg-[#16A34A] hover:bg-green-700 text-white font-extrabold rounded-xl text-xs transition-all cursor-pointer"
                     >
                       Saya Mengerti
                     </button>
@@ -1821,11 +2511,15 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
+      <footer className="py-5 text-center text-xs text-[#475569] border-t border-slate-200 bg-white">
+        CarbonSense — Sistem Pemantauan Keamanan Udara &amp; Gas Real-time
+      </footer>
+
       <style>{`
-         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-         .custom-scrollbar::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
-       `}</style>
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+      `}</style>
     </div>
   );
 }

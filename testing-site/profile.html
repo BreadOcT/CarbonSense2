@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profil & Keamanan Akun - CarbonSense</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body class="bg-[#F0F9FF] text-[#0F172A] font-sans min-h-screen flex flex-col justify-between grid-backdrop">
+
+  <!-- Header -->
+  <header class="w-full border-b border-slate-200 bg-white/90 backdrop-blur-md shadow-sm">
+    <div class="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+      <a href="dashboard.html" class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-[#0284C7] flex items-center justify-center font-bold text-white shadow-md shadow-[#0284C7]/25">
+          <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <span class="font-display text-2xl tracking-wider text-[#0F172A]">CarbonSense</span>
+      </a>
+
+      <div class="flex items-center gap-4 text-xs">
+        <a href="dashboard.html" class="text-[#475569] hover:text-[#0284C7] border border-slate-200 bg-white px-3.5 py-1.5 rounded-xl font-semibold transition">
+          &larr; Dasbor Utama
+        </a>
+        <a href="settings.html" class="text-[#475569] hover:text-[#0284C7] font-semibold">Pengaturan AI</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 max-w-4xl w-full mx-auto p-6 my-8 space-y-6">
+    
+    <!-- Profile Info Card -->
+    <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200 mb-8">
+        <div class="flex items-center gap-4">
+          <div class="w-16 h-16 rounded-3xl bg-[#0284C7] text-white flex items-center justify-center font-display text-3xl font-bold shadow-md shadow-[#0284C7]/25">
+            <span id="profile-avatar-initial">S</span>
+          </div>
+          <div>
+            <h1 class="text-2xl font-bold text-[#0F172A] font-display tracking-wider" id="profile-display-name">Salman Al-Farisi</h1>
+            <p class="text-xs text-[#475569]" id="profile-display-email">user@carbonsense.id</p>
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#DCFCE7] text-[#16A34A] border border-[#16A34A]/30 text-[10px] font-bold mt-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#16A34A]"></span>
+              <span>Akun Pengguna Terverifikasi</span>
+            </div>
+          </div>
+        </div>
+
+        <button onclick="handleLogout()" class="px-4 py-2 rounded-xl text-xs font-bold text-[#DC2626] bg-[#FEF2F2] hover:bg-[#FEE2E2] border border-[#DC2626]/30 self-start sm:self-auto transition">
+          Keluar dari Sesi
+        </button>
+      </div>
+
+      <!-- Update Username Form -->
+      <form id="profile-form" class="space-y-4 mb-8">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-[#0284C7]">Informasi Pribadi</h2>
+        
+        <div id="profile-alert" class="hidden p-3 rounded-xl bg-[#DCFCE7] border border-[#16A34A]/30 text-[#16A34A] font-semibold text-xs"></div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase text-[#475569] mb-1.5">Nama Lengkap</label>
+            <input 
+              type="text" 
+              id="user-fullname" 
+              required 
+              class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-[#0F172A] text-sm focus:outline-none focus:border-[#0284C7]"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase text-[#475569] mb-1.5">Alamat Email (Permanen)</label>
+            <input 
+              type="email" 
+              id="user-email" 
+              disabled 
+              class="w-full px-4 py-2.5 rounded-xl bg-[#F9FAFB] border border-slate-200 text-[#475569] text-sm cursor-not-allowed font-mono"
+            />
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary px-6 py-2.5 rounded-xl text-xs font-bold shadow-md shadow-[#0284C7]/20">
+          Simpan Pembaruan Nama
+        </button>
+      </form>
+
+      <!-- Change Password Section -->
+      <form id="password-form" class="space-y-4 pt-6 border-t border-slate-200">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-[#0284C7]">Ubah Kata Sandi</h2>
+
+        <div id="password-alert" class="hidden p-3 rounded-xl text-xs"></div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase text-[#475569] mb-1.5">Kata Sandi Lama</label>
+            <input 
+              type="password" 
+              id="old-password" 
+              required 
+              placeholder="••••••••" 
+              class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-[#0F172A] text-sm focus:outline-none focus:border-[#0284C7]"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase text-[#475569] mb-1.5">Kata Sandi Baru (Min. 5 Karakter)</label>
+            <input 
+              type="password" 
+              id="new-password" 
+              required 
+              placeholder="••••••••" 
+              class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-[#0F172A] text-sm focus:outline-none focus:border-[#0284C7]"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase text-[#475569] mb-1.5">Konfirmasi Sandi Baru</label>
+            <input 
+              type="password" 
+              id="confirm-password" 
+              required 
+              placeholder="••••••••" 
+              class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-[#0F172A] text-sm focus:outline-none focus:border-[#0284C7]"
+            />
+          </div>
+        </div>
+
+        <button type="submit" class="btn-secondary px-6 py-2.5 rounded-xl text-xs font-bold">
+          Ubah Kata Sandi
+        </button>
+      </form>
+
+    </div>
+
+    <!-- Emergency Safety Readiness Card -->
+    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-lg">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-[#DCFCE7] text-[#16A34A] flex items-center justify-center">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-[#16A34A]">Daftar Kontak WhatsApp Peringatan Bahaya</h3>
+            <p class="text-[11px] text-[#475569]">Kontak yang akan menerima pesan otomatis jika terjadi kebocoran gas</p>
+          </div>
+        </div>
+        <a href="settings.html" class="text-xs text-[#0284C7] font-bold hover:underline">
+          Kelola Kontak &rarr;
+        </a>
+      </div>
+
+      <div id="profile-contacts-container" class="space-y-2 text-xs">
+        <!-- Dynamically rendered list of all contacts -->
+      </div>
+    </div>
+
+    <!-- Account Reset & Danger Zone -->
+    <div class="bg-white p-6 rounded-3xl border border-[#DC2626]/30 shadow-sm">
+      <h3 class="text-xs font-bold uppercase tracking-wider text-[#DC2626] mb-2">Zona Pembersihan Sesi Pengujian</h3>
+      <p class="text-xs text-[#475569] mb-4">
+        Hapus seluruh data riwayat telemetri, kuesioner onboarding, dan tautan perangkat lokal untuk menguji alur mulai dari pengguna baru.
+      </p>
+
+      <button onclick="resetUserData()" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#FEE2E2] text-[#DC2626] border border-[#DC2626]/30 hover:bg-red-200 transition">
+        Reset Data Sesi & Mulai Ulang
+      </button>
+    </div>
+
+  </main>
+
+  <footer class="py-6 text-center text-xs text-[#475569] border-t border-slate-200 bg-white">
+    CarbonSense Decoupled Testing Site &bull; Account Security
+  </footer>
+
+  <script src="assets/js/mock-data.js"></script>
+  <script src="assets/js/testing-nav.js"></script>
+  <script>
+    function loadProfile() {
+      const user = window.MockStore.getUser() || { username: 'Salman Al-Farisi', email: 'user@carbonsense.id' };
+      document.getElementById('profile-display-name').textContent = user.username;
+      document.getElementById('profile-display-email').textContent = user.email;
+      document.getElementById('user-fullname').value = user.username;
+      document.getElementById('user-email').value = user.email;
+      document.getElementById('profile-avatar-initial').textContent = (user.username || 'S').charAt(0).toUpperCase();
+
+      // Load Emergency Contacts List
+      const contacts = window.MockStore.getEmergencyContacts();
+      const contContainer = document.getElementById('profile-contacts-container');
+      if (contContainer) {
+        contContainer.innerHTML = '';
+        contacts.forEach((c, idx) => {
+          const row = document.createElement('div');
+          row.className = 'p-3 rounded-2xl bg-[#F9FAFB] border border-slate-200 flex items-center justify-between';
+          row.innerHTML = `
+            <div>
+              <strong class="text-[#0F172A] text-sm">${idx + 1}. ${c.name || 'Kontak'}</strong>
+              <span class="text-[#475569] font-mono text-xs ml-3">${c.phone}</span>
+            </div>
+            <span class="px-2 py-0.5 rounded text-[10px] bg-[#DCFCE7] text-[#16A34A] font-bold">Aktif</span>
+          `;
+          contContainer.appendChild(row);
+        });
+      }
+    }
+
+    document.getElementById('profile-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const newName = document.getElementById('user-fullname').value.trim();
+      if (!newName) {
+        alert('Nama tidak boleh kosong.');
+        return;
+      }
+
+      const user = window.MockStore.getUser() || {};
+      user.username = newName;
+      window.MockStore.setUser(user);
+
+      const alertBox = document.getElementById('profile-alert');
+      alertBox.textContent = 'Nama profil Anda berhasil diperbarui!';
+      alertBox.classList.remove('hidden');
+      loadProfile();
+      setTimeout(() => alertBox.classList.add('hidden'), 3000);
+    });
+
+    document.getElementById('password-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const oldPw = document.getElementById('old-password').value;
+      const newPw = document.getElementById('new-password').value;
+      const confirmPw = document.getElementById('confirm-password').value;
+      const alertBox = document.getElementById('password-alert');
+
+      if (newPw.length < 5) {
+        alertBox.className = 'p-3 rounded-xl text-xs bg-red-500/10 border border-red-500/30 text-red-300';
+        alertBox.textContent = 'Password baru harus minimal 5 karakter.';
+        alertBox.classList.remove('hidden');
+        return;
+      }
+
+      if (newPw !== confirmPw) {
+        alertBox.className = 'p-3 rounded-xl text-xs bg-red-500/10 border border-red-500/30 text-red-300';
+        alertBox.textContent = 'Konfirmasi password tidak cocok dengan password baru.';
+        alertBox.classList.remove('hidden');
+        return;
+      }
+
+      alertBox.className = 'p-3 rounded-xl text-xs bg-emerald-500/10 border border-emerald-500/30 text-emerald-450';
+      alertBox.textContent = 'Kata sandi berhasil diperbarui!';
+      alertBox.classList.remove('hidden');
+      document.getElementById('old-password').value = '';
+      document.getElementById('new-password').value = '';
+      document.getElementById('confirm-password').value = '';
+      setTimeout(() => alertBox.classList.add('hidden'), 3000);
+    });
+
+    function handleLogout() {
+      if (confirm('Keluar dari sesi akun saat ini?')) {
+        window.MockStore.logoutUser();
+        window.location.href = 'login.html';
+      }
+    }
+
+    function resetUserData() {
+      if (confirm('Reset seluruh data simulasi pengujian ke kondisi awal?')) {
+        window.MockStore.resetAll();
+        window.location.href = 'index.html';
+      }
+    }
+
+    loadProfile();
+  </script>
+</body>
+</html>
+

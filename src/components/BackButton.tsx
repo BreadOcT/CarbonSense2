@@ -21,17 +21,14 @@ export default function BackButton() {
             navigate(-1);
           }
         }} 
-        className="fixed bottom-6 lg:bottom-10 left-6 lg:left-10 z-[100] p-4 rounded-full text-[var(--cs-text-dim)] transition-all flex items-center justify-center group shadow-xl border cursor-pointer"
-        style={{
-          background: 'var(--cs-surface)',
-          borderColor: 'var(--cs-border)',
-        }}
+        className="fixed bottom-6 lg:bottom-10 left-6 lg:left-10 z-[100] p-4 rounded-full text-[#475569] hover:text-[#0284C7] bg-white border border-slate-200 transition-all flex items-center justify-center group shadow-lg cursor-pointer"
         whileHover={{
-          borderColor: 'var(--cs-amber)',
-          color: 'var(--cs-amber)',
-          boxShadow: '0 0 15px -4px var(--cs-amber-glow)',
+          borderColor: '#0284C7',
+          color: '#0284C7',
+          boxShadow: '0 8px 20px -4px rgba(2, 132, 199, 0.25)',
           y: -2
         }}
+        title="Kembali ke Halaman Sebelumnya"
       >
         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
       </motion.button>

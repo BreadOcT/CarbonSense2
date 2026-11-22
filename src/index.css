@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400&family=Roboto:wght@400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto:wght@400;500;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
 @import 'tailwindcss';
 
@@ -16,6 +16,8 @@ body {
   box-sizing: border-box;
   overflow: auto;
   overscroll-behavior-x: none;
+  background-color: #F0F9FF;
+  color: #0F172A;
 }
 
 @theme inline {
@@ -62,72 +64,40 @@ body {
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(12% 0.012 60);
-  --foreground: oklch(92% 0.01 80);
-  --card: oklch(18% 0.015 60);
-  --card-foreground: oklch(92% 0.01 80);
-  --popover: oklch(18% 0.015 60);
-  --popover-foreground: oklch(92% 0.01 80);
-  --primary: oklch(74% 0.16 65);
-  --primary-foreground: oklch(12% 0.012 60);
-  --secondary: oklch(15% 0.013 60);
-  --secondary-foreground: oklch(92% 0.01 80);
-  --muted: oklch(15% 0.013 60);
-  --muted-foreground: oklch(62% 0.02 70);
-  --accent: oklch(15% 0.013 60);
-  --accent-foreground: oklch(74% 0.16 65);
-  --destructive: oklch(58% 0.22 25);
-  --border: oklch(25% 0.02 60);
-  --input: oklch(25% 0.02 60);
-  --ring: oklch(74% 0.16 65);
+  --background: #F0F9FF;
+  --foreground: #0F172A;
+  --card: #FFFFFF;
+  --card-foreground: #0F172A;
+  --popover: #FFFFFF;
+  --popover-foreground: #0F172A;
+  --primary: #0284C7;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F9FAFB;
+  --secondary-foreground: #0F172A;
+  --muted: #F9FAFB;
+  --muted-foreground: #475569;
+  --accent: #E0F2FE;
+  --accent-foreground: #0284C7;
+  --destructive: #DC2626;
+  --border: #E2E8F0;
+  --input: #CBD5E1;
+  --ring: #0284C7;
   
-  /* CarbonSense Custom Theme variables */
-  --cs-bg: oklch(12% 0.012 60);
-  --cs-surface: oklch(18% 0.015 60);
-  --cs-surface-2: oklch(15% 0.013 60);
-  --cs-amber: oklch(74% 0.16 65);
-  --cs-amber-glow: oklch(74% 0.16 65 / 0.55);
-  --cs-danger: oklch(58% 0.22 25);
-  --cs-danger-text: oklch(70% 0.19 30);
-  --cs-text: oklch(92% 0.01 80);
-  --cs-text-dim: oklch(62% 0.02 70);
-  --cs-border: oklch(25% 0.02 60);
+  /* CarbonSense Custom Ocean Blue Light Theme variables */
+  --cs-bg: #F0F9FF;
+  --cs-surface: #FFFFFF;
+  --cs-surface-2: #F9FAFB;
+  --cs-amber: #0284C7;
+  --cs-amber-glow: rgba(2, 132, 199, 0.25);
+  --cs-danger: #DC2626;
+  --cs-danger-text: #DC2626;
+  --cs-warning: #EA580C;
+  --cs-success: #16A34A;
+  --cs-text: #0F172A;
+  --cs-text-dim: #475569;
+  --cs-border: #E2E8F0;
   --font-display: 'Bebas Neue', sans-serif;
   --font-body: 'DM Sans', system-ui, sans-serif;
-}
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
 }
 
 @layer base {
@@ -166,11 +136,6 @@ img.broken-image-fallback {
   object-fit: none;
   object-position: center;
   animation: fadeIn 0.3s ease-in-out;
-}
-
-.dark img.broken-image-fallback {
-  background: #1f2937;
-  border-color: #374151;
 }
 
 @keyframes fadeIn {

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <title>Kalimat Pengantar & Kesimpulan - CarbonSense</title>
@@ -12,6 +13,7 @@
             margin: 40px;
             max-width: 800px;
         }
+
         h1 {
             font-size: 14pt;
             font-weight: bold;
@@ -20,6 +22,7 @@
             margin-bottom: 12pt;
             page-break-after: avoid;
         }
+
         h2 {
             font-size: 12pt;
             font-weight: bold;
@@ -28,24 +31,30 @@
             margin-bottom: 6pt;
             page-break-after: avoid;
         }
+
         p {
             text-align: justify;
             text-indent: 1.25cm;
             margin-top: 0;
             margin-bottom: 10pt;
         }
+
         p.no-indent {
             text-indent: 0 !important;
         }
-        ol, ul {
+
+        ol,
+        ul {
             margin-top: 0;
             margin-bottom: 10pt;
             padding-left: 24pt;
         }
+
         li {
             text-align: justify;
             margin-bottom: 8pt;
         }
+
         .instruction-box {
             background-color: #eef2ff;
             border-left: 4px solid #4f46e5;
@@ -54,6 +63,7 @@
             font-family: Arial, sans-serif;
             font-size: 11pt;
         }
+
         .section-separator {
             margin-top: 24pt;
             margin-bottom: 24pt;
@@ -62,75 +72,124 @@
         }
     </style>
 </head>
+
 <body>
 
     <div class="instruction-box">
         <strong>Petunjuk Salin-Tempel (Copy-Paste) ke Microsoft Word / Google Docs:</strong><br>
         1. Buka file HTML ini di browser (klik ganda file <code>Kesimpulan_dan_Pengantar.html</code>).<br>
-        2. Pilih bagian teks yang Anda butuhkan (atau Ctrl + A untuk memilih semuanya), lalu tekan <strong>Ctrl + C</strong>.<br>
+        2. Pilih bagian teks yang Anda butuhkan (atau Ctrl + A untuk memilih semuanya), lalu tekan <strong>Ctrl +
+            C</strong>.<br>
         3. Tempelkan ke dokumen Word/Google Docs Anda dengan menekan <strong>Ctrl + V</strong>.<br>
         4. Seluruh format font, ukuran heading, penjorokan paragraf, dan struktur daftar akan ter-copy dengan rapi.
     </div>
 
     <h1>1. Kalimat Pengantar Tabel Bab 2 (Perancangan Pengujian)</h1>
-    <p>Bab ini menjelaskan mengenai rancangan kasus uji (<i>test cases</i>) yang telah disusun secara sistematis oleh tim penguji untuk memvalidasi fungsionalitas sistem CarbonSense. Pengujian difokuskan pada skenario normal (<i>happy path</i>) maupun skenario pengecualian/kesalahan (<i>alternative/negative path</i>). Berikut merupakan tabel rancangan pengujian untuk masing-masing fungsionalitas:</p>
+    <p>Bab ini menjelaskan mengenai rancangan kasus uji (<i>test cases</i>) yang telah disusun secara sistematis oleh
+        tim penguji untuk memvalidasi fungsionalitas sistem CarbonSense. Pengujian difokuskan pada skenario normal
+        (<i>happy path</i>) maupun skenario pengecualian/kesalahan (<i>alternative/negative path</i>). Berikut merupakan
+        tabel rancangan pengujian untuk masing-masing fungsionalitas:</p>
 
     <ul style="list-style-type: square;">
-        <li>Rancangan pengujian untuk fungsionalitas Autentikasi (Login) Pengguna disajikan secara terperinci pada Tabel 2-1.</li>
-        <li>Kasus uji untuk fungsionalitas Registrasi Akun Baru dengan batasan validasi password dan keunikan email dipaparkan pada Tabel 2-2.</li>
-        <li>Tabel 2-3 memuat detail perancangan kasus uji untuk fungsionalitas pengisian kuesioner kesehatan wajib (Onboarding).</li>
-        <li>Skenario pengujian untuk memperbarui informasi data diri pada fungsionalitas Manajemen Profil Pengguna (Edit Profil) dirinci pada Tabel 2-4.</li>
-        <li>Rancangan pengujian fungsionalitas penautan perangkat IoT menggunakan metode pemindaian QR Code (QR Code Binding) dijabarkan pada Tabel 2-5.</li>
-        <li>Tabel 2-6 menyajikan skenario uji untuk memverifikasi proses fungsionalitas Aktivasi dan Reaktivasi Perangkat pemantau kualitas udara.</li>
-        <li>Kasus uji untuk menguji kelancaran interaksi tanya jawab dengan Gemini AI pada fungsionalitas Konsultasi Asisten Chat AI dipaparkan pada Tabel 2-7.</li>
-        <li>Skenario pengujian navigasi data log harian menggunakan pemilih tanggal pada fungsionalitas Navigasi Histori Tanggal (DatePicker &amp; Button Nav) dijabarkan pada Tabel 2-8.</li>
-        <li>Tabel 2-9 memuat perancangan kasus uji untuk memverifikasi keakuratan berkas unduhan PDF dan Excel pada fungsionalitas Ekspor Laporan.</li>
-        <li>Rancangan pengujian untuk fungsionalitas Pengaturan AI Assistant (Mode Sensitivitas Tinggi) terkait penurunan threshold PPM disajikan pada Tabel 2-10.</li>
-        <li>Skenario uji untuk memvalidasi keamanan hak akses administratif pada fungsionalitas Portal dan Autentikasi Admin dijabarkan pada Tabel 2-11.</li>
-        <li>Tabel 2-12 memaparkan kasus uji untuk pendaftaran perangkat baru dan pembuatan kode QR pada fungsionalitas Admin Dashboard.</li>
-        <li>Rancangan pengujian untuk memverifikasi penghapusan seluruh data sesi lokal pada fungsionalitas Autentikasi (Logout) disajikan pada Tabel 2-13.</li>
+        <li>Rancangan pengujian untuk fungsionalitas Autentikasi (Login) Pengguna disajikan secara terperinci pada Tabel
+            2-1.</li>
+        <li>Kasus uji untuk fungsionalitas Registrasi Akun Baru dengan batasan validasi password dan keunikan email
+            dipaparkan pada Tabel 2-2.</li>
+        <li>Tabel 2-3 memuat detail perancangan kasus uji untuk fungsionalitas pengisian kuesioner kesehatan wajib
+            (Onboarding).</li>
+        <li>Skenario pengujian untuk memperbarui informasi data diri pada fungsionalitas Manajemen Profil Pengguna (Edit
+            Profil) dirinci pada Tabel 2-4.</li>
+        <li>Rancangan pengujian fungsionalitas penautan perangkat IoT menggunakan metode pemindaian QR Code (QR Code
+            Binding) dijabarkan pada Tabel 2-5.</li>
+        <li>Tabel 2-6 menyajikan skenario uji untuk memverifikasi proses fungsionalitas Aktivasi dan Reaktivasi
+            Perangkat pemantau kualitas udara.</li>
+        <li>Kasus uji untuk menguji kelancaran interaksi tanya jawab dengan Gemini AI pada fungsionalitas Konsultasi
+            Asisten Chat AI dipaparkan pada Tabel 2-7.</li>
+        <li>Skenario pengujian navigasi data log harian menggunakan pemilih tanggal pada fungsionalitas Navigasi Histori
+            Tanggal (DatePicker &amp; Button Nav) dijabarkan pada Tabel 2-8.</li>
+        <li>Tabel 2-9 memuat perancangan kasus uji untuk memverifikasi keakuratan berkas unduhan PDF dan Excel pada
+            fungsionalitas Ekspor Laporan.</li>
+        <li>Rancangan pengujian untuk fungsionalitas Pengaturan AI Assistant (Mode Sensitivitas Tinggi) terkait
+            penurunan threshold PPM disajikan pada Tabel 2-10.</li>
+        <li>Skenario uji untuk memvalidasi keamanan hak akses administratif pada fungsionalitas Portal dan Autentikasi
+            Admin dijabarkan pada Tabel 2-11.</li>
+        <li>Tabel 2-12 memaparkan kasus uji untuk pendaftaran perangkat baru dan pembuatan kode QR pada fungsionalitas
+            Admin Dashboard.</li>
+        <li>Rancangan pengujian untuk memverifikasi penghapusan seluruh data sesi lokal pada fungsionalitas Autentikasi
+            (Logout) disajikan pada Tabel 2-13.</li>
     </ul>
 
     <div class="section-separator"></div>
 
     <h1>2. Kalimat Pengantar Tabel Bab 3 (Hasil Pengujian)</h1>
-    <p>Bab ini memaparkan hasil eksekusi pengujian otomatis (<i>automated testing</i>) yang telah dijalankan menggunakan Selenium IDE dan Selenium WebDriver. Setiap kasus uji dinilai berdasarkan kesesuaian antara hasil yang diharapkan dengan hasil aktual di lapangan. Berikut adalah tabel hasil eksekusi pengujian untuk masing-masing fungsionalitas:</p>
+    <p>Bab ini memaparkan hasil eksekusi pengujian otomatis (<i>automated testing</i>) yang telah dijalankan menggunakan
+        Selenium IDE dan Selenium WebDriver. Setiap kasus uji dinilai berdasarkan kesesuaian antara hasil yang
+        diharapkan dengan hasil aktual di lapangan. Berikut adalah tabel hasil eksekusi pengujian untuk masing-masing
+        fungsionalitas:</p>
 
     <ul style="list-style-type: square;">
         <li>Hasil pengujian fungsionalitas Autentikasi (Login) Pengguna dipaparkan pada Tabel 3-1.</li>
         <li>Tabel 3-2 menyajikan rangkuman hasil eksekusi uji fungsionalitas Registrasi Akun Baru.</li>
-        <li>Hasil pengujian fungsionalitas pengisian kuesioner kesehatan wajib (Onboarding) dijabarkan pada Tabel 3-3.</li>
+        <li>Hasil pengujian fungsionalitas pengisian kuesioner kesehatan wajib (Onboarding) dijabarkan pada Tabel 3-3.
+        </li>
         <li>Tabel 3-4 memuat laporan hasil eksekusi uji fungsionalitas Manajemen Profil Pengguna (Edit Profil).</li>
-        <li>Hasil pengujian fungsionalitas penautan perangkat IoT melalui parameter QR Code dipaparkan pada Tabel 3-5.</li>
+        <li>Hasil pengujian fungsionalitas penautan perangkat IoT melalui parameter QR Code dipaparkan pada Tabel 3-5.
+        </li>
         <li>Tabel 3-6 menyajikan status keberhasilan eksekusi uji fungsionalitas Aktivasi dan Reaktivasi Perangkat.</li>
-        <li>Laporan hasil pengujian respons asisten pintar pada fungsionalitas Konsultasi Asisten Chat AI dijabarkan pada Tabel 3-7.</li>
-        <li>Tabel 3-8 memuat hasil pengujian pemfilteran data kualitas udara pada fungsionalitas Navigasi Histori Tanggal.</li>
+        <li>Laporan hasil pengujian respons asisten pintar pada fungsionalitas Konsultasi Asisten Chat AI dijabarkan
+            pada Tabel 3-7.</li>
+        <li>Tabel 3-8 memuat hasil pengujian pemfilteran data kualitas udara pada fungsionalitas Navigasi Histori
+            Tanggal.</li>
         <li>Hasil eksekusi uji fungsionalitas pengunduhan file laporan data telemetri disajikan pada Tabel 3-9.</li>
-        <li>Tabel 3-10 menyajikan laporan pengujian fungsionalitas Pengaturan AI Assistant (Mode Sensitivitas Tinggi).</li>
-        <li>Hasil pengujian otentikasi admin pada fungsionalitas Portal dan Autentikasi Admin dipaparkan pada Tabel 3-11.</li>
-        <li>Tabel 3-12 menyajikan hasil eksekusi pengujian fungsionalitas pendaftaran alat baru pada Admin Dashboard.</li>
-        <li>Laporan hasil pengosongan status akhir sesi pada fungsionalitas Autentikasi (Logout) dijabarkan pada Tabel 3-13.</li>
+        <li>Tabel 3-10 menyajikan laporan pengujian fungsionalitas Pengaturan AI Assistant (Mode Sensitivitas Tinggi).
+        </li>
+        <li>Hasil pengujian otentikasi admin pada fungsionalitas Portal dan Autentikasi Admin dipaparkan pada Tabel
+            3-11.</li>
+        <li>Tabel 3-12 menyajikan hasil eksekusi pengujian fungsionalitas pendaftaran alat baru pada Admin Dashboard.
+        </li>
+        <li>Laporan hasil pengosongan status akhir sesi pada fungsionalitas Autentikasi (Logout) dijabarkan pada Tabel
+            3-13.</li>
     </ul>
 
     <div class="section-separator"></div>
 
     <h1>4 Kesimpulan</h1>
-    <p>Dari 38 pengujian fungsionalitas yang telah direncanakan dan dieksekusi secara otomatis menggunakan Selenium IDE dan Selenium WebDriver pada sistem pemantauan kualitas udara CarbonSense, seluruh 38 pengujian dinyatakan berhasil (<b>pass</b>) dengan persentase keberhasilan sebesar <b>100%</b>. Selama siklus pengujian berlangsung, tim penguji berfokus pada pengujian aspek fungsionalitas dasar seperti modul login dan registrasi, alur wajib pengisian kuesioner onboarding kesehatan, validasi parameter penautan perangkat (<i>QR Code Device Binding</i>), hingga sinkronisasi data sensor MQ135 secara real-time.</p>
-    
-    <p>Pada awal tahap pengembangan pengujian, tim penguji sempat mengidentifikasi beberapa <i>defect</i> penting, di antaranya adalah:</p>
-    <ol>
-        <li>Validasi batas panjang karakter registrasi akun (<i>username</i> dan <i>password</i>) yang belum terikat secara ketat.</li>
-        <li>Penautan perangkat fisik menggunakan tautan URL parameter (<code>login?device=...</code>) yang sempat menerima sembarang kode perangkat.</li>
-    </ol>
-    
-    <p>Namun, kendala tersebut telah berhasil diselesaikan secara tuntas. Saat ini, registrasi akun pengguna hanya dapat berhasil jika kata sandi diisi minimal 6 karakter. Sementara itu, untuk penautan alat lewat scan QR, sistem kini memvalidasi parameter <i>Device ID</i> secara ketat terhadap database admin; apabila parameter yang dikirim di luar dari yang didaftarkan oleh admin, halaman penautan secara otomatis dikosongkan demi mencegah terjadinya penautan ilegal.</p>
+    <p>Dari 38 pengujian fungsionalitas yang telah direncanakan dan dieksekusi secara otomatis menggunakan Selenium IDE
+        dan Selenium WebDriver pada sistem pemantauan kualitas udara CarbonSense, seluruh 38 pengujian dinyatakan
+        berhasil (<b>pass</b>) dengan persentase keberhasilan sebesar <b>100%</b>. Selama siklus pengujian berlangsung,
+        tim penguji berfokus pada pengujian aspek fungsionalitas dasar seperti modul login dan registrasi, alur wajib
+        pengisian kuesioner onboarding kesehatan, validasi parameter penautan perangkat (<i>QR Code Device Binding</i>),
+        hingga sinkronisasi data sensor MQ135 secara real-time.</p>
 
-    <p>Untuk pengembangan dan peningkatan sistem di masa mendatang, tim penguji memberikan beberapa saran perbaikan sebagai berikut:</p>
+    <p>Pada awal tahap pengembangan pengujian, tim penguji sempat mengidentifikasi beberapa <i>defect</i> penting, di
+        antaranya adalah:</p>
     <ol>
-        <li><strong>Peningkatan Manajemen State Pengguna</strong>: Disarankan untuk menambahkan animasi pemuatan (<i>skeleton loading state</i>) saat sistem menyinkronkan data parameter PPM kualitas udara dari database Supabase PostgreSQL ke dashboard frontend guna meningkatkan kenyamanan visual pengguna.</li>
-        <li><strong>Validasi Sisi Server (Backend Validation)</strong>: Perlu ditambahkan validasi skema yang lebih ketat pada lapisan backend (<i>database constraint</i>) untuk parameter penautan perangkat, sebagai proteksi lapis kedua selain pengosongan halaman pada antarmuka frontend.</li>
-        <li><strong>Mekanisme Penanganan Gangguan Sensor</strong>: Disarankan untuk menambahkan sistem peringatan berupa notifikasi surat elektronik (e-mail) otomatis kepada pengguna apabila status perangkat terdeteksi <i>Offline</i> atau tidak aktif selama lebih dari 12 jam berturut-turut.</li>
+        <li>Validasi batas panjang karakter registrasi akun (<i>username</i> dan <i>password</i>) yang belum terikat
+            secara ketat.</li>
+        <li>Penautan perangkat fisik menggunakan tautan URL parameter (<code>login?device=...</code>) yang sempat
+            menerima sembarang kode perangkat.</li>
+    </ol>
+
+    <p>Namun, kendala tersebut telah berhasil diselesaikan secara tuntas. Saat ini, registrasi akun pengguna hanya dapat
+        berhasil jika kata sandi diisi minimal 6 karakter. Sementara itu, untuk penautan alat lewat scan QR, sistem kini
+        memvalidasi parameter <i>Device ID</i> secara ketat terhadap database admin; apabila parameter yang dikirim di
+        luar dari yang didaftarkan oleh admin, halaman penautan secara otomatis dikosongkan demi mencegah terjadinya
+        penautan ilegal.</p>
+
+    <p>Untuk pengembangan dan peningkatan sistem di masa mendatang, tim penguji memberikan beberapa saran perbaikan
+        sebagai berikut:</p>
+    <ol>
+        <li><strong>Peningkatan Manajemen State Pengguna</strong>: Disarankan untuk menambahkan animasi pemuatan
+            (<i>skeleton loading state</i>) saat sistem menyinkronkan data parameter PPM kualitas udara dari database
+            Supabase PostgreSQL ke dashboard frontend guna meningkatkan kenyamanan visual pengguna.</li>
+        <li><strong>Validasi Sisi Server (Backend Validation)</strong>: Perlu ditambahkan validasi skema yang lebih
+            ketat pada lapisan backend (<i>database constraint</i>) untuk parameter penautan perangkat, sebagai proteksi
+            lapis kedua selain pengosongan halaman pada antarmuka frontend.</li>
+        <li><strong>Mekanisme Penanganan Gangguan Sensor</strong>: Disarankan untuk menambahkan sistem peringatan berupa
+            notifikasi surat elektronik (e-mail) otomatis kepada pengguna apabila status perangkat terdeteksi
+            <i>Offline</i> atau tidak aktif selama lebih dari 12 jam berturut-turut.</li>
     </ol>
 
 </body>
+
 </html>

@@ -1,11 +1,10 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ShieldAlert } from 'lucide-react';
+import { ShieldAlert, ArrowLeft } from 'lucide-react';
 import { api } from '../lib/api';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
-  const containerRef = useRef<HTMLDivElement>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -16,20 +15,10 @@ export default function AdminLogin() {
     localStorage.removeItem('cs_admin_email');
   }, []);
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      containerRef.current.style.setProperty('--mouse-x', `${x}px`);
-      containerRef.current.style.setProperty('--mouse-y', `${y}px`);
-    }
-  };
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      setError('Harap lengkapi semua kolom input.');
+      setError('Harap lengkapi ID Admin dan kata sandi.');
       return;
     }
 
@@ -38,10 +27,10 @@ export default function AdminLogin() {
 
     try {
       const response = await api.auth.adminLogin({ email, password });
-      
+
       localStorage.setItem('cs_admin_token', response.token);
       localStorage.setItem('cs_admin_email', response.user.email);
-      
+
       setLoading(false);
       navigate('/admin/dashboard');
     } catch (err: any) {
@@ -51,81 +40,91 @@ export default function AdminLogin() {
   };
 
   return (
-    <div 
-      ref={containerRef}
-      onMouseMove={handleMouseMove}
-      className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden pt-20"
-      style={{
-        background: 'var(--cs-bg)',
-        backgroundImage: `radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), oklch(74% 0.16 65 / 0.15), transparent 40%)`
-      }}
-    >
+    <div className="min-h-screen flex flex-col justify-between bg-[#F0F9FF] text-[#0F172A] font-sans">
       {/* Navigation Header */}
-      <header className="absolute top-0 left-0 right-0 z-50 border-b" style={{ background: 'color-mix(in oklab, var(--cs-bg) 80%, transparent)', borderColor: 'var(--cs-border)', backdropFilter: 'blur(8px)' }}>
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center border" style={{ background: 'color-mix(in oklab, var(--cs-amber) 12%, transparent)', borderColor: 'var(--cs-amber)' }}>
-              <ShieldAlert className="w-4 h-4 text-red-500" />
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center border border-[#0284C7]/30 bg-[#E0F2FE] text-[#0284C7]">
+              <ShieldAlert className="w-5 h-5" />
             </div>
-            <span className="font-bold tracking-wide text-lg text-white" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.04em' }}>CarbonSense Admin</span>
+            <div>
+              <span className="font-black tracking-tight text-base text-[#0F172A] block leading-none">
+                CARBONSENSE ADMIN
+              </span>
+              <span className="text-[10px] text-[#0284C7] font-mono uppercase tracking-widest font-bold">
+                PORTAL MANAJEMEN PERANGKAT
+              </span>
+            </div>
           </Link>
-          <Link to="/" className="text-xs uppercase tracking-widest font-semibold text-[var(--cs-text-dim)] hover:text-[var(--cs-amber)] transition-colors border px-4 py-2 rounded-xl" style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}>
+          <Link
+            to="/"
+            className="text-xs px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:border-[#0284C7] text-[#475569] hover:text-[#0284C7] transition-colors font-semibold flex items-center gap-1.5"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
             Kembali ke Beranda
           </Link>
         </div>
       </header>
-      {/* Grid background */}
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
 
-      <div className="relative z-10 w-full max-w-md p-8 backdrop-blur-xl border rounded-[2rem] shadow-2xl" style={{ background: 'var(--cs-surface)', borderColor: 'var(--cs-border)' }}>
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 border" style={{ background: 'rgba(239, 68, 68, 0.1)', borderColor: 'var(--cs-danger)' }}>
-            <ShieldAlert className="w-8 h-8" style={{ color: 'var(--cs-danger-text)' }} />
+      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 my-6">
+        <div className="w-full max-w-md p-8 bg-white border border-slate-200 rounded-3xl shadow-xl">
+          <div className="text-center mb-6">
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-[#0284C7]/30 bg-[#E0F2FE] text-[#0284C7]">
+              <ShieldAlert className="w-7 h-7" />
+            </div>
+            <h1 className="text-2xl font-extrabold text-[#0F172A]">Portal Administrator</h1>
+            <p className="text-xs text-[#475569] mt-1">Sistem Manajemen Perangkat &amp; Pengguna CarbonSense</p>
           </div>
-          <h1 className="text-2xl font-bold text-white font-sans" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.05em' }}>Admin Portal</h1>
-          <p className="text-sm text-[var(--cs-text-dim)] mt-2">Sistem Manajemen CarbonSense</p>
+
+          {error && (
+            <div className="mb-5 p-3.5 border border-[#FECACA] bg-[#FEF2F2] text-[#DC2626] rounded-xl text-xs font-semibold">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleLogin} className="space-y-4" noValidate>
+            <div>
+              <label className="block text-xs font-semibold text-[#475569] uppercase tracking-wider mb-1.5">
+                Admin ID / Email
+              </label>
+              <input
+                type="text"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-[#F9FAFB] border border-slate-300 text-sm text-[#0F172A] focus:outline-none focus:border-[#0284C7] focus:bg-white transition-colors"
+                placeholder="admin@carbonsense.id"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[#475569] uppercase tracking-wider mb-1.5">
+                Kata Sandi Admin
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-[#F9FAFB] border border-slate-300 text-sm text-[#0F172A] focus:outline-none focus:border-[#0284C7] focus:bg-white transition-colors"
+                placeholder="••••••••"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full py-3.5 mt-2 bg-[#0284C7] hover:bg-[#0369A1] text-white font-extrabold text-sm rounded-xl transition-all cursor-pointer shadow-lg shadow-[#0284C7]/25 ${
+                loading ? 'opacity-60' : 'active:scale-[0.99]'
+              }`}
+            >
+              {loading ? 'Memproses...' : 'Masuk ke Dashboard Admin ->'}
+            </button>
+          </form>
         </div>
+      </main>
 
-        {error && (
-          <div className="mb-6 p-4 border border-red-500 rounded-xl text-sm" style={{ background: 'rgba(239, 68, 68, 0.1)', borderColor: 'var(--cs-danger)', color: 'var(--cs-danger-text)' }}>
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleLogin} className="space-y-5" noValidate>
-          <div>
-            <label className="block text-xs font-medium text-[var(--cs-text-dim)] uppercase tracking-wider mb-2">Admin ID</label>
-            <input 
-              type="text" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl focus:outline-none transition-colors text-white border" 
-              style={{ background: 'rgba(0,0,0,0.3)', borderColor: 'var(--cs-border)' }}
-              placeholder="admin_xxx" 
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-[var(--cs-text-dim)] uppercase tracking-wider mb-2">Password</label>
-            <input 
-              type="password" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl focus:outline-none transition-colors text-white border" 
-              style={{ background: 'rgba(0,0,0,0.3)', borderColor: 'var(--cs-border)' }}
-              placeholder="••••••••" 
-            />
-          </div>
-
-          <button 
-            type="submit" 
-            disabled={loading}
-            className={`w-full py-4 mt-4 text-[#0c0a08] font-bold rounded-xl transition-all cursor-pointer hover:brightness-110 active:scale-95 shadow-md ${loading ? 'opacity-50' : ''}`}
-            style={{ background: 'var(--cs-amber)', boxShadow: '0 4px 15px -4px var(--cs-amber-glow)' }}
-          >
-            {loading ? 'Memproses...' : 'Akses Sistem'}
-          </button>
-        </form>
-      </div>
+      <footer className="py-5 text-center text-xs text-[#475569] border-t border-slate-200 bg-white">
+        CarbonSense — Portal Administrasi Perangkat IoT
+      </footer>
     </div>
   );
 }

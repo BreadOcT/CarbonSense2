@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CarbonSense - Monitoring IoT & Analitik AI Kualitas Udara</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <style>
+    :root {
+      --lp-bg-main: #F0F9FF;
+      --lp-bg-alt: #F9FAFB;
+      --lp-surface: #FFFFFF;
+      --lp-primary: #0284C7;
+      --lp-primary-hover: #0369A1;
+      --lp-text-main: #0F172A;
+      --lp-text-sec: #475569;
+      --lp-safe: #16A34A;
+      --lp-warn: #EA580C;
+      --lp-danger: #DC2626;
+    }
+
+    body.landing-palette {
+      background-color: var(--lp-bg-main) !important;
+      color: var(--lp-text-main) !important;
+    }
+
+    .lp-grid-backdrop {
+      background-image: radial-gradient(rgba(2, 132, 199, 0.12) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    .lp-btn-primary {
+      background-color: #0284C7;
+      color: #FFFFFF;
+      font-weight: 700;
+      transition: all 0.2s ease;
+    }
+
+    .lp-btn-primary:hover {
+      background-color: #0369A1;
+      box-shadow: 0 10px 20px -5px rgba(2, 132, 199, 0.35);
+      transform: translateY(-1px);
+    }
+
+    .lp-btn-secondary {
+      background-color: #FFFFFF;
+      color: #0F172A;
+      border: 1px solid #CBD5E1;
+      transition: all 0.2s ease;
+    }
+
+    .lp-btn-secondary:hover {
+      background-color: #F9FAFB;
+      border-color: #0284C7;
+      color: #0284C7;
+    }
+
+    .lp-card {
+      background-color: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.05);
+      transition: all 0.2s ease;
+    }
+
+    .lp-card:hover {
+      border-color: rgba(2, 132, 199, 0.45);
+      box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.1);
+    }
+  </style>
+</head>
+
+<body class="landing-palette bg-[#F0F9FF] text-[#0F172A] font-sans selection:bg-[#0284C7] selection:text-white">
+
+  <!-- Top Sticky Navigation Bar -->
+  <header class="fixed top-0 left-0 right-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur-md shadow-sm">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <!-- Logo -->
+      <a href="index.html" class="flex items-center gap-3 group">
+        <div
+          class="w-9 h-9 rounded-xl flex items-center justify-center bg-[#0284C7] shadow-md shadow-[#0284C7]/25 group-hover:scale-105 transition-transform">
+          <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <div class="flex flex-col">
+          <span class="font-display text-2xl tracking-wider text-[#0F172A]">CarbonSense</span>
+          <span class="text-[10px] uppercase font-bold tracking-widest text-[#0284C7] -mt-1">IoT & AI Safeguard</span>
+        </div>
+      </a>
+
+      <!-- Desktop Nav Links -->
+      <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-[#475569]">
+        <a href="#beranda" class="hover:text-[#0284C7] transition-colors">Beranda</a>
+        <a href="#fitur" class="hover:text-[#0284C7] transition-colors">Fitur Utama</a>
+        <a href="#cara-kerja" class="hover:text-[#0284C7] transition-colors">Alur Sistem</a>
+        <a href="#faq" class="hover:text-[#0284C7] transition-colors">FAQ</a>
+      </nav>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-3">
+        <a href="login.html"
+          class="px-4 py-2 rounded-xl text-sm font-semibold text-[#475569] hover:text-[#0284C7] hover:bg-[#F0F9FF] border border-slate-200 bg-white transition-all">
+          Masuk
+        </a>
+        <a href="register.html"
+          class="lp-btn-primary px-5 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-md shadow-[#0284C7]/20">
+          <span>Daftar / Mulai</span>
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </a>
+        <a href="admin-login.html"
+          class="hidden sm:inline-flex px-3 py-2 rounded-xl text-xs font-semibold text-[#DC2626] bg-[#FEF2F2] hover:bg-[#FEE2E2] border border-[#DC2626]/30 transition-all"
+          title="Portal Khusus Administrator">
+          Portal Admin
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section id="beranda" class="relative pt-32 pb-20 overflow-hidden lp-grid-backdrop bg-[#F0F9FF]">
+    <!-- Ambient Glow effects -->
+    <div
+      class="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#0284C7]/10 blur-[120px] rounded-full pointer-events-none">
+    </div>
+
+    <div class="max-w-7xl mx-auto px-6 relative z-10">
+      <div class="flex flex-col items-center text-center max-w-4xl mx-auto">
+
+        <!-- Live Hub Status Badge -->
+        <div
+          class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#16A34A]/30 bg-white text-[#16A34A] text-xs font-bold mb-6 tracking-wide shadow-sm">
+          <span class="w-2.5 h-2.5 rounded-full bg-[#16A34A] animate-ping"></span>
+          <span>Alat Pendeteksi Gas Aktif & Terhubung</span>
+        </div>
+
+        <!-- Main Heading -->
+        <h1
+          class="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-[#0F172A] mb-6 uppercase leading-tight font-display">
+          Solusi Deteksi Kebocoran Gas & Udara <span class="text-[#0284C7]">Untuk
+            Tempat Usaha & Rumah</span>
+        </h1>
+
+        <p class="text-lg md:text-xl text-[#475569] max-w-2xl mb-10 leading-relaxed font-normal">
+          Pantau potensi kebocoran tabung gas, asap, dan polusi udara secara otomatis. Dilengkapi alarm suara dan pesan peringatan darurat via WhatsApp ke nomor Anda.
+        </p>
+
+        <!-- CTA Buttons -->
+        <div class="flex flex-wrap items-center justify-center gap-4 mb-16">
+          <a href="register.html"
+            class="lp-btn-primary px-8 py-3.5 rounded-2xl text-base font-bold flex items-center gap-2 shadow-lg shadow-[#0284C7]/25">
+            <span>Uji Coba Registrasi Akun</span>
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </a>
+          <a href="dashboard.html"
+            class="lp-btn-secondary px-8 py-3.5 rounded-2xl text-base font-semibold flex items-center gap-2 shadow-sm">
+            <svg class="w-5 h-5 text-[#0284C7]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            <span>Buka Dashboard Langsung</span>
+          </a>
+        </div>
+
+        <!-- Interactive Live Preview Card -->
+        <div
+          class="w-full max-w-3xl bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xl relative overflow-hidden">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-4 mb-6">
+            <div class="flex items-center gap-3">
+              <span class="w-3 h-3 rounded-full bg-[#16A34A] animate-pulse"></span>
+              <span class="font-mono text-xs uppercase tracking-wider text-[#475569]">Alat Aktif: <strong
+                  class="text-[#0F172A]">CS-ESP32-LIVING-01</strong></span>
+            </div>
+            <span
+              class="text-xs px-3 py-1 rounded-full bg-[#DCFCE7] text-[#16A34A] border border-[#16A34A]/30 font-bold">
+              Koneksi Stabil
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 items-center">
+            <!-- PPM Gauge -->
+            <div
+              class="sm:col-span-1 flex flex-col items-center justify-center p-5 rounded-2xl bg-[#F9FAFB] border border-slate-200">
+              <span class="text-xs uppercase tracking-widest text-[#475569] font-semibold mb-1">Konsentrasi Gas</span>
+              <div class="text-5xl font-display text-[#16A34A] tracking-wider my-1" id="hero-preview-ppm">425</div>
+              <span class="text-xs font-mono text-[#475569]">PPM (Kadar Gas di Udara)</span>
+              <div
+                class="mt-3 px-3 py-1 rounded-full text-xs font-bold bg-[#DCFCE7] text-[#16A34A] border border-[#16A34A]/30"
+                id="hero-preview-status">
+                Status: Normal & Aman
+              </div>
+            </div>
+
+            <!-- AI Insight Preview -->
+            <div
+              class="sm:col-span-2 text-left p-5 rounded-2xl bg-[#F9FAFB] border border-slate-200 flex flex-col justify-between h-full">
+              <div>
+                <div class="flex items-center gap-2 text-[#0284C7] text-xs font-bold uppercase tracking-wider mb-2">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <span>Petunjuk Keselamatan Udara</span>
+                </div>
+                <p class="text-sm text-[#475569] leading-relaxed" id="hero-preview-advice">
+                  Sirkulasi udara di Ruang Keluarga berjalan optimal. Tidak terdeteksi konsentrasi gas berbahaya, kondisi aman untuk seluruh penghuni.
+                </p>
+              </div>
+
+              <!-- Live Simulator buttons -->
+              <div class="mt-4 pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs">
+                <span class="text-[#475569] font-semibold">Simulasikan lonjakan:</span>
+                <div class="flex items-center gap-2">
+                  <button onclick="simulateHero(425, 'Normal')"
+                    class="px-3 py-1.5 rounded-lg bg-white hover:bg-[#DCFCE7]/50 text-[#16A34A] border border-[#16A34A]/40 font-bold transition shadow-sm">Aman</button>
+                  <button onclick="simulateHero(850, 'Waspada')"
+                    class="px-3 py-1.5 rounded-lg bg-white hover:bg-[#FFEDD5]/60 text-[#EA580C] border border-[#EA580C]/40 font-bold transition shadow-sm">Waspada</button>
+                  <button onclick="simulateHero(1280, 'Bahaya')"
+                    class="px-3 py-1.5 rounded-lg bg-white hover:bg-[#FEE2E2]/60 text-[#DC2626] border border-[#DC2626]/40 font-bold transition shadow-sm">Bahaya</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- 4-Step Process Section -->
+  <section id="cara-kerja" class="py-24 border-t border-slate-200 bg-[#F9FAFB]">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="text-center max-w-3xl mx-auto mb-16">
+        <span class="text-xs uppercase font-bold tracking-widest text-[#0284C7]">Alur Pengoperasian Terpadu</span>
+        <h2 class="text-3xl sm:text-4xl font-bold text-[#0F172A] mt-2 font-display tracking-wider">
+          Dari Perakitan Alat Hingga Proteksi Otomatis AI
+        </h2>
+        <p class="text-[#475569] mt-3 text-sm sm:text-base">
+          Pengalaman tanpa hambatan yang menghubungkan mikrokontroler fisik Anda dengan analitik awan real-time.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <!-- Step 1 -->
+        <div class="lp-card p-6 rounded-2xl relative group">
+          <div class="text-4xl font-display text-slate-300 group-hover:text-[#0284C7] transition-colors mb-3">01
+          </div>
+          <h3 class="text-lg font-bold text-[#0F172A] mb-2">Pasang & Daftarkan</h3>
+          <p class="text-xs text-[#475569] leading-relaxed mb-4">
+            Sambungkan modul ESP32 + MQ-135 ke catu daya dan WiFi. Registrasikan ID alat melalui pemindaian QR Code atau
+            kode unik.
+          </p>
+          <a href="select-device.html"
+            class="text-xs font-bold text-[#0284C7] hover:underline inline-flex items-center gap-1">
+            Lihat Antarmuka Perangkat &rarr;
+          </a>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="lp-card p-6 rounded-2xl relative group">
+          <div class="text-4xl font-display text-slate-300 group-hover:text-[#0284C7] transition-colors mb-3">02
+          </div>
+          <h3 class="text-lg font-bold text-[#0F172A] mb-2">Pengaturan Ruangan & Kontak WA</h3>
+          <p class="text-xs text-[#475569] leading-relaxed mb-4">
+            Jawab pertanyaan singkat tentang kondisi ruangan, sumber gas kompor, serta daftar kontak WhatsApp darurat.
+          </p>
+          <a href="onboarding.html"
+            class="text-xs font-bold text-[#0284C7] hover:underline inline-flex items-center gap-1">
+            Uji Onboarding AI &rarr;
+          </a>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="lp-card p-6 rounded-2xl relative group">
+          <div class="text-4xl font-display text-slate-300 group-hover:text-[#0284C7] transition-colors mb-3">03
+          </div>
+          <h3 class="text-lg font-bold text-[#0F172A] mb-2">Aliran Telemetri Langsung</h3>
+          <p class="text-xs text-[#475569] leading-relaxed mb-4">
+            Sensor mengirimkan pembacaan PPM setiap saat ke sistem. Nikmati visualisasi grafik tren interaktif dan
+            diagnostik jaringan.
+          </p>
+          <a href="dashboard.html"
+            class="text-xs font-bold text-[#0284C7] hover:underline inline-flex items-center gap-1">
+            Buka Dasbor Telemetri &rarr;
+          </a>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="lp-card p-6 rounded-2xl relative group">
+          <div class="text-4xl font-display text-slate-300 group-hover:text-[#DC2626] transition-colors mb-3">04
+          </div>
+          <h3 class="text-lg font-bold text-[#0F172A] mb-2">Alarm Visual & Mitigasi</h3>
+          <p class="text-xs text-[#475569] leading-relaxed mb-4">
+            Ketika level gas melewati batas kritis (&gt;1000 PPM), alarm sirene visual menyala lengkap dengan anjuran
+            kedaruratan dari Deepseek AI.
+          </p>
+          <button onclick="triggerTestAlarmFromLanding()"
+            class="text-xs font-bold text-[#DC2626] hover:underline inline-flex items-center gap-1">
+            Simulasikan Alarm Bahaya &rarr;
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Grid -->
+  <section id="fitur" class="py-24 border-t border-slate-200 bg-[#F0F9FF]">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="text-center max-w-3xl mx-auto mb-16">
+        <span class="text-xs uppercase font-bold tracking-widest text-[#0284C7]">Fitur & Arsitektur</span>
+        <h2 class="text-3xl sm:text-4xl font-bold text-[#0F172A] mt-2 font-display tracking-wider">
+          Kekuatan Penuh Platform CarbonSense
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Feature 1 -->
+        <div class="lp-card p-8 rounded-3xl">
+          <div
+            class="w-12 h-12 rounded-2xl bg-[#E0F2FE] text-[#0284C7] flex items-center justify-center mb-6 border border-[#0284C7]/20">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-[#0F172A] mb-3">Multi-Gas Sensor MQ-135</h3>
+          <p class="text-[#475569] text-sm leading-relaxed">
+            Mendeteksi berbagai gas berbahaya termasuk CO2, CO (karbon monoksida), amonia, sulfat, asap pekat, dan
+            senyawa organik volatil (VOC) di udara.
+          </p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="lp-card p-8 rounded-3xl">
+          <div
+            class="w-12 h-12 rounded-2xl bg-[#DCFCE7] text-[#16A34A] flex items-center justify-center mb-6 border border-[#16A34A]/20">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-[#0F172A] mb-3">Deepseek AI Safety Engine</h3>
+          <p class="text-[#475569] text-sm leading-relaxed">
+            Model cerdas yang memproses profil risiko penghuni secara adaptif, menghasilkan rekomendasi pencegahan
+            sebelum gas mencapai titik toksik mematikan.
+          </p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="lp-card p-8 rounded-3xl">
+          <div
+            class="w-12 h-12 rounded-2xl bg-[#FFEDD5] text-[#EA580C] flex items-center justify-center mb-6 border border-[#EA580C]/20">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-[#0F172A] mb-3">Ekspor Laporan PDF & Excel</h3>
+          <p class="text-[#475569] text-sm leading-relaxed">
+            Simpan dan unduh log historis lengkap untuk dokumentasi kepatuhan keselamatan kerja (K3), inspeksi bangunan,
+            atau riwayat kesehatan lingkungan.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section id="faq" class="py-20 border-t border-slate-200 bg-[#F9FAFB]">
+    <div class="max-w-4xl mx-auto px-6">
+      <div class="text-center mb-12">
+        <span class="text-xs uppercase font-bold tracking-widest text-[#0284C7]">Bantuan & Informasi</span>
+        <h2 class="text-3xl font-bold text-[#0F172A] mt-1 font-display tracking-wider">Pertanyaan yang Sering Diajukan</h2>
+      </div>
+
+      <div class="space-y-4">
+        <details class="lp-card p-5 rounded-2xl cursor-pointer group">
+          <summary class="font-bold text-[#0F172A] flex justify-between items-center text-sm sm:text-base">
+            <span>Apa yang dimaksud dengan nilai PPM pada sensor?</span>
+            <span class="text-[#0284C7] text-xl font-bold group-open:rotate-45 transition-transform">+</span>
+          </summary>
+          <p class="text-[#475569] text-sm mt-3 leading-relaxed">
+            PPM adalah singkatan dari <em>Parts Per Million</em> (bagian per sejuta), satuan standar untuk mengukur konsentrasi
+            gas di udara. Nilai di bawah 600 PPM tergolong normal, 600–1000 PPM memerlukan peningkatan ventilasi, dan di
+            atas 1000 PPM memerlukan evakuasi cepat.
+          </p>
+        </details>
+
+        <details class="lp-card p-5 rounded-2xl cursor-pointer group">
+          <summary class="font-bold text-[#0F172A] flex justify-between items-center text-sm sm:text-base">
+            <span>Apakah saya bisa menguji seluruh alur tanpa menyambungkan ESP32 fisik?</span>
+            <span class="text-[#0284C7] text-xl font-bold group-open:rotate-45 transition-transform">+</span>
+          </summary>
+          <p class="text-[#475569] text-sm mt-3 leading-relaxed">
+            Ya! Testing site ini dibuat 100% mandiri (<em>decoupled</em>). Anda dapat menggunakan tombol <strong>Panel Pengujian</strong> di pojok kanan bawah untuk menguji skenario gas bocor, peringatan waspada, perangkat
+            offline, hingga manajemen inventori admin.
+          </p>
+        </details>
+
+        <details class="lp-card p-5 rounded-2xl cursor-pointer group">
+          <summary class="font-bold text-[#0F172A] flex justify-between items-center text-sm sm:text-base">
+            <span>Bagaimana cara mendaftarkan hardware sensor baru?</span>
+            <span class="text-[#0284C7] text-xl font-bold group-open:rotate-45 transition-transform">+</span>
+          </summary>
+          <p class="text-[#475569] text-sm mt-3 leading-relaxed">
+            Administrator dapat mendaftarkan ID alat melalui halaman <strong>Admin Dashboard</strong>, yang secara
+            otomatis membuat kode QR unik. Pengguna cukup memindai kode QR tersebut atau memasukkan Device ID di halaman
+            <strong>Pilih Perangkat</strong>.
+          </p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-200 py-12 bg-white text-[#475569] text-xs">
+    <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
+      <div class="flex items-center gap-3">
+        <div class="w-7 h-7 rounded-lg bg-[#E0F2FE] text-[#0284C7] flex items-center justify-center font-bold">CS
+        </div>
+        <span class="text-[#0F172A] font-bold">CarbonSense Testing Site (Standalone Decoupled Prototype)</span>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-6 font-medium">
+        <a href="index.html" class="hover:text-[#0284C7]">Beranda</a>
+        <a href="login.html" class="hover:text-[#0284C7]">Login User</a>
+        <a href="dashboard.html" class="hover:text-[#0284C7]">Dashboard</a>
+        <a href="settings.html" class="hover:text-[#0284C7]">Pengaturan AI</a>
+        <a href="admin-dashboard.html" class="hover:text-[#0284C7]">Admin Panel</a>
+      </div>
+
+      <p class="text-[#475569]">&copy; 2026 Tim Pengembang CarbonSense IoT. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="assets/js/mock-data.js"></script>
+  <script src="assets/js/testing-nav.js"></script>
+  <script>
+    function simulateHero(ppm, status) {
+      const ppmEl = document.getElementById('hero-preview-ppm');
+      const statusEl = document.getElementById('hero-preview-status');
+      const adviceEl = document.getElementById('hero-preview-advice');
+
+      ppmEl.textContent = ppm;
+
+      if (ppm < 600) {
+        ppmEl.className = 'text-5xl font-display text-[#16A34A] tracking-wider my-1';
+        statusEl.className = 'mt-3 px-3 py-1 rounded-full text-xs font-bold bg-[#DCFCE7] text-[#16A34A] border border-[#16A34A]/30';
+        statusEl.textContent = 'Status: Normal & Aman';
+        adviceEl.textContent = 'Sirkulasi udara di Ruang Keluarga berjalan optimal. Tidak terdeteksi konsentrasi gas berbahaya, aman untuk seluruh penghuni.';
+      } else if (ppm < 1000) {
+        ppmEl.className = 'text-5xl font-display text-[#EA580C] tracking-wider my-1';
+        statusEl.className = 'mt-3 px-3 py-1 rounded-full text-xs font-bold bg-[#FFEDD5] text-[#EA580C] border border-[#EA580C]/40';
+        statusEl.textContent = 'Status: Waspada (Ventilasi Diperlukan)';
+        adviceEl.textContent = 'Peningkatan konsentrasi gas terdeteksi. Buka jendela segera untuk mempercepat sirkulasi udara segar.';
+      } else {
+        ppmEl.className = 'text-5xl font-display text-[#DC2626] tracking-wider my-1';
+        statusEl.className = 'mt-3 px-3 py-1 rounded-full text-xs font-bold bg-[#FEE2E2] text-[#DC2626] border border-[#DC2626]/40 animate-pulse';
+        statusEl.textContent = 'Status: BAHAYA DARURAT!';
+        adviceEl.textContent = 'Kadar gas melampaui batas kritis! Segera matikan sumber api/gas dan evakuasi seluruh penghuni ruangan ke area terbuka.';
+      }
+
+      if (window.MockStore) {
+        window.MockStore.setSimPpm(ppm);
+      }
+    }
+
+    function triggerTestAlarmFromLanding() {
+      if (window.MockStore) {
+        window.MockStore.setSimPpm(1320);
+        window.MockStore.setSimStatus('Bahaya');
+      }
+      window.location.href = 'dashboard.html';
+    }
+
+    window.onTelemetryUpdate = function (ppm) {
+      simulateHero(ppm);
+    };
+
+    if (window.MockStore) {
+      simulateHero(window.MockStore.getSimPpm());
+    }
+  </script>
+</body>
+
+</html>

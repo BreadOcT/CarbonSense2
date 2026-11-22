@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pilih Perangkat Monitor - CarbonSense</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body class="bg-[#F0F9FF] text-[#0F172A] font-sans min-h-screen flex flex-col justify-between grid-backdrop">
+
+  <!-- Header -->
+  <header class="w-full border-b border-slate-200 bg-white/90 backdrop-blur-md shadow-sm">
+    <div class="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-[#0284C7] flex items-center justify-center font-bold text-white shadow-md shadow-[#0284C7]/25">
+          <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <span class="font-display text-2xl tracking-wider text-[#0F172A]">CarbonSense</span>
+      </a>
+
+      <div class="flex items-center gap-4 text-xs">
+        <span class="text-[#475569] hidden sm:inline">Masuk sebagai: <strong id="header-user-email" class="text-[#0284C7]">user@carbonsense.id</strong></span>
+        <a href="onboarding.html" class="text-[#475569] hover:text-[#0284C7] border border-slate-200 bg-white px-3 py-1.5 rounded-lg font-semibold transition">
+          Konfigurasi AI
+        </a>
+        <a href="login.html" class="text-[#DC2626] font-bold hover:underline">Keluar</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 max-w-4xl w-full mx-auto p-6 my-8">
+    <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl">
+      
+      <!-- Title section -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200 mb-8">
+        <div>
+          <div class="flex items-center gap-2 text-[#0284C7] text-xs font-bold uppercase tracking-wider mb-1">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+            </svg>
+            <span>Hardware Registry</span>
+          </div>
+          <h1 class="text-2xl sm:text-3xl font-bold text-[#0F172A] font-display tracking-wider">
+            Pilih Perangkat Sensor Anda
+          </h1>
+          <p class="text-xs text-[#475569] mt-1">
+            Pilih alat yang ingin Anda buka secara aktif pada panel monitoring dashboard
+          </p>
+        </div>
+
+        <button 
+          type="button" 
+          onclick="openBindModal()" 
+          class="btn-secondary px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 self-start sm:self-auto"
+        >
+          <svg class="w-4 h-4 text-[#0284C7]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>Tautkan Alat Baru / Scan QR</span>
+        </button>
+      </div>
+
+      <!-- User Identification Section -->
+      <div class="bg-[#F9FAFB] p-5 rounded-2xl border border-slate-200 mb-8">
+        <label class="block text-xs font-bold uppercase tracking-wider text-[#475569] mb-2">
+          Nama Lengkap Pemilik / Pengenal Akun
+        </label>
+        <div class="flex gap-3">
+          <input 
+            type="text" 
+            id="input-username" 
+            placeholder="Contoh: Salman Al-Farisi" 
+            class="flex-1 px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-[#0F172A] text-sm focus:outline-none focus:border-[#0284C7] transition"
+          />
+          <button 
+            type="button" 
+            onclick="saveUsername()" 
+            class="px-4 py-2.5 rounded-xl text-xs font-bold bg-[#E0F2FE] hover:bg-[#0284C7] hover:text-white text-[#0284C7] border border-[#0284C7]/30 transition"
+          >
+            Simpan Nama
+          </button>
+        </div>
+      </div>
+
+      <!-- Error alert -->
+      <div id="device-select-error" class="hidden mb-6 p-4 rounded-xl bg-[#FEE2E2] border border-[#DC2626]/30 text-[#DC2626] font-medium text-xs"></div>
+
+      <!-- Device List -->
+      <div class="mb-8">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-bold uppercase tracking-wider text-[#0F172A]">Daftar Perangkat Terhubung:</h2>
+          <span class="text-xs text-[#475569] font-semibold" id="device-count-badge">2 Perangkat</span>
+        </div>
+
+        <div id="devices-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Dynamically populated devices -->
+        </div>
+      </div>
+
+      <!-- Action Footer -->
+      <div class="flex items-center justify-between pt-6 border-t border-slate-200">
+        <a href="onboarding.html" class="text-xs font-semibold text-[#475569] hover:text-[#0284C7]">
+          &larr; Ubah Kuesioner Ruangan
+        </a>
+
+        <button 
+          type="button" 
+          onclick="proceedToDashboard()" 
+          class="btn-primary px-8 py-3.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg shadow-[#0284C7]/25"
+        >
+          <span>Buka Dashboard Monitoring</span>
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+          </svg>
+        </button>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Modal Tautkan Alat Baru / Scan QR -->
+  <div id="bind-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="w-full max-w-md bg-white p-6 rounded-3xl border border-slate-200 shadow-2xl relative">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 mb-5">
+        <h3 class="text-lg font-bold text-[#0F172A] font-display tracking-wider">Tautkan Alat Hardware</h3>
+        <button onclick="closeBindModal()" class="text-[#475569] hover:text-[#0F172A] text-xl font-bold">&times;</button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase text-[#475569] mb-1.5">ID Perangkat Fisik (Label Stiker)</label>
+          <input 
+            type="text" 
+            id="new-device-id" 
+            placeholder="Contoh: CS-ESP32-BEDROOM-03" 
+            class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-[#0F172A] text-sm uppercase focus:outline-none focus:border-[#0284C7]"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase text-[#475569] mb-1.5">Nama Lokasi Penempatan</label>
+          <input 
+            type="text" 
+            id="new-device-loc" 
+            placeholder="Contoh: Kamar Anak / Lantai 2" 
+            class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-[#0F172A] text-sm focus:outline-none focus:border-[#0284C7]"
+          />
+        </div>
+
+        <!-- Simulated QR Scan Option -->
+        <div class="p-4 rounded-xl bg-[#F0F9FF] border border-[#0284C7]/25 text-center">
+          <div class="text-xs font-semibold text-[#475569] mb-2">Atau Gunakan Simulasi Pindai QR Code:</div>
+          <button 
+            type="button" 
+            onclick="simulateQrScan()" 
+            class="px-4 py-2 rounded-lg bg-[#E0F2FE] text-[#0284C7] border border-[#0284C7]/30 text-xs font-bold hover:bg-[#0284C7] hover:text-white transition flex items-center justify-center gap-2 mx-auto"
+          >
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+            </svg>
+            <span>Simulasikan Scan Kamera QR</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-5 border-t border-slate-200 mt-6">
+        <button type="button" onclick="closeBindModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-[#475569] hover:text-[#0F172A]">Batal</button>
+        <button type="button" onclick="submitBindDevice()" class="btn-primary px-5 py-2 rounded-xl text-xs font-bold">Tautkan Sekarang</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="py-6 text-center text-xs text-[#475569] border-t border-slate-200 bg-white">
+    CarbonSense Decoupled Testing Site &bull; IoT Hardware Management
+  </footer>
+
+  <script src="assets/js/mock-data.js"></script>
+  <script src="assets/js/testing-nav.js"></script>
+  <script>
+    let selectedDeviceId = window.MockStore.getActiveDeviceId();
+
+    function initPage() {
+      const user = window.MockStore.getUser();
+      if (user) {
+        document.getElementById('header-user-email').textContent = user.email || 'user@carbonsense.id';
+        document.getElementById('input-username').value = user.username || 'Salman Al-Farisi';
+      }
+      renderDevices();
+    }
+
+    function renderDevices() {
+      const devices = window.MockStore.getDevices();
+      const container = document.getElementById('devices-container');
+      container.innerHTML = '';
+
+      document.getElementById('device-count-badge').textContent = `${devices.length} Perangkat Terdaftar`;
+
+      devices.forEach(dev => {
+        const isSelected = (dev.id === selectedDeviceId);
+        let badgeColor = 'bg-[#DCFCE7] text-[#16A34A] border-[#16A34A]/30';
+        if (dev.status === 'Warning') badgeColor = 'bg-[#FFEDD5] text-[#EA580C] border-[#EA580C]/30';
+        if (dev.status === 'Offline') badgeColor = 'bg-slate-200 text-[#475569] border-slate-300';
+
+        const card = document.createElement('div');
+        card.className = `p-5 rounded-2xl border cursor-pointer transition-all ${
+          isSelected 
+            ? 'bg-[#E0F2FE] border-[#0284C7] shadow-md ring-1 ring-[#0284C7]' 
+            : 'bg-[#F9FAFB] border-slate-200 hover:border-[#0284C7]/50 hover:bg-white'
+        }`;
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between mb-3">
+            <div>
+              <div class="font-mono text-xs font-bold ${isSelected ? 'text-[#0284C7]' : 'text-[#475569]'}">${dev.id}</div>
+              <div class="text-sm font-bold text-[#0F172A] mt-0.5">${dev.location || 'Ruangan Sensor'}</div>
+            </div>
+            <span class="px-2.5 py-1 rounded-md text-[11px] font-bold border ${badgeColor}">
+              ${dev.status}
+            </span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 text-xs text-[#475569] pt-3 border-t border-slate-200">
+            <div>PPM Terakhir: <strong class="text-[#0F172A]">${dev.ppm || 0} PPM</strong></div>
+            <div>Firmware: <span class="font-mono text-[#0F172A]">${dev.firmware || 'v2.4.1'}</span></div>
+          </div>
+
+          <div class="mt-4 flex items-center justify-between text-xs pt-2">
+            <span class="text-[11px] text-[#475569]">Aktif: ${dev.lastActive}</span>
+            <span class="font-bold ${isSelected ? 'text-[#0284C7]' : 'text-[#475569]'}">
+              ${isSelected ? 'Terpilih untuk Dipantau' : 'Pilih Alat Ini'}
+            </span>
+          </div>
+        `;
+
+        card.onclick = () => {
+          selectedDeviceId = dev.id;
+          window.MockStore.setActiveDeviceId(dev.id);
+          window.MockStore.setSimPpm(dev.ppm || 425);
+          window.MockStore.setSimStatus(dev.status);
+          renderDevices();
+        };
+
+        container.appendChild(card);
+      });
+    }
+
+    function saveUsername() {
+      const name = document.getElementById('input-username').value.trim();
+      if (!name) {
+        alert('Nama tidak boleh kosong.');
+        return;
+      }
+      const user = window.MockStore.getUser() || {};
+      user.username = name;
+      window.MockStore.setUser(user);
+      alert('Nama pengguna berhasil diperbarui!');
+    }
+
+    function proceedToDashboard() {
+      const name = document.getElementById('input-username').value.trim();
+      const errEl = document.getElementById('device-select-error');
+      if (!name) {
+        errEl.textContent = 'Harap isi nama pengguna Anda.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+      if (!selectedDeviceId) {
+        errEl.textContent = 'Harap pilih minimal satu perangkat sensor untuk dibuka di Dashboard.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      window.MockStore.setActiveDeviceId(selectedDeviceId);
+      window.location.href = `dashboard.html?deviceId=${selectedDeviceId}`;
+    }
+
+    function openBindModal() {
+      document.getElementById('bind-modal').classList.remove('hidden');
+      document.getElementById('bind-modal').classList.add('flex');
+    }
+
+    function closeBindModal() {
+      document.getElementById('bind-modal').classList.add('hidden');
+      document.getElementById('bind-modal').classList.remove('flex');
+    }
+
+    function simulateQrScan() {
+      const mockIds = ['CS-ESP32-BEDROOM-03', 'CS-ESP32-GARAGE-05', 'CS-ESP32-BALCONY-06'];
+      const pick = mockIds[Math.floor(Math.random() * mockIds.length)];
+      document.getElementById('new-device-id').value = pick;
+      document.getElementById('new-device-loc').value = 'Ruangan Tambahan (Hasil Scan)';
+      alert(`Kode QR fisik berhasil dipindai: [${pick}]`);
+    }
+
+    function submitBindDevice() {
+      const devId = document.getElementById('new-device-id').value.trim().toUpperCase();
+      const devLoc = document.getElementById('new-device-loc').value.trim() || 'Ruangan Sensor';
+
+      if (!devId) {
+        alert('Harap isi ID Perangkat.');
+        return;
+      }
+
+      const devices = window.MockStore.getDevices();
+      if (devices.some(d => d.id === devId)) {
+        alert('Perangkat dengan ID ini sudah ada di daftar Anda.');
+        closeBindModal();
+        return;
+      }
+
+      devices.push({
+        id: devId,
+        user: document.getElementById('input-username').value.trim() || 'Salman Al-Farisi',
+        userEmail: window.MockStore.getUser()?.email || 'user@carbonsense.id',
+        status: 'Online',
+        ppm: 430,
+        lastActive: 'Baru saja',
+        location: devLoc,
+        temp: 27.2,
+        humidity: 60.0,
+        voc: 115,
+        firmware: 'v2.4.1-esp32'
+      });
+
+      window.MockStore.saveDevices(devices);
+      selectedDeviceId = devId;
+      window.MockStore.setActiveDeviceId(devId);
+      closeBindModal();
+      renderDevices();
+      alert(`Perangkat [${devId}] berhasil ditautkan!`);
+    }
+
+    initPage();
+
+    // ============================================================
+    // SIMPLE MODE — applied after initPage
+    // ============================================================
+    function applySimpleMode() {
+      if (!window.MockStore.isSimpleMode()) return;
+
+      // Hide advanced sections
+      const advancedIds = ['bind-modal'];
+      // Replace main content with simple version
+      const main = document.querySelector('main');
+      if (!main) return;
+
+      main.innerHTML = `
+        <div class="max-w-lg mx-auto bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-5 sm:space-y-6">
+
+          <!-- Greeting -->
+          <div class="text-center">
+            <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl sm:rounded-3xl bg-[#E0F2FE] border-2 border-[#0284C7]/30 flex items-center justify-center mx-auto mb-3">
+              <svg class="w-7 h-7 sm:w-8 sm:h-8 text-[#0284C7]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-bold text-[#0F172A] mb-1">Pilih Ruangan yang Dipantau</h1>
+            <p class="text-[#475569] text-xs sm:text-sm">Ketuk ruangan di tempat Anda untuk melihat kondisinya</p>
+          </div>
+
+          <!-- Simple device list -->
+          <div id="simple-devices-list" class="space-y-2.5 sm:space-y-3"></div>
+
+          <!-- Proceed button -->
+          <button
+            type="button"
+            onclick="simpleProceed()"
+            class="w-full py-3.5 sm:py-4 rounded-2xl bg-[#0284C7] hover:bg-[#0369A1] text-white text-base sm:text-lg font-bold shadow-lg shadow-[#0284C7]/25 transition flex items-center justify-center gap-2"
+          >
+            <span>Mulai Pantau Ruangan Ini</span>
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+          </button>
+
+          <p class="text-center text-xs text-[#475569]">
+            Tombol di atas akan membuka halaman pemantauan udara ruangan yang Anda pilih
+          </p>
+        </div>
+      `;
+
+      // Render simple device cards
+      const devices = window.MockStore.getDevices();
+      const listEl = document.getElementById('simple-devices-list');
+      let activeId = window.MockStore.getActiveDeviceId() || (devices[0] && devices[0].id);
+
+      function renderSimpleDevices() {
+        listEl.innerHTML = '';
+        devices.forEach(dev => {
+          const isSelected = (dev.id === activeId);
+          let statusColor = 'border-[#16A34A]/50 bg-[#DCFCE7]/40';
+          let iconBg = 'bg-[#DCFCE7]';
+          let statusIcon = `<svg class="w-6 h-6 sm:w-7 sm:h-7 text-[#16A34A]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`;
+          let statusText = 'Udara Bersih & Aman';
+          let statusTextColor = 'text-[#16A34A]';
+
+          if (dev.status === 'Warning' || dev.ppm >= 600) {
+            statusColor = 'border-[#EA580C]/50 bg-[#FFEDD5]/50';
+            iconBg = 'bg-[#FFEDD5]';
+            statusIcon = `<svg class="w-6 h-6 sm:w-7 sm:h-7 text-[#EA580C]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>`;
+            statusText = 'Perlu Diperhatikan';
+            statusTextColor = 'text-[#EA580C]';
+          }
+          if (dev.status === 'Offline') {
+            statusColor = 'border-slate-300 bg-[#F9FAFB]';
+            iconBg = 'bg-slate-200';
+            statusIcon = `<svg class="w-6 h-6 sm:w-7 sm:h-7 text-[#475569]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728M15.536 8.464a5 5 0 010 7.072M6.343 6.343a9 9 0 000 12.728M9.172 9.172a5 5 0 000 7.071"/></svg>`;
+            statusText = 'Alat Tidak Terhubung';
+            statusTextColor = 'text-[#475569]';
+          }
+
+          const card = document.createElement('button');
+          card.type = 'button';
+          card.className = `w-full p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border-2 ${statusColor} ${isSelected ? 'ring-2 sm:ring-4 ring-[#0284C7]/40 border-[#0284C7]' : ''} transition text-left active:scale-[0.99]`;
+          card.innerHTML = `
+            <div class="flex items-center gap-3 sm:gap-4">
+              <div class="shrink-0 p-2.5 rounded-xl ${iconBg}">${statusIcon}</div>
+              <div class="flex-1 min-w-0">
+                <div class="text-base sm:text-lg font-bold text-[#0F172A] truncate">${dev.location || 'Ruangan Sensor'}</div>
+                <div class="${statusTextColor} text-xs sm:text-sm font-bold mt-0.5">${statusText}</div>
+              </div>
+              ${isSelected ? '<div class="shrink-0 w-4 h-4 rounded-full bg-[#0284C7] ring-4 ring-[#0284C7]/20"></div>' : ''}
+            </div>
+          `;
+          card.onclick = () => {
+            activeId = dev.id;
+            window.MockStore.setActiveDeviceId(dev.id);
+            window.MockStore.setSimPpm(dev.ppm || 425);
+            window.MockStore.setSimStatus(dev.status);
+            renderSimpleDevices();
+          };
+          listEl.appendChild(card);
+        });
+      }
+
+      renderSimpleDevices();
+    }
+
+    function simpleProceed() {
+      const activeId = window.MockStore.getActiveDeviceId();
+      if (!activeId) {
+        alert('Silakan pilih dulu ruangan yang ingin dipantau.');
+        return;
+      }
+      window.location.href = 'dashboard.html';
+    }
+
+    applySimpleMode();
+  </script></body>
+</html>
+
