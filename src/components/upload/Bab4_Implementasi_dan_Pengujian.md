@@ -39,7 +39,6 @@ Rangkaian instruksi teknis langkah demi langkah yang dilakukan untuk memasang, m
    ```env
    PORT=5000
    DATABASE_URL=postgresql://postgres.xxx:xxx@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres
-   VITE_DEEPSEEK_API_KEY=sk-c9b32675151e40a6888f356a002975e9
    JWT_SECRET=gwehkerenjir
    ADMIN_ID=admin
    ADMIN_PASSWORD=admin123
