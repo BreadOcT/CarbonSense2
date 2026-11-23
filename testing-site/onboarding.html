@@ -144,10 +144,11 @@
             Ubah Pengaturan
           </button>
           <a 
-            href="select-device.html" 
+            id="onboarding-finish-link"
+            href="dashboard.html" 
             class="btn-primary px-8 py-3 rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-[#0284C7]/25"
           >
-            <span>Lanjut ke Pilih Alat</span>
+            <span>Simpan & Masuk ke Dashboard</span>
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
             </svg>
@@ -219,7 +220,16 @@
       { id: 'c-1', name: 'Penanggung Jawab / Keluarga', phone: '+6285694813059' }
     ];
 
-    // Load existing profile & contacts if available
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetDeviceId = urlParams.get('deviceId') || (window.MockStore ? window.MockStore.getActiveDeviceId() : 'CS-ESP32-LIVING-01');
+    const badgeEl = document.getElementById('wizard-badge');
+    if (badgeEl) {
+      badgeEl.textContent = `Pengaturan Ruangan (1x) untuk Alat: ${targetDeviceId}`;
+    }
+    const finishLink = document.getElementById('onboarding-finish-link');
+    if (finishLink) {
+      finishLink.href = `dashboard.html?deviceId=${encodeURIComponent(targetDeviceId)}`;
+    }
     if (window.MockStore) {
       const savedContacts = window.MockStore.getEmergencyContacts();
       if (Array.isArray(savedContacts) && savedContacts.length > 0) {
@@ -488,6 +498,15 @@
           window.MockStore.saveProfile(profileObj);
           window.MockStore.saveEmergencyContacts(emergencyContacts);
           window.MockStore.setOnboardingDone(true);
+          // Simpan khusus per device (1x onboarding per device)
+          localStorage.setItem(`cs_ai_personality_${targetDeviceId}`, JSON.stringify(profileObj));
+          localStorage.setItem(`cs_device_onboarding_completed_${targetDeviceId}`, 'true');
+          const devs = window.MockStore.getDevices();
+          const idx = devs.findIndex(d => d.id === targetDeviceId);
+          if (idx !== -1 && profileObj.lokasi) {
+            devs[idx].location = profileObj.lokasi;
+            window.MockStore.saveDevices(devs);
+          }
         }
 
         const summaryText = window.MockStore 

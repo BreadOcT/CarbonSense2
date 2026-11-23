@@ -113,12 +113,7 @@ export default function UserLogin() {
       }
 
       setLoading(false);
-
-      if (hasOnboarded) {
-        navigate('/select-device');
-      } else {
-        navigate('/onboarding');
-      }
+      navigate('/select-device');
     } catch (err: any) {
       setLoading(false);
       setError(err.message || 'Login gagal. Periksa kembali email dan kata sandi Anda.');

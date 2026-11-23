@@ -241,12 +241,8 @@
         joinDate: 'Baru saja'
       });
 
-      // Check onboarding state
-      if (!window.MockStore.isOnboardingDone()) {
-        window.location.href = 'onboarding.html';
-      } else {
-        window.location.href = 'dashboard.html';
-      }
+      // Langsung ke pilih alat (onboarding dilakukan 1x per device setelah pilih alat)
+      window.location.href = 'select-device.html';
     });
   </script>
 </body>

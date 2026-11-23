@@ -137,7 +137,7 @@
           type="submit" 
           class="w-full btn-primary py-3.5 rounded-xl font-bold text-sm tracking-wide shadow-lg shadow-[#0284C7]/20 mt-2"
         >
-          Daftar & Mulai Onboarding
+          Daftar & Pilih Alat Pemantau
         </button>
       </form>
 
@@ -248,11 +248,8 @@
         joinDate: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
       });
 
-      // Mark onboarding as not done so user enters the wizard
-      window.MockStore.setOnboardingDone(false);
-
-      // Transition to Onboarding
-      window.location.href = 'onboarding.html';
+      // Langsung ke pilih alat (onboarding dilakukan 1x per device setelah pilih alat)
+      window.location.href = 'select-device.html';
     });
   </script>
 </body>

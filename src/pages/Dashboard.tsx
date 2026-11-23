@@ -10,7 +10,7 @@ import {
   ArrowLeft, Settings as SettingsIcon, Download,
   Table, Brain, ShoppingCart, Info, Clock as ClockIcon, ShieldAlert,
   Maximize2, Minimize2, User, LogOut, Cpu, Cloud, Monitor, CheckCircle, XCircle, X,
-  Sparkles, Send, Plug, Wifi, Phone, Menu, Check
+  Sparkles, Send, Plug, Wifi, Phone, Menu, Check, MessageSquare, Plus, Trash2
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
@@ -32,6 +32,27 @@ interface EmergencyContact {
   name: string;
   phone: string;
 }
+
+interface ChatMessageItem {
+  sender: 'user' | 'ai';
+  text: string;
+  timestamp?: string;
+}
+
+interface ChatSession {
+  id: string;
+  deviceId: string;
+  roomName: string;
+  title: string;
+  createdAt: number;
+  updatedAt: number;
+  messages: ChatMessageItem[];
+}
+
+const DEFAULT_GREETING_MESSAGE: ChatMessageItem = {
+  sender: 'ai',
+  text: 'Halo! Saya adalah Asisten Keselamatan CarbonSense. Berdasarkan kondisi ruangan dan pembacaan alat saat ini, saya siap membantu Anda menjaga keamanan udara dan mencegah bahaya kebocoran gas.'
+};
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -94,15 +115,111 @@ export default function Dashboard() {
   const lastSyncedStatusRef = useRef<string | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [aiPersonality, setAiPersonality] = useState<any>(null);
-  const [chatMessages, setChatMessages] = useState<any[]>([
-    {
-      sender: 'ai',
-      text: 'Halo! Saya adalah Asisten Keselamatan CarbonSense. Berdasarkan kondisi ruangan dan pembacaan alat saat ini, saya siap membantu Anda menjaga keamanan udara dan mencegah bahaya kebocoran gas.'
-    }
-  ]);
+  const [chatMessages, setChatMessages] = useState<ChatMessageItem[]>([DEFAULT_GREETING_MESSAGE]);
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
+  const [activeChatSessionId, setActiveChatSessionId] = useState<string>('');
+  const [showChatHistory, setShowChatHistory] = useState<boolean>(false);
+  const [chatHistoryFilter, setChatHistoryFilter] = useState<'device' | 'all'>('device');
   const [isTyping, setIsTyping] = useState(false);
   const [customQuestion, setCustomQuestion] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const getChatStorageKey = () => {
+    const email = localStorage.getItem('cs_user_email') || 'guest';
+    return `cs_chat_sessions_${email}`;
+  };
+
+  const persistMessagesToSession = (messages: ChatMessageItem[], currentDevId: string, currentRoom: string) => {
+    // Only persist if there is at least one user message or emergency analysis beyond initial greeting
+    const hasMeaningfulContent = messages.length > 1;
+    if (!hasMeaningfulContent || !currentDevId) return;
+
+    const firstUserMsg = messages.find(m => m.sender === 'user')?.text;
+    const sessionTitle = firstUserMsg
+      ? firstUserMsg.length > 52
+        ? firstUserMsg.slice(0, 52) + '...'
+        : firstUserMsg
+      : 'Analisis Darurat & Keselamatan AI';
+
+    const storageKey = getChatStorageKey();
+    setChatSessions(prevSessions => {
+      const now = Date.now();
+      let targetId = activeChatSessionId;
+      let updated: ChatSession[];
+
+      if (targetId && prevSessions.some(s => s.id === targetId)) {
+        updated = prevSessions.map(s =>
+          s.id === targetId
+            ? {
+                ...s,
+                title: s.title === 'Percakapan Baru' ? sessionTitle : s.title,
+                roomName: currentRoom,
+                updatedAt: now,
+                messages
+              }
+            : s
+        );
+      } else {
+        targetId = `chat_${now}_${Math.random().toString(36).slice(2, 7)}`;
+        setActiveChatSessionId(targetId);
+        const newSession: ChatSession = {
+          id: targetId,
+          deviceId: currentDevId,
+          roomName: currentRoom,
+          title: sessionTitle,
+          createdAt: now,
+          updatedAt: now,
+          messages
+        };
+        updated = [newSession, ...prevSessions].slice(0, 50);
+      }
+
+      // Sort by most recent
+      updated.sort((a, b) => b.updatedAt - a.updatedAt);
+      localStorage.setItem(storageKey, JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const handleNewChatSession = () => {
+    const newId = `chat_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    setActiveChatSessionId(newId);
+    setChatMessages([
+      {
+        ...DEFAULT_GREETING_MESSAGE,
+        timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+      }
+    ]);
+    setShowChatHistory(false);
+  };
+
+  const handleSelectChatSession = (session: ChatSession) => {
+    setActiveChatSessionId(session.id);
+    setChatMessages(session.messages && session.messages.length > 0 ? session.messages : [DEFAULT_GREETING_MESSAGE]);
+    setShowChatHistory(false);
+  };
+
+  const handleDeleteChatSession = (sessionId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const storageKey = getChatStorageKey();
+    setChatSessions(prev => {
+      const filtered = prev.filter(s => s.id !== sessionId);
+      localStorage.setItem(storageKey, JSON.stringify(filtered));
+      return filtered;
+    });
+    if (activeChatSessionId === sessionId) {
+      setActiveChatSessionId('');
+      setChatMessages([DEFAULT_GREETING_MESSAGE]);
+    }
+  };
+
+  const handleClearAllChatHistory = () => {
+    const storageKey = getChatStorageKey();
+    setChatSessions([]);
+    localStorage.removeItem(storageKey);
+    setActiveChatSessionId('');
+    setChatMessages([DEFAULT_GREETING_MESSAGE]);
+  };
 
   const [, setConsecutiveDangerCount] = useState<number>(0);
   const [isDangerPopupOpen, setIsDangerPopupOpen] = useState<boolean>(false);
@@ -134,13 +251,20 @@ export default function Dashboard() {
         setChatMessages(prev => {
           const hasAlertMessage = prev.some(m => m.text.includes('ANALISIS DARURAT AI'));
           if (hasAlertMessage) return prev;
-          return [
+          const nextMsgs: ChatMessageItem[] = [
             ...prev,
             {
               sender: 'ai',
-              text: `**ANALISIS DARURAT AI (Kadar Gas Kritis):**\n\n${rec}`
+              text: `**ANALISIS DARURAT AI (Kadar Gas Kritis):**\n\n${rec}`,
+              timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
             }
           ];
+          persistMessagesToSession(
+            nextMsgs,
+            deviceId,
+            aiPersonalityRef.current?.lokasi || 'Ruangan Utama'
+          );
+          return nextMsgs;
         });
       })
       .catch(err => {
@@ -309,9 +433,63 @@ export default function Dashboard() {
     };
   }, [isDiagnosticOpen]);
 
-  // Load history when deviceId changes and fetch initial status from MySQL
+  // Load history and per-device room profile + chat history when deviceId changes
   useEffect(() => {
     if (!deviceId) return;
+
+    localStorage.setItem('cs_current_device_id', deviceId);
+
+    // Load per-device room profile
+    const email = localStorage.getItem('cs_user_email') || '';
+    const deviceProfileStr =
+      localStorage.getItem(`cs_ai_personality_${deviceId}`) ||
+      (email && localStorage.getItem(`cs_ai_personality_${email}`)) ||
+      localStorage.getItem('cs_ai_personality');
+
+    if (deviceProfileStr) {
+      try {
+        const parsedProf = JSON.parse(deviceProfileStr);
+        setAiPersonality(parsedProf);
+      } catch (e) {
+        console.error('Failed to parse device profile:', e);
+      }
+    }
+
+    const deviceContactsStr =
+      localStorage.getItem(`cs_emergency_contacts_${deviceId}`) ||
+      (email && localStorage.getItem(`cs_emergency_contacts_${email}`)) ||
+      localStorage.getItem('cs_emergency_contacts');
+
+    if (deviceContactsStr) {
+      try {
+        const parsedC = JSON.parse(deviceContactsStr);
+        if (Array.isArray(parsedC) && parsedC.length > 0) {
+          setEmergencyContacts(parsedC);
+        }
+      } catch (e) {
+        console.error('Failed to parse device emergency contacts:', e);
+      }
+    }
+
+    // Load user's saved chat sessions & restore most recent session for this device
+    const chatKey = `cs_chat_sessions_${email || 'guest'}`;
+    try {
+      const rawSessions = localStorage.getItem(chatKey);
+      const parsedSessions: ChatSession[] = rawSessions ? JSON.parse(rawSessions) : [];
+      if (Array.isArray(parsedSessions)) {
+        setChatSessions(parsedSessions);
+        const latestForDevice = parsedSessions.find(s => s.deviceId === deviceId);
+        if (latestForDevice && Array.isArray(latestForDevice.messages) && latestForDevice.messages.length > 0) {
+          setActiveChatSessionId(latestForDevice.id);
+          setChatMessages(latestForDevice.messages);
+        } else {
+          setActiveChatSessionId('');
+          setChatMessages([DEFAULT_GREETING_MESSAGE]);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load chat sessions:', e);
+    }
 
     isInitialCheckedRef.current = false;
     initialPingRef.current = null;
@@ -501,8 +679,11 @@ export default function Dashboard() {
   const handleAskAI = (questionText: string) => {
     if (!questionText.trim() || isTyping) return;
 
-    const updatedMessages = [...chatMessages, { sender: 'user', text: questionText }];
+    const timeNow = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    const userMsg: ChatMessageItem = { sender: 'user', text: questionText, timestamp: timeNow };
+    const updatedMessages = [...chatMessages, userMsg];
     setChatMessages(updatedMessages);
+    persistMessagesToSession(updatedMessages, deviceId, aiPersonality?.lokasi || 'Ruangan Utama');
     setIsTyping(true);
 
     setTimeout(async () => {
@@ -515,13 +696,25 @@ export default function Dashboard() {
           isDeviceOffline,
           updatedMessages
         );
-        setChatMessages(prev => [...prev, { sender: 'ai', text: aiResponse }]);
+        const replyTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        const finalMessages: ChatMessageItem[] = [
+          ...updatedMessages,
+          { sender: 'ai', text: aiResponse, timestamp: replyTime }
+        ];
+        setChatMessages(finalMessages);
+        persistMessagesToSession(finalMessages, deviceId, aiPersonality?.lokasi || 'Ruangan Utama');
       } catch (err) {
         console.error(err);
-        setChatMessages(prev => [
-          ...prev,
-          { sender: 'ai', text: 'Gagal memproses respons asisten AI.' }
-        ]);
+        const errMessages: ChatMessageItem[] = [
+          ...updatedMessages,
+          {
+            sender: 'ai',
+            text: 'Gagal memproses respons asisten AI.',
+            timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+          }
+        ];
+        setChatMessages(errMessages);
+        persistMessagesToSession(errMessages, deviceId, aiPersonality?.lokasi || 'Ruangan Utama');
       }
       setIsTyping(false);
     }, 800);
@@ -831,13 +1024,22 @@ export default function Dashboard() {
                 value={deviceId}
                 onChange={(e) => setDeviceId(e.target.value)}
                 aria-label="Pilih Perangkat"
-                className="ml-1 bg-[#F9FAFB] border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-[#0F172A] focus:outline-none focus:border-[#0284C7] max-w-[160px] sm:max-w-[220px] truncate cursor-pointer"
+                className="ml-1 bg-[#F9FAFB] border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-[#0F172A] focus:outline-none focus:border-[#0284C7] max-w-[160px] sm:max-w-[240px] truncate cursor-pointer"
               >
-                {activeDeviceIds.map(id => (
-                  <option key={id} value={id}>
-                    {id} ({roomName})
-                  </option>
-                ))}
+                {activeDeviceIds.map(id => {
+                  let devRoom = 'Ruangan Utama';
+                  try {
+                    const p = localStorage.getItem(`cs_ai_personality_${id}`);
+                    if (p) devRoom = JSON.parse(p).lokasi || devRoom;
+                  } catch {
+                    // ignore
+                  }
+                  return (
+                    <option key={id} value={id}>
+                      {id} ({id === deviceId ? roomName : devRoom})
+                    </option>
+                  );
+                })}
               </select>
             )}
           </div>
@@ -996,7 +1198,7 @@ export default function Dashboard() {
             {/* Desktop Nav Actions */}
             <div className="hidden lg:flex items-center gap-2">
               <Link
-                to="/settings"
+                to={deviceId ? `/settings?deviceId=${encodeURIComponent(deviceId)}` : '/settings'}
                 className="text-xs px-3 py-1.5 rounded-xl border border-slate-300 bg-white hover:border-[#0284C7] text-[#475569] hover:text-[#0284C7] transition-all font-semibold flex items-center gap-1.5"
               >
                 <SettingsIcon className="w-3.5 h-3.5" />
@@ -1567,9 +1769,9 @@ export default function Dashboard() {
                 </div>
 
                 {/* Asisten Saran Keselamatan (AI Assistant Widget) */}
-                <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-lg flex flex-col justify-between min-h-[460px]">
+                <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-lg flex flex-col justify-between min-h-[480px]">
                   {/* Header */}
-                  <div className="flex items-center justify-between border-b border-slate-200 pb-4 mb-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-4 mb-4">
                     <div className="flex items-center gap-3">
                       <div className="p-2.5 rounded-xl bg-[#E0F2FE] border border-[#0284C7]/30 flex items-center justify-center text-[#0284C7]">
                         <Brain className="w-5 h-5" />
@@ -1580,22 +1782,171 @@ export default function Dashboard() {
                           <span className="w-2 h-2 rounded-full bg-[#16A34A]" />
                         </h3>
                         <p className="text-[11px] text-[#475569]">
-                          Tanyakan saran menjaga udara tetap bersih atau langkah mengatasi bau gas
+                          Tanyakan saran menjaga udara tetap bersih atau lihat riwayat chat sebelumnya
                         </p>
                       </div>
                     </div>
-                    <div
-                      className={`px-3 py-1 rounded-lg border text-[10px] font-extrabold uppercase tracking-wider ${
-                        isAlert
-                          ? 'bg-[#FEF2F2] border-[#FECACA] text-[#DC2626]'
-                          : isWarning
-                          ? 'bg-[#FFF7ED] border-[#FED7AA] text-[#EA580C]'
-                          : 'bg-[#DCFCE7] border-[#86EFAC] text-[#16A34A]'
-                      }`}
-                    >
-                      {isAlert ? 'BAHAYA KRITIS' : isWarning ? 'WASPADA' : 'UDARA AMAN'}
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleNewChatSession}
+                        className="px-2.5 py-1.5 rounded-xl border border-slate-200 bg-[#F9FAFB] hover:border-[#0284C7] hover:text-[#0284C7] text-[#475569] text-[11px] font-bold flex items-center gap-1 transition-all cursor-pointer"
+                        title="Mulai Percakapan Baru"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Chat Baru</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowChatHistory(!showChatHistory)}
+                        className={`px-3 py-1.5 rounded-xl border text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                          showChatHistory
+                            ? 'bg-[#0284C7] border-[#0284C7] text-white shadow-sm'
+                            : 'bg-[#E0F2FE] border-[#0284C7]/30 text-[#0284C7] hover:bg-[#BAE6FD]'
+                        }`}
+                        title="Lihat Riwayat Chat Sebelumnya"
+                      >
+                        <History className="w-3.5 h-3.5" />
+                        <span>Riwayat Chat ({chatSessions.length})</span>
+                      </button>
                     </div>
                   </div>
+
+                  {/* Interactive Chat History Drawer/Panel */}
+                  <AnimatePresence>
+                    {showChatHistory && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="mb-4 overflow-hidden"
+                      >
+                        <div className="p-4 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] space-y-3 text-left">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <MessageSquare className="w-4 h-4 text-[#0284C7]" />
+                              <h4 className="text-xs font-extrabold text-[#0F172A] uppercase tracking-wider">
+                                Riwayat Percakapan dengan AI
+                              </h4>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => setChatHistoryFilter('device')}
+                                className={`px-2.5 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-all ${
+                                  chatHistoryFilter === 'device'
+                                    ? 'bg-[#0284C7] text-white'
+                                    : 'bg-white text-[#475569] border border-slate-200'
+                                }`}
+                              >
+                                Alat Ini ({chatSessions.filter(s => s.deviceId === deviceId).length})
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setChatHistoryFilter('all')}
+                                className={`px-2.5 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-all ${
+                                  chatHistoryFilter === 'all'
+                                    ? 'bg-[#0284C7] text-white'
+                                    : 'bg-white text-[#475569] border border-slate-200'
+                                }`}
+                              >
+                                Semua Alat ({chatSessions.length})
+                              </button>
+                              {chatSessions.length > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={handleClearAllChatHistory}
+                                  className="px-2 py-1 rounded-lg bg-[#FEF2F2] hover:bg-[#FEE2E2] text-[#DC2626] text-[10px] font-bold cursor-pointer ml-1"
+                                  title="Hapus Semua Riwayat Chat"
+                                >
+                                  Hapus Semua
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          {(() => {
+                            const filteredSessions =
+                              chatHistoryFilter === 'device'
+                                ? chatSessions.filter(s => s.deviceId === deviceId)
+                                : chatSessions;
+
+                            if (filteredSessions.length === 0) {
+                              return (
+                                <div className="py-6 text-center bg-white rounded-xl border border-slate-200">
+                                  <p className="text-xs font-bold text-[#0F172A]">
+                                    Belum Ada Riwayat Percakapan Tersimpan
+                                  </p>
+                                  <p className="text-[11px] text-[#475569] mt-0.5">
+                                    Kirim pertanyaan ke Asisten AI di bawah untuk mulai menyimpan riwayat percakapan.
+                                  </p>
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <div className="space-y-2 max-h-[210px] overflow-y-auto pr-1 custom-scrollbar">
+                                {filteredSessions.map(session => {
+                                  const isCurrent = session.id === activeChatSessionId;
+                                  const dateStr = new Date(session.updatedAt).toLocaleDateString('id-ID', {
+                                    day: 'numeric',
+                                    month: 'short',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  });
+                                  const lastMsg = session.messages[session.messages.length - 1]?.text || '';
+                                  return (
+                                    <div
+                                      key={session.id}
+                                      onClick={() => handleSelectChatSession(session)}
+                                      className={`p-3 rounded-xl border transition-all cursor-pointer flex items-start justify-between gap-3 ${
+                                        isCurrent
+                                          ? 'bg-[#E0F2FE] border-[#0284C7] shadow-sm'
+                                          : 'bg-white border-slate-200 hover:border-[#0284C7]/60'
+                                      }`}
+                                    >
+                                      <div className="min-w-0 flex-1">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                          <span className="text-xs font-extrabold text-[#0F172A] truncate">
+                                            {session.title}
+                                          </span>
+                                          {isCurrent && (
+                                            <span className="px-2 py-0.5 rounded-full bg-[#0284C7] text-white text-[9px] font-bold">
+                                              Sedang Dibuka
+                                            </span>
+                                          )}
+                                        </div>
+                                        <p className="text-[11px] text-[#475569] truncate mt-0.5">
+                                          {lastMsg.replace(/\*\*/g, '')}
+                                        </p>
+                                        <div className="flex items-center gap-2 mt-1.5 text-[10px] text-[#475569] font-mono">
+                                          <span className="font-bold text-[#0284C7]">
+                                            {session.deviceId} ({session.roomName})
+                                          </span>
+                                          <span>•</span>
+                                          <span>{dateStr}</span>
+                                          <span>•</span>
+                                          <span>{session.messages.length} pesan</span>
+                                        </div>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => handleDeleteChatSession(session.id, e)}
+                                        className="p-1.5 rounded-lg hover:bg-[#FEE2E2] text-slate-400 hover:text-[#DC2626] transition-colors cursor-pointer shrink-0"
+                                        title="Hapus Riwayat Ini"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
                   {/* Active Warning Overlay if PPM >= 700 */}
                   {carbonLevel !== null && carbonLevel >= 700 && (
@@ -1645,16 +1996,27 @@ export default function Dashboard() {
                               <Brain className="w-4 h-4" />
                             </div>
                           )}
-                          <div
-                            className={`p-3.5 rounded-2xl text-xs max-w-[85%] leading-relaxed font-medium border ${
-                              isAi
-                                ? 'bg-[#F9FAFB] border-slate-200 text-[#0F172A] rounded-tl-none'
-                                : 'bg-[#0284C7] border-[#0284C7] text-white rounded-tr-none'
-                            }`}
-                            dangerouslySetInnerHTML={{
-                              __html: msg.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                            }}
-                          />
+                          <div className="max-w-[85%]">
+                            <div
+                              className={`p-3.5 rounded-2xl text-xs leading-relaxed font-medium border ${
+                                isAi
+                                  ? 'bg-[#F9FAFB] border-slate-200 text-[#0F172A] rounded-tl-none'
+                                  : 'bg-[#0284C7] border-[#0284C7] text-white rounded-tr-none'
+                              }`}
+                              dangerouslySetInnerHTML={{
+                                __html: msg.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                              }}
+                            />
+                            {msg.timestamp && (
+                              <span
+                                className={`block text-[10px] text-slate-400 mt-1 font-mono ${
+                                  isAi ? 'text-left' : 'text-right'
+                                }`}
+                              >
+                                {msg.timestamp}
+                              </span>
+                            )}
+                          </div>
                           {!isAi && (
                             <div className="w-8 h-8 rounded-xl bg-[#F0F9FF] border border-[#0284C7]/30 flex items-center justify-center shrink-0 text-[#0284C7]">
                               <User className="w-4 h-4" />

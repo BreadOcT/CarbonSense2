@@ -96,7 +96,7 @@ export default function Register() {
       localStorage.setItem('cs_user_token', response.token);
 
       setLoading(false);
-      navigate('/onboarding');
+      navigate('/select-device');
     } catch (err: any) {
       setLoading(false);
       setError(err.message || 'Pendaftaran gagal. Silakan coba lagi.');
@@ -259,7 +259,7 @@ export default function Register() {
                 loading ? 'opacity-60 cursor-not-allowed' : 'active:scale-[0.99]'
               }`}
             >
-              {loading ? 'Mendaftarkan...' : 'Daftar & Lanjut Pengaturan Ruangan ->'}
+              {loading ? 'Mendaftarkan...' : 'Daftar & Pilih Alat Pemantau ->'}
             </button>
           </form>
 

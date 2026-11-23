@@ -215,11 +215,22 @@
             : 'bg-[#F9FAFB] border-slate-200 hover:border-[#0284C7]/50 hover:bg-white'
         }`;
 
+        const isConfigured = localStorage.getItem(`cs_device_onboarding_completed_${dev.id}`) === 'true';
+        const savedDevProfile = (() => {
+          try { return JSON.parse(localStorage.getItem(`cs_ai_personality_${dev.id}`) || 'null'); } catch { return null; }
+        })();
+        const displayLoc = (savedDevProfile && savedDevProfile.lokasi) || dev.location || 'Ruangan Sensor';
+
         card.innerHTML = `
           <div class="flex items-start justify-between mb-3">
             <div>
-              <div class="font-mono text-xs font-bold ${isSelected ? 'text-[#0284C7]' : 'text-[#475569]'}">${dev.id}</div>
-              <div class="text-sm font-bold text-[#0F172A] mt-0.5">${dev.location || 'Ruangan Sensor'}</div>
+              <div class="flex items-center gap-2">
+                <div class="font-mono text-xs font-bold ${isSelected ? 'text-[#0284C7]' : 'text-[#475569]'}">${dev.id}</div>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ${isConfigured ? 'bg-[#E0F2FE] text-[#0284C7] border-[#0284C7]/30' : 'bg-[#FFEDD5] text-[#EA580C] border-[#FDBA74]'}">
+                  ${isConfigured ? 'Ruangan Teratur' : 'Belum Diatur (1x)'}
+                </span>
+              </div>
+              <div class="text-sm font-bold text-[#0F172A] mt-0.5">${displayLoc}</div>
             </div>
             <span class="px-2.5 py-1 rounded-md text-[11px] font-bold border ${badgeColor}">
               ${dev.status}
@@ -278,7 +289,12 @@
       }
 
       window.MockStore.setActiveDeviceId(selectedDeviceId);
-      window.location.href = `dashboard.html?deviceId=${selectedDeviceId}`;
+      const isConfigured = localStorage.getItem(`cs_device_onboarding_completed_${selectedDeviceId}`) === 'true';
+      if (!isConfigured) {
+        window.location.href = `onboarding.html?deviceId=${encodeURIComponent(selectedDeviceId)}`;
+      } else {
+        window.location.href = `dashboard.html?deviceId=${encodeURIComponent(selectedDeviceId)}`;
+      }
     }
 
     function openBindModal() {
@@ -447,7 +463,12 @@
         alert('Silakan pilih dulu ruangan yang ingin dipantau.');
         return;
       }
-      window.location.href = 'dashboard.html';
+      const isConfigured = localStorage.getItem(`cs_device_onboarding_completed_${activeId}`) === 'true';
+      if (!isConfigured) {
+        window.location.href = `onboarding.html?deviceId=${encodeURIComponent(activeId)}`;
+      } else {
+        window.location.href = `dashboard.html?deviceId=${encodeURIComponent(activeId)}`;
+      }
     }
 
     applySimpleMode();

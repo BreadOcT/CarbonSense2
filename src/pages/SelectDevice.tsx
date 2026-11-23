@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Database, Cpu, Check, ChevronRight, User, Plus, X, Home } from 'lucide-react';
+import { Database, Cpu, Check, ChevronRight, User, Plus, X, Home, Settings as SettingsIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../lib/api';
 
@@ -81,13 +81,30 @@ export default function SelectDevice() {
     );
   };
 
+  const getDeviceRoomProfile = (devId: string) => {
+    try {
+      const raw = localStorage.getItem(`cs_ai_personality_${devId}`);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const isDeviceOnboarded = (devId: string) => {
+    return (
+      localStorage.getItem(`cs_device_onboarding_completed_${devId}`) === 'true' ||
+      Boolean(localStorage.getItem(`cs_ai_personality_${devId}`))
+    );
+  };
+
   const handleManualBind = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!manualDeviceId.trim()) return;
     setBindLoading(true);
     setBindError('');
     try {
-      await api.devices.bind({ deviceId: manualDeviceId.trim().toUpperCase(), userEmail: email });
+      const targetId = manualDeviceId.trim().toUpperCase();
+      await api.devices.bind({ deviceId: targetId, userEmail: email });
       await fetchUserDevices(email);
       setManualDeviceId('');
       setShowBindModal(false);
@@ -113,17 +130,18 @@ export default function SelectDevice() {
 
     localStorage.setItem('cs_user', JSON.stringify({ username, email }));
     localStorage.setItem('cs_active_devices', JSON.stringify(selectedDevices));
-    navigate('/dashboard');
-  };
 
-  const aiPersonality = (() => {
-    try {
-      const raw = localStorage.getItem('cs_ai_personality');
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
+    // Check which selected devices have NOT yet completed their 1-time per-device onboarding
+    const unconfiguredDevices = selectedDevices.filter(id => !isDeviceOnboarded(id));
+
+    if (unconfiguredDevices.length > 0) {
+      localStorage.setItem('cs_pending_onboarding_devices', JSON.stringify(unconfiguredDevices));
+      navigate(`/onboarding?deviceId=${encodeURIComponent(unconfiguredDevices[0])}`);
+    } else {
+      localStorage.removeItem('cs_pending_onboarding_devices');
+      navigate('/dashboard');
     }
-  })();
+  };
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-[#F0F9FF] text-[#0F172A] font-sans">
@@ -161,12 +179,6 @@ export default function SelectDevice() {
               <span>Mode Sederhana:</span>
               <span className="font-extrabold">{isSimpleMode ? 'AKTIF' : 'NONAKTIF'}</span>
             </button>
-            <Link
-              to="/onboarding"
-              className="hidden sm:inline-flex text-xs px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:border-[#0284C7] text-[#475569] hover:text-[#0284C7] transition-all font-semibold"
-            >
-              Atur Ulang Ruangan
-            </Link>
             <button
               type="button"
               onClick={() => {
@@ -247,10 +259,12 @@ export default function SelectDevice() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {devices.map((dev, idx) => {
+                    {devices.map((dev) => {
                       const isSelected = selectedDevices.includes(dev.id);
                       const isOffline = dev.status === 'Offline';
-                      const roomLabel = idx === 0 && aiPersonality?.lokasi ? aiPersonality.lokasi : `Ruangan (${dev.id})`;
+                      const devProfile = getDeviceRoomProfile(dev.id);
+                      const configured = isDeviceOnboarded(dev.id);
+                      const roomLabel = devProfile?.lokasi ? devProfile.lokasi : `Alat ${dev.id}`;
                       return (
                         <div
                           key={dev.id}
@@ -270,7 +284,18 @@ export default function SelectDevice() {
                               <Home className="w-6 h-6" />
                             </div>
                             <div>
-                              <h3 className="text-lg font-extrabold text-[#0F172A]">{roomLabel}</h3>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h3 className="text-lg font-extrabold text-[#0F172A]">{roomLabel}</h3>
+                                {configured ? (
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#DCFCE7] text-[#16A34A] border border-[#86EFAC]">
+                                    Ruangan Terkonfigurasi
+                                  </span>
+                                ) : (
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FFEDD5] text-[#EA580C] border border-[#FDBA74]">
+                                    Perlu Atur Ruangan (1x)
+                                  </span>
+                                )}
+                              </div>
                               <p className="text-xs text-[#475569] mt-0.5 font-mono">Kode Alat: {dev.id}</p>
                               <div className="flex items-center gap-1.5 mt-1.5">
                                 <span
@@ -340,7 +365,7 @@ export default function SelectDevice() {
                 </div>
                 <h1 className="text-2xl font-extrabold text-[#0F172A]">Pilih Alat Pemantau Aktif</h1>
                 <p className="text-xs text-[#475569] mt-1">
-                  Centang alat CarbonSense yang ingin Anda tampilkan di layar pemantauan utama.
+                  Setiap alat memiliki pengaturan kamar/ruangan tersendiri. Alat baru akan diminta pengaturan ruangan 1 kali sebelum masuk ke Dashboard.
                 </p>
               </div>
 
@@ -406,34 +431,58 @@ export default function SelectDevice() {
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+                  <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
                     {devices.map(dev => {
                       const isSelected = selectedDevices.includes(dev.id);
                       const isOffline = dev.status === 'Offline';
+                      const devProfile = getDeviceRoomProfile(dev.id);
+                      const configured = isDeviceOnboarded(dev.id);
                       return (
                         <div
                           key={dev.id}
                           onClick={() => toggleDevice(dev.id)}
-                          className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                          className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
                             isSelected
                               ? 'bg-[#F0F9FF] border-[#0284C7] shadow-sm'
                               : 'bg-[#F9FAFB] border-slate-200 hover:bg-white'
                           }`}
                         >
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-3 min-w-0">
                             <div
-                              className={`w-5 h-5 rounded-md flex items-center justify-center border transition-colors ${
+                              className={`w-5 h-5 rounded-md flex items-center justify-center border transition-colors shrink-0 ${
                                 isSelected ? 'border-[#0284C7] bg-[#0284C7] text-white' : 'border-slate-300 bg-white'
                               }`}
                             >
                               {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                             </div>
-                            <div>
-                              <h4 className="font-bold font-mono text-sm text-[#0F172A]">{dev.id}</h4>
-                              <p className="text-[11px] text-[#475569]">Status Alat: {dev.status}</p>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h4 className="font-bold font-mono text-sm text-[#0F172A]">{dev.id}</h4>
+                                {configured ? (
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E0F2FE] text-[#0284C7] border border-[#0284C7]/30">
+                                    {devProfile?.lokasi || 'Ruangan Teratur'}
+                                  </span>
+                                ) : (
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FFEDD5] text-[#EA580C] border border-[#FDBA74]">
+                                    Belum Diatur Ruangan
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-3 mt-1">
+                                <p className="text-[11px] text-[#475569]">Status Alat: {dev.status}</p>
+                                {configured && (
+                                  <Link
+                                    to={`/settings?deviceId=${encodeURIComponent(dev.id)}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="text-[11px] text-[#0284C7] hover:underline font-bold inline-flex items-center gap-1"
+                                  >
+                                    <SettingsIcon className="w-3 h-3" /> Edit Ruangan
+                                  </Link>
+                                )}
+                              </div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 shrink-0">
                             <span
                               className={`w-2 h-2 rounded-full ${
                                 isOffline ? 'bg-[#DC2626]' : 'bg-[#16A34A] animate-pulse'
@@ -460,7 +509,7 @@ export default function SelectDevice() {
                   onClick={handleContinue}
                   className="w-full py-4 rounded-2xl bg-[#0284C7] hover:bg-[#0369A1] text-white font-extrabold text-sm transition-all shadow-lg shadow-[#0284C7]/25 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
                 >
-                  <span>Buka Dashboard Pemantauan</span>
+                  <span>Lanjutkan ke Pemantauan</span>
                   <ChevronRight className="w-4 h-4" />
                 </button>
               )}

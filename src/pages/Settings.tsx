@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft, Save, LogOut, Wind, Brain, Sparkles, Bed, Laptop, Home, User, Users,
   Minimize2, Maximize2, Flame, Activity, ShieldCheck, ShieldAlert,
   HelpCircle, UserX, Cigarette, Car, Lock, RotateCw, ExternalLink, ShieldOff,
-  Plus, Trash2, Phone, Send
+  Plus, Trash2, Phone, Send, Cpu
 } from 'lucide-react';
 import { auth, db } from '../lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
+import { api } from '../lib/api';
 
 interface EmergencyContact {
   name: string;
@@ -17,7 +18,22 @@ interface EmergencyContact {
 
 export default function Settings() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
+  const [availableDevices, setAvailableDevices] = useState<string[]>([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>(() => {
+    const qDev = searchParams.get('deviceId');
+    if (qDev) return qDev;
+    const curDev = localStorage.getItem('cs_current_device_id');
+    if (curDev) return curDev;
+    try {
+      const act = JSON.parse(localStorage.getItem('cs_active_devices') || '[]');
+      if (Array.isArray(act) && act.length > 0) return act[0];
+    } catch {
+      // ignore
+    }
+    return '';
+  });
   const [answers, setAnswers] = useState({
     lokasi: 'Dapur / Tempat Masak',
     sirkulasi: 'Jendela Sering Dibuka',
@@ -78,24 +94,53 @@ export default function Settings() {
   ];
 
   useEffect(() => {
+    const userEmail = localStorage.getItem('cs_user_email') || '';
+    let initialDevs: string[] = [];
+    try {
+      const act = JSON.parse(localStorage.getItem('cs_active_devices') || '[]');
+      if (Array.isArray(act)) initialDevs = act;
+    } catch {
+      // ignore
+    }
+    setAvailableDevices(initialDevs);
+
+    if (userEmail) {
+      api.devices.list(userEmail)
+        .then(myDevs => {
+          const allIds = Array.from(new Set([...initialDevs, ...myDevs.map((d: any) => d.id)]));
+          setAvailableDevices(allIds);
+          if (!selectedDeviceId && allIds.length > 0) {
+            setSelectedDeviceId(allIds[0]);
+          }
+        })
+        .catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
     const fetchProfile = async () => {
       const userEmail = localStorage.getItem('cs_user_email');
       const user = auth.currentUser;
       if (user) {
         try {
           const userDoc = await getDoc(doc(db, 'users', user.uid));
-          if (userDoc.exists() && userDoc.data().profile) {
-            const profileData = userDoc.data().profile;
-            setAnswers(prev => ({
-              ...prev,
-              ...profileData,
-              rentan: profileData.rentan || 'Tidak Ada',
-              polutan: Array.isArray(profileData.polutan)
-                ? profileData.polutan
-                : profileData.polutan
-                ? [profileData.polutan]
-                : []
-            }));
+          if (userDoc.exists()) {
+            const docData = userDoc.data();
+            const profileData =
+              (selectedDeviceId && docData.deviceProfiles?.[selectedDeviceId]) ||
+              docData.profile;
+            if (profileData) {
+              setAnswers(prev => ({
+                ...prev,
+                ...profileData,
+                rentan: profileData.rentan || 'Tidak Ada',
+                polutan: Array.isArray(profileData.polutan)
+                  ? profileData.polutan
+                  : profileData.polutan
+                  ? [profileData.polutan]
+                  : []
+              }));
+            }
           }
         } catch (err) {
           console.error('Error loading Firestore profile:', err);
@@ -103,6 +148,7 @@ export default function Settings() {
       }
 
       const stored =
+        (selectedDeviceId && localStorage.getItem(`cs_ai_personality_${selectedDeviceId}`)) ||
         (userEmail && localStorage.getItem(`cs_ai_personality_${userEmail}`)) ||
         localStorage.getItem('cs_ai_personality');
       if (stored) {
@@ -114,6 +160,9 @@ export default function Settings() {
             if (loadedLokasi && !presetNames.includes(loadedLokasi)) {
               setShowCustomLokasi(true);
               setCustomLokasi(loadedLokasi);
+            } else {
+              setShowCustomLokasi(false);
+              setCustomLokasi('');
             }
             setAnswers(prev => ({
               ...prev,
@@ -129,9 +178,23 @@ export default function Settings() {
         } catch (e) {
           console.error('Failed to parse stored configuration:', e);
         }
+      } else {
+        // Default values for a not-yet-configured device
+        setShowCustomLokasi(false);
+        setCustomLokasi('');
+        setAnswers({
+          lokasi: 'Dapur / Tempat Masak',
+          sirkulasi: 'Jendela Sering Dibuka',
+          kapasitas: '1 - 2 Orang',
+          polutan: ['Kompor Gas / Tabung LPG'],
+          rentan: 'Tidak Ada',
+          luas_ruang: 'Sedang (Sekitar 4x5 meter)',
+          detektor_lain: 'Belum Ada Sama Sekali'
+        });
       }
 
       const storedContacts =
+        (selectedDeviceId && localStorage.getItem(`cs_emergency_contacts_${selectedDeviceId}`)) ||
         (userEmail && localStorage.getItem(`cs_emergency_contacts_${userEmail}`)) ||
         localStorage.getItem('cs_emergency_contacts');
       if (storedContacts) {
@@ -148,7 +211,7 @@ export default function Settings() {
       setLoading(false);
     };
     fetchProfile();
-  }, []);
+  }, [selectedDeviceId]);
 
   const handlePolutanChange = (val: string) => {
     setAnswers(prev => ({
@@ -207,6 +270,7 @@ export default function Settings() {
 
     const updatedProfile = {
       ...answers,
+      deviceId: selectedDeviceId || undefined,
       lokasi: finalLokasi,
       rentan: answers.rentan || 'Tidak Ada',
       wa_darurat: finalContacts[0].phone,
@@ -216,15 +280,24 @@ export default function Settings() {
     const user = auth.currentUser;
     if (user) {
       try {
-        await updateDoc(doc(db, 'users', user.uid), {
+        const updatePayload: Record<string, any> = {
           profile: updatedProfile
-        });
+        };
+        if (selectedDeviceId) {
+          updatePayload[`deviceProfiles.${selectedDeviceId}`] = updatedProfile;
+        }
+        await updateDoc(doc(db, 'users', user.uid), updatePayload);
       } catch (err) {
         console.error('Error updating Firestore profile:', err);
       }
     }
 
     const userEmail = localStorage.getItem('cs_user_email');
+    if (selectedDeviceId) {
+      localStorage.setItem(`cs_ai_personality_${selectedDeviceId}`, JSON.stringify(updatedProfile));
+      localStorage.setItem(`cs_emergency_contacts_${selectedDeviceId}`, JSON.stringify(finalContacts));
+      localStorage.setItem(`cs_device_onboarding_completed_${selectedDeviceId}`, 'true');
+    }
     localStorage.setItem('cs_ai_personality', JSON.stringify(updatedProfile));
     localStorage.setItem('cs_emergency_contacts', JSON.stringify(finalContacts));
     if (userEmail) {
@@ -307,13 +380,42 @@ export default function Settings() {
       </nav>
 
       <div className="max-w-6xl mx-auto">
-        <header className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A]">
-            Pengaturan Kondisi Ruangan &amp; Kontak Darurat
-          </h1>
-          <p className="text-xs sm:text-sm text-[#475569] mt-1">
-            Sesuaikan informasi ruangan tempat alat dipasang serta daftar nomor WhatsApp yang akan dihubungi saat kondisi darurat.
-          </p>
+        <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+          <div>
+            <span className="text-[10px] font-mono uppercase tracking-widest text-[#0284C7] font-bold">
+              KONFIGURASI PER PERANGKAT
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] mt-0.5">
+              Pengaturan Kondisi Ruangan &amp; Kontak Darurat
+            </h1>
+            <p className="text-xs sm:text-sm text-[#475569] mt-1">
+              Setiap alat memiliki pengaturan ruangan tersendiri karena ditempatkan di kamar/area yang berbeda.
+            </p>
+          </div>
+
+          {availableDevices.length > 0 && (
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 bg-[#F0F9FF] p-3.5 rounded-2xl border border-[#BAE6FD] shrink-0">
+              <div className="flex items-center gap-2 text-xs font-bold text-[#0284C7]">
+                <Cpu className="w-4 h-4" />
+                <span>Pilih Alat:</span>
+              </div>
+              <select
+                value={selectedDeviceId}
+                onChange={(e) => {
+                  const nextId = e.target.value;
+                  setSelectedDeviceId(nextId);
+                  setSearchParams({ deviceId: nextId });
+                }}
+                className="px-3.5 py-2 rounded-xl bg-white border border-[#0284C7]/40 text-xs font-mono font-bold text-[#0F172A] focus:outline-none focus:border-[#0284C7] cursor-pointer"
+              >
+                {availableDevices.map(devId => (
+                  <option key={devId} value={devId}>
+                    {devId}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </header>
 
         <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">

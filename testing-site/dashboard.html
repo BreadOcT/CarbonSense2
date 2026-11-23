@@ -554,8 +554,8 @@
         </div>
 
         <!-- Interactive AI Chat Assistant (1 Col) -->
-        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-md flex flex-col h-[400px]">
-          <div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-3">
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-md flex flex-col h-[420px]">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-3 gap-2">
             <div class="flex items-center gap-2">
               <div
                 class="w-7 h-7 rounded-lg bg-[#E0F2FE] text-[#0284C7] flex items-center justify-center font-bold text-xs">
@@ -563,10 +563,28 @@
               </div>
               <div>
                 <h4 class="text-xs font-bold text-[#0F172A]">Tanya Asisten AI</h4>
-                <p class="text-[10px] text-[#475569]">Analisis Kedaruratan & Udara</p>
+                <p class="text-[10px] text-[#475569]">Analisis & Riwayat Chat</p>
               </div>
             </div>
-            <span class="w-2 h-2 rounded-full bg-[#16A34A] animate-pulse"></span>
+            <div class="flex items-center gap-1.5">
+              <button type="button" onclick="startNewChatSession()"
+                class="px-2 py-1 rounded-lg bg-[#F9FAFB] border border-slate-200 hover:border-[#0284C7] text-[#475569] hover:text-[#0284C7] text-[10px] font-bold transition">
+                + Chat Baru
+              </button>
+              <button type="button" onclick="toggleChatHistoryPanel()" id="btn-toggle-chat-history"
+                class="px-2.5 py-1 rounded-lg bg-[#E0F2FE] border border-[#0284C7]/30 text-[#0284C7] hover:bg-[#0284C7] hover:text-white text-[10px] font-bold transition">
+                Riwayat (<span id="chat-history-count">0</span>)
+              </button>
+            </div>
+          </div>
+
+          <!-- Collapsible Chat History Panel -->
+          <div id="ai-chat-history-panel" class="hidden flex-1 overflow-y-auto mb-3 p-3 rounded-2xl bg-[#F0F9FF] border border-[#0284C7]/30 space-y-2 text-xs">
+            <div class="flex items-center justify-between pb-1.5 border-b border-[#0284C7]/20">
+              <span class="font-bold text-[#0F172A] text-[11px]">Riwayat Percakapan Sebelumnya</span>
+              <button type="button" onclick="clearAllChatSessions()" class="text-[10px] font-bold text-[#DC2626] hover:underline">Hapus Semua</button>
+            </div>
+            <div id="ai-chat-history-list" class="space-y-1.5"></div>
           </div>
 
           <!-- Chat message thread -->
@@ -1215,7 +1233,179 @@
       });
     }
 
-    // AI Chat Assistant Logic
+    // AI Chat Assistant Logic with Persistent History
+    let activeChatSessionId = '';
+    let currentChatMessages = [];
+
+    function getChatSessionsKey() {
+      const user = window.MockStore.getUser();
+      const email = (user && user.email) || 'guest';
+      return `cs_chat_sessions_${email}`;
+    }
+
+    function getSavedChatSessions() {
+      try {
+        return JSON.parse(localStorage.getItem(getChatSessionsKey()) || '[]');
+      } catch {
+        return [];
+      }
+    }
+
+    function saveChatSessions(sessions) {
+      localStorage.setItem(getChatSessionsKey(), JSON.stringify(sessions));
+      const countEl = document.getElementById('chat-history-count');
+      if (countEl) countEl.textContent = sessions.length;
+    }
+
+    function renderChatThreadFromMessages(messages) {
+      const thread = document.getElementById('ai-chat-thread');
+      if (!thread) return;
+      thread.innerHTML = '';
+      messages.forEach(m => {
+        const msg = document.createElement('div');
+        if (m.sender === 'user') {
+          msg.className = 'bg-[#0284C7] text-white p-3 rounded-2xl rounded-tr-none border border-[#0284C7] ml-4 leading-relaxed';
+        } else {
+          msg.className = 'bg-[#F9FAFB] text-[#0F172A] p-3 rounded-2xl rounded-tl-none border border-slate-200 mr-4 leading-relaxed';
+        }
+        const timeHtml = m.timestamp ? `<div class="text-[9px] opacity-70 mt-1 font-mono text-right">${m.timestamp}</div>` : '';
+        msg.innerHTML = m.text.replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold">$1</strong>') + timeHtml;
+        thread.appendChild(msg);
+      });
+      thread.scrollTop = thread.scrollHeight;
+    }
+
+    function loadLatestChatForCurrentDevice() {
+      const devId = window.MockStore.getActiveDeviceId();
+      const sessions = getSavedChatSessions();
+      const countEl = document.getElementById('chat-history-count');
+      if (countEl) countEl.textContent = sessions.length;
+
+      const latest = sessions.find(s => s.deviceId === devId);
+      if (latest && Array.isArray(latest.messages) && latest.messages.length > 0) {
+        activeChatSessionId = latest.id;
+        currentChatMessages = latest.messages;
+      } else {
+        activeChatSessionId = '';
+        currentChatMessages = [{
+          sender: 'ai',
+          text: 'Halo! Saya **CarbonSense AI**. Ada yang ingin Anda ketahui seputar kualitas udara atau mitigasi ruangan Anda saat ini?'
+        }];
+      }
+      renderChatThreadFromMessages(currentChatMessages);
+      renderChatHistoryList();
+    }
+
+    function persistCurrentChatSession() {
+      if (currentChatMessages.length <= 1) return;
+      const dev = window.MockStore.getActiveDevice();
+      const devId = (dev && dev.id) || window.MockStore.getActiveDeviceId();
+      const roomName = (dev && dev.location) || 'Ruangan';
+      const firstUser = currentChatMessages.find(m => m.sender === 'user');
+      const title = firstUser ? (firstUser.text.length > 42 ? firstUser.text.slice(0, 42) + '...' : firstUser.text) : 'Percakapan AI';
+      const now = Date.now();
+      let sessions = getSavedChatSessions();
+
+      if (activeChatSessionId && sessions.some(s => s.id === activeChatSessionId)) {
+        sessions = sessions.map(s => s.id === activeChatSessionId ? {
+          ...s,
+          title,
+          roomName,
+          updatedAt: now,
+          messages: currentChatMessages
+        } : s);
+      } else {
+        activeChatSessionId = 'chat_' + now;
+        sessions.unshift({
+          id: activeChatSessionId,
+          deviceId: devId,
+          roomName,
+          title,
+          createdAt: now,
+          updatedAt: now,
+          messages: currentChatMessages
+        });
+      }
+      sessions.sort((a, b) => b.updatedAt - a.updatedAt);
+      saveChatSessions(sessions);
+      renderChatHistoryList();
+    }
+
+    function startNewChatSession() {
+      activeChatSessionId = 'chat_' + Date.now();
+      currentChatMessages = [{
+        sender: 'ai',
+        text: 'Halo! Saya **CarbonSense AI**. Silakan ajukan pertanyaan baru seputar keamanan udara di ruangan ini.',
+        timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+      }];
+      renderChatThreadFromMessages(currentChatMessages);
+      const panel = document.getElementById('ai-chat-history-panel');
+      const thread = document.getElementById('ai-chat-thread');
+      if (panel && !panel.classList.contains('hidden')) {
+        panel.classList.add('hidden');
+        thread.classList.remove('hidden');
+      }
+    }
+
+    function toggleChatHistoryPanel() {
+      const panel = document.getElementById('ai-chat-history-panel');
+      const thread = document.getElementById('ai-chat-thread');
+      if (!panel || !thread) return;
+      const isHidden = panel.classList.contains('hidden');
+      if (isHidden) {
+        renderChatHistoryList();
+        panel.classList.remove('hidden');
+        thread.classList.add('hidden');
+      } else {
+        panel.classList.add('hidden');
+        thread.classList.remove('hidden');
+      }
+    }
+
+    function renderChatHistoryList() {
+      const listEl = document.getElementById('ai-chat-history-list');
+      if (!listEl) return;
+      const sessions = getSavedChatSessions();
+      if (sessions.length === 0) {
+        listEl.innerHTML = '<div class="p-4 text-center text-[#475569] bg-white rounded-xl border border-slate-200">Belum ada riwayat chat tersimpan.</div>';
+        return;
+      }
+      listEl.innerHTML = '';
+      sessions.forEach(s => {
+        const isCurrent = s.id === activeChatSessionId;
+        const dateStr = new Date(s.updatedAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        const item = document.createElement('div');
+        item.className = `p-2.5 rounded-xl border cursor-pointer transition flex items-start justify-between gap-2 ${isCurrent ? 'bg-[#E0F2FE] border-[#0284C7]' : 'bg-white border-slate-200 hover:border-[#0284C7]'}`;
+        item.innerHTML = `
+          <div class="min-w-0 flex-1">
+            <div class="font-bold text-[#0F172A] truncate">${s.title}</div>
+            <div class="text-[10px] text-[#0284C7] font-mono mt-0.5">${s.deviceId} (${s.roomName || 'Ruangan'}) &bull; ${dateStr} &bull; ${s.messages.length} pesan</div>
+          </div>
+          <button type="button" class="text-[#DC2626] font-bold text-xs px-1.5 hover:bg-[#FEE2E2] rounded" title="Hapus">&times;</button>
+        `;
+        item.onclick = (e) => {
+          if (e.target.tagName === 'BUTTON') {
+            e.stopPropagation();
+            const filtered = getSavedChatSessions().filter(x => x.id !== s.id);
+            saveChatSessions(filtered);
+            renderChatHistoryList();
+            return;
+          }
+          activeChatSessionId = s.id;
+          currentChatMessages = s.messages;
+          renderChatThreadFromMessages(currentChatMessages);
+          toggleChatHistoryPanel();
+        };
+        listEl.appendChild(item);
+      });
+    }
+
+    function clearAllChatSessions() {
+      saveChatSessions([]);
+      startNewChatSession();
+      renderChatHistoryList();
+    }
+
     function handleChatSubmit(e) {
       e.preventDefault();
       const input = document.getElementById('chat-input');
@@ -1242,19 +1432,19 @@
     }
 
     function appendChatMessage(sender, text) {
+      const panel = document.getElementById('ai-chat-history-panel');
       const thread = document.getElementById('ai-chat-thread');
-      const msg = document.createElement('div');
-
-      if (sender === 'user') {
-        msg.className = 'bg-[#E0F2FE] text-[#0F172A] p-3 rounded-2xl rounded-tr-none border border-[#0284C7]/30 ml-4 leading-relaxed';
-      } else {
-        msg.className = 'bg-[#F9FAFB] text-[#475569] p-3 rounded-2xl rounded-tl-none border border-slate-200 mr-4 leading-relaxed';
+      if (panel && !panel.classList.contains('hidden')) {
+        panel.classList.add('hidden');
+        thread.classList.remove('hidden');
       }
-
-      msg.innerHTML = text.replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<strong class="text-[#0284C7] font-bold">$1</strong>');
-      thread.appendChild(msg);
-      thread.scrollTop = thread.scrollHeight;
+      const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+      currentChatMessages.push({ sender, text, timestamp: timeStr });
+      renderChatThreadFromMessages(currentChatMessages);
+      persistCurrentChatSession();
     }
+
+    setTimeout(loadLatestChatForCurrentDevice, 150);
 
     // ============================================================
     // EMERGENCY RESPONSE FLOW & ESCALATION (< 1 MENIT)

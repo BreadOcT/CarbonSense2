@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { BrainCircuit, ArrowRight, ArrowLeft, CheckCircle2, ShieldAlert, Activity, Brain, Plus, Trash2 } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { BrainCircuit, ArrowRight, ArrowLeft, CheckCircle2, ShieldAlert, Activity, Brain, Plus, Trash2, Cpu } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../lib/api';
 
@@ -107,8 +107,35 @@ function generateDynamicFallbackSummary(answers: { id: string; value: string }[]
 
 export default function Onboarding() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const userEmail = localStorage.getItem('cs_user_email');
-  const onboardingCompleted = userEmail ? localStorage.getItem(`cs_onboarding_completed_${userEmail}`) === 'true' : false;
+
+  const getInitialTargetDevice = () => {
+    const fromQuery = searchParams.get('deviceId');
+    if (fromQuery) return fromQuery;
+    try {
+      const pending = JSON.parse(localStorage.getItem('cs_pending_onboarding_devices') || '[]');
+      if (Array.isArray(pending) && pending.length > 0) return pending[0];
+      const active = JSON.parse(localStorage.getItem('cs_active_devices') || '[]');
+      if (Array.isArray(active) && active.length > 0) return active[0];
+    } catch {
+      // ignore
+    }
+    return 'ALAT-UTAMA';
+  };
+
+  const targetDeviceId = getInitialTargetDevice();
+  const onboardingCompleted =
+    localStorage.getItem(`cs_device_onboarding_completed_${targetDeviceId}`) === 'true';
+
+  const pendingQueue: string[] = (() => {
+    try {
+      const parsed = JSON.parse(localStorage.getItem('cs_pending_onboarding_devices') || '[]');
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  })();
 
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<{ id: string; value: string }[]>([]);
@@ -123,33 +150,41 @@ export default function Onboarding() {
   const [aiSummary, setAiSummary] = useState('');
   const [loadingSummary, setLoadingSummary] = useState(false);
 
-  // Load previous answers & emergency contacts if repeating onboarding
+  // Load previous answers & emergency contacts for this specific device
   useEffect(() => {
-    if (userEmail) {
-      const savedAnswers = localStorage.getItem(`cs_onboarding_answers_${userEmail}`);
-      if (savedAnswers) {
-        try {
-          const parsed = JSON.parse(savedAnswers);
-          if (Array.isArray(parsed)) {
-            setAnswers(parsed);
-          }
-        } catch (e) {
-          console.error('Failed to parse saved onboarding answers:', e);
+    setCurrentStep(0);
+    setCustomInputMode({});
+    setCustomTextValue({});
+
+    const savedDeviceAnswers = localStorage.getItem(`cs_onboarding_answers_${targetDeviceId}`);
+    if (savedDeviceAnswers) {
+      try {
+        const parsed = JSON.parse(savedDeviceAnswers);
+        if (Array.isArray(parsed)) {
+          setAnswers(parsed);
         }
+      } catch (e) {
+        console.error('Failed to parse saved device onboarding answers:', e);
       }
-      const savedContacts = localStorage.getItem(`cs_emergency_contacts_${userEmail}`) || localStorage.getItem('cs_emergency_contacts');
-      if (savedContacts) {
-        try {
-          const parsedC = JSON.parse(savedContacts);
-          if (Array.isArray(parsedC) && parsedC.length > 0) {
-            setContacts(parsedC);
-          }
-        } catch (e) {
-          console.error('Failed to parse saved emergency contacts:', e);
+    } else {
+      setAnswers([]);
+    }
+
+    const savedContacts =
+      localStorage.getItem(`cs_emergency_contacts_${targetDeviceId}`) ||
+      (userEmail && localStorage.getItem(`cs_emergency_contacts_${userEmail}`)) ||
+      localStorage.getItem('cs_emergency_contacts');
+    if (savedContacts) {
+      try {
+        const parsedC = JSON.parse(savedContacts);
+        if (Array.isArray(parsedC) && parsedC.length > 0) {
+          setContacts(parsedC);
         }
+      } catch (e) {
+        console.error('Failed to parse saved emergency contacts:', e);
       }
     }
-  }, [userEmail]);
+  }, [targetDeviceId, userEmail]);
 
   useEffect(() => {
     if (currentStep === steps.length) {
@@ -269,6 +304,7 @@ export default function Onboarding() {
     const detektorVal = answers.find(a => a?.id === 'detektor_lain')?.value || 'Belum Ada Sama Sekali';
 
     const profile = {
+      deviceId: targetDeviceId,
       lokasi: lokasiVal,
       sirkulasi: sirkulasiVal,
       kapasitas: kapasitasVal,
@@ -280,6 +316,13 @@ export default function Onboarding() {
       emergency_contacts: contacts
     };
 
+    // Save per-device onboarding profile & completion flag (1x per device)
+    localStorage.setItem(`cs_onboarding_answers_${targetDeviceId}`, JSON.stringify(answers));
+    localStorage.setItem(`cs_ai_personality_${targetDeviceId}`, JSON.stringify(profile));
+    localStorage.setItem(`cs_emergency_contacts_${targetDeviceId}`, JSON.stringify(contacts));
+    localStorage.setItem(`cs_device_onboarding_completed_${targetDeviceId}`, 'true');
+
+    // Also update current active fallback keys
     localStorage.setItem('cs_onboarding_answers', JSON.stringify(answers));
     localStorage.setItem('cs_ai_personality', JSON.stringify(profile));
     localStorage.setItem('cs_emergency_contacts', JSON.stringify(contacts));
@@ -291,9 +334,20 @@ export default function Onboarding() {
       localStorage.setItem(`cs_onboarding_completed_${userEmail}`, 'true');
     }
 
-    setTimeout(() => {
-      navigate('/select-device');
-    }, 1000);
+    // Check if there are remaining unconfigured devices in the queue
+    const remaining = pendingQueue.filter(id => id !== targetDeviceId && localStorage.getItem(`cs_device_onboarding_completed_${id}`) !== 'true');
+    if (remaining.length > 0) {
+      localStorage.setItem('cs_pending_onboarding_devices', JSON.stringify(remaining));
+      setTimeout(() => {
+        setIsFinishing(false);
+        setSearchParams({ deviceId: remaining[0] });
+      }, 700);
+    } else {
+      localStorage.removeItem('cs_pending_onboarding_devices');
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 800);
+    }
   };
 
   const isSummaryPage = currentStep === steps.length;
@@ -368,9 +422,18 @@ export default function Onboarding() {
             <div className="w-14 h-14 rounded-2xl bg-[#E0F2FE] border border-[#0284C7]/30 flex items-center justify-center mx-auto mb-3 text-[#0284C7] shadow-sm">
               <BrainCircuit className="w-7 h-7" />
             </div>
-            <h1 className="text-2xl font-extrabold text-[#0F172A]">Kenali Kondisi Ruangan Anda</h1>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#E0F2FE] border border-[#0284C7]/30 text-[#0284C7] text-xs font-bold mb-2">
+              <Cpu className="w-3.5 h-3.5" />
+              <span>Pengaturan Ruangan untuk Alat: <strong className="font-mono">{targetDeviceId}</strong></span>
+              {pendingQueue.length > 1 && (
+                <span className="ml-1 px-2 py-0.5 rounded-full bg-[#0284C7] text-white text-[10px]">
+                  Masih ada {pendingQueue.length - 1} alat berikutnya
+                </span>
+              )}
+            </div>
+            <h1 className="text-2xl font-extrabold text-[#0F172A]">Kenali Kondisi Ruangan Alat Ini</h1>
             <p className="text-xs text-[#475569] mt-1">
-              Jawab beberapa pertanyaan singkat ini agar peringatan bahaya dan pesan WhatsApp bekerja sesuai kondisi ruangan Anda.
+              Pengaturan ini hanya dilakukan <strong>1 kali</strong> untuk alat <strong className="font-mono text-[#0F172A]">{targetDeviceId}</strong> dan dapat diubah kapan saja di menu Pengaturan.
             </p>
           </div>
 
@@ -510,7 +573,10 @@ export default function Onboarding() {
                       onClick={handleFinish}
                       className="px-6 py-3 rounded-xl bg-[#0284C7] hover:bg-[#0369A1] text-white font-extrabold text-xs transition-all shadow-lg shadow-[#0284C7]/25 flex items-center gap-2 cursor-pointer"
                     >
-                      Simpan &amp; Pilih Perangkat <ArrowRight className="w-4 h-4" />
+                      {pendingQueue.filter(id => id !== targetDeviceId && localStorage.getItem(`cs_device_onboarding_completed_${id}`) !== 'true').length > 0
+                        ? 'Simpan & Atur Alat Berikutnya'
+                        : 'Simpan & Masuk ke Dashboard'}{' '}
+                      <ArrowRight className="w-4 h-4" />
                     </button>
                   </div>
                 </motion.div>
