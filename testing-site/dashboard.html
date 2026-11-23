@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard Monitoring Telemetri - CarbonSense</title>
-  <!-- Tailwind CSS CDN -->
+  Tailwind CSS CDN
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -51,7 +51,8 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <span class="font-display text-xl sm:text-2xl tracking-wider text-[#0F172A] hidden xs:inline">CarbonSense</span>
+            <span
+              class="font-display text-xl sm:text-2xl tracking-wider text-[#0F172A] hidden xs:inline">CarbonSense</span>
           </a>
 
           <!-- Device Selector Dropdown -->
@@ -211,14 +212,16 @@
         <div id="sm-status-desc"
           class="text-sm sm:text-base font-medium leading-snug sm:leading-relaxed max-w-sm mx-auto"></div>
         <div id="sm-location-label"
-          class="text-xs px-3 py-1 rounded-full bg-white/80 border border-slate-200 inline-block mt-3 text-[#0F172A] font-mono font-semibold"></div>
+          class="text-xs px-3 py-1 rounded-full bg-white/80 border border-slate-200 inline-block mt-3 text-[#0F172A] font-mono font-semibold">
+        </div>
       </div>
 
       <!-- Action Cards Row -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
 
         <!-- Open Ventilation Card (Waspada: #EA580C) -->
-        <div id="sm-ventilation-card" class="hidden p-4 sm:p-5 rounded-2xl bg-[#FFF7ED] border-2 border-[#EA580C]/40 shadow-sm">
+        <div id="sm-ventilation-card"
+          class="hidden p-4 sm:p-5 rounded-2xl bg-[#FFF7ED] border-2 border-[#EA580C]/40 shadow-sm">
           <div class="text-[#EA580C] font-bold text-sm sm:text-base mb-1.5 flex items-center gap-2">
             <svg class="w-4 h-4 text-[#EA580C] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -234,7 +237,8 @@
         </div>
 
         <!-- Emergency Card (Bahaya: #DC2626) -->
-        <div id="sm-emergency-card" class="hidden p-4 sm:p-5 rounded-2xl bg-[#FEF2F2] border-2 border-[#DC2626]/50 shadow-sm">
+        <div id="sm-emergency-card"
+          class="hidden p-4 sm:p-5 rounded-2xl bg-[#FEF2F2] border-2 border-[#DC2626]/50 shadow-sm">
           <div class="text-[#DC2626] font-bold text-sm sm:text-base mb-1.5 flex items-center gap-2">
             <svg class="w-4 h-4 text-[#DC2626] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -267,7 +271,8 @@
         </div>
 
         <!-- WhatsApp Emergency Button -->
-        <div class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between gap-3">
+        <div
+          class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between gap-3">
           <div>
             <div class="text-[#0F172A] font-bold text-sm sm:text-base mb-0.5">Butuh Bantuan Cepat?</div>
             <div class="text-[#475569] text-xs leading-relaxed">Kirim pesan peringatan otomatis ke nomor WhatsApp
@@ -380,33 +385,33 @@
               </div>
             </div>
 
-            <!-- Auxiliary Environmental Telemetry -->
+            <!-- Auxiliary Parameters (Status Online/Offline & Batas Bahaya, tanpa Suhu/Kelembaban) -->
             <div class="grid grid-cols-2 gap-4">
               <div class="p-4 rounded-2xl bg-[#F9FAFB] border border-slate-200">
                 <div class="flex items-center justify-between text-[#475569] text-xs mb-1">
-                  <span>Suhu Ruangan</span>
-                  <span class="text-[#EA580C] text-[11px] font-bold">SUHU</span>
+                  <span>Status Alat</span>
+                  <span class="text-[#16A34A] text-[11px] font-bold">KONEKSI</span>
                 </div>
-                <div class="text-2xl font-bold text-[#0F172A] font-mono" id="telemetry-temp">27.4 °C</div>
-                <span class="text-[10px] text-[#475569]">Kisaran ideal 24-28 °C</span>
+                <div class="text-2xl font-bold text-[#16A34A] font-mono" id="telemetry-temp">Online</div>
+                <span class="text-[10px] text-[#475569]">Terhubung aktif ke server</span>
               </div>
 
               <div class="p-4 rounded-2xl bg-[#F9FAFB] border border-slate-200">
                 <div class="flex items-center justify-between text-[#475569] text-xs mb-1">
-                  <span>Kelembaban</span>
-                  <span class="text-[#0284C7] text-[11px] font-bold">UDARA</span>
+                  <span>Batas Waspada</span>
+                  <span class="text-[#EA580C] text-[11px] font-bold">WARN</span>
                 </div>
-                <div class="text-2xl font-bold text-[#0F172A] font-mono" id="telemetry-humidity">58 %</div>
-                <span class="text-[10px] text-[#475569]">Tingkat lembab normal</span>
+                <div class="text-2xl font-bold text-[#0F172A] font-mono" id="telemetry-humidity">700</div>
+                <span class="text-[10px] text-[#475569]">PPM (Buka ventilasi)</span>
               </div>
 
               <div class="p-4 rounded-2xl bg-[#F9FAFB] border border-slate-200">
                 <div class="flex items-center justify-between text-[#475569] text-xs mb-1">
-                  <span>Partikel Udara (VOC)</span>
-                  <span class="text-[#0284C7] text-[11px] font-bold">VOC</span>
+                  <span>Status Udara</span>
+                  <span class="text-[#0284C7] text-[11px] font-bold">LEVEL</span>
                 </div>
-                <div class="text-2xl font-bold text-[#0F172A] font-mono" id="telemetry-voc">115</div>
-                <span class="text-[10px] text-[#475569]">Partikel asap & aroma</span>
+                <div class="text-2xl font-bold text-[#16A34A] font-mono" id="telemetry-voc">Aman</div>
+                <span class="text-[10px] text-[#475569]">Indikasi sensor MQ-135</span>
               </div>
 
               <div class="p-4 rounded-2xl bg-[#F9FAFB] border border-slate-200">
@@ -415,7 +420,7 @@
                   <span class="text-[#DC2626] text-[11px] font-bold">LIMIT</span>
                 </div>
                 <div class="text-2xl font-bold text-[#0F172A] font-mono" id="telemetry-threshold">1000</div>
-                <span class="text-[10px] text-[#475569]">Batas sirene berbunyi</span>
+                <span class="text-[10px] text-[#475569]">PPM (Batas sirene berbunyi)</span>
               </div>
             </div>
 
@@ -579,10 +584,12 @@
           </div>
 
           <!-- Collapsible Chat History Panel -->
-          <div id="ai-chat-history-panel" class="hidden flex-1 overflow-y-auto mb-3 p-3 rounded-2xl bg-[#F0F9FF] border border-[#0284C7]/30 space-y-2 text-xs">
+          <div id="ai-chat-history-panel"
+            class="hidden flex-1 overflow-y-auto mb-3 p-3 rounded-2xl bg-[#F0F9FF] border border-[#0284C7]/30 space-y-2 text-xs">
             <div class="flex items-center justify-between pb-1.5 border-b border-[#0284C7]/20">
               <span class="font-bold text-[#0F172A] text-[11px]">Riwayat Percakapan Sebelumnya</span>
-              <button type="button" onclick="clearAllChatSessions()" class="text-[10px] font-bold text-[#DC2626] hover:underline">Hapus Semua</button>
+              <button type="button" onclick="clearAllChatSessions()"
+                class="text-[10px] font-bold text-[#DC2626] hover:underline">Hapus Semua</button>
             </div>
             <div id="ai-chat-history-list" class="space-y-1.5"></div>
           </div>
@@ -591,7 +598,8 @@
           <div id="ai-chat-thread" class="flex-1 overflow-y-auto space-y-3 pr-1 text-xs mb-3">
             <div
               class="bg-[#F9FAFB] p-3 rounded-2xl rounded-tl-none border border-slate-200 text-[#475569] leading-relaxed">
-              Halo! Saya <strong class="text-[#0F172A]">CarbonSense AI</strong>. Ada yang ingin Anda ketahui seputar kualitas udara atau
+              Halo! Saya <strong class="text-[#0F172A]">CarbonSense AI</strong>. Ada yang ingin Anda ketahui seputar
+              kualitas udara atau
               mitigasi ruangan Anda saat ini?
             </div>
           </div>
@@ -670,11 +678,12 @@
         <div class="overflow-x-auto" id="container-sensor-logs">
           <table class="w-full text-left text-xs border-collapse">
             <thead>
-              <tr class="border-b border-[#252b39] text-slate-400 uppercase tracking-wider font-semibold">
+              <tr class="border-b border-slate-200 text-[#475569] uppercase tracking-wider font-bold">
                 <th class="py-3 px-4">Waktu Perekaman</th>
                 <th class="py-3 px-4">PPM Terbaca</th>
-                <th class="py-3 px-4">Suhu / Lembab</th>
-                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4">Batas Bahaya</th>
+                <th class="py-3 px-4">Status Alat</th>
+                <th class="py-3 px-4">Status Udara</th>
                 <th class="py-3 px-4">Keterangan AI</th>
               </tr>
             </thead>
@@ -798,14 +807,14 @@
     <!-- ==========================================================
          2. DETAILED MODE ALERT BOX (Lengkap & Nyaman Dibaca)
          ========================================================== -->
-    <div
-      class="w-full max-w-2xl bg-white p-6 sm:p-8 rounded-3xl border-2 border-[#DC2626] shadow-2xl relative my-6"
+    <div class="w-full max-w-2xl bg-white p-6 sm:p-8 rounded-3xl border-2 border-[#DC2626] shadow-2xl relative my-6"
       id="hazard-modal-box">
 
       <!-- Top Stage Indicator -->
       <div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-5">
         <div class="flex items-center gap-2">
-          <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#FFF7ED] text-[#EA580C] border border-[#EA580C]/40"
+          <span
+            class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#FFF7ED] text-[#EA580C] border border-[#EA580C]/40"
             id="alarm-stage-badge">
             Tahap 1: Alarm Pendeteksi Berbunyi
           </span>
@@ -827,8 +836,8 @@
           KEBOCORAN GAS BERBAHAYA TERDETEKSI!
         </h2>
         <p class="text-sm text-[#475569] mt-1">
-          Kadar gas terukur: <strong id="modal-ppm-val" class="text-[#0F172A] font-extrabold text-base">1280 PPM</strong> di <strong
-            id="modal-loc-val" class="text-[#0F172A]">Ruang Tamu / Keluarga</strong>
+          Kadar gas terukur: <strong id="modal-ppm-val" class="text-[#0F172A] font-extrabold text-base">1280
+            PPM</strong> di <strong id="modal-loc-val" class="text-[#0F172A]">Ruang Tamu / Keluarga</strong>
         </p>
       </div>
 
@@ -860,17 +869,20 @@
         <div class="flex items-start gap-2.5">
           <span
             class="w-5 h-5 rounded-full bg-[#EA580C] text-white flex items-center justify-center font-bold text-[11px] shrink-0">1</span>
-          <span class="leading-relaxed"><strong>Buka Semua Jendela & Pintu:</strong> Segera buat ventilasi agar gas keluar ke udara bebas.</span>
+          <span class="leading-relaxed"><strong>Buka Semua Jendela & Pintu:</strong> Segera buat ventilasi agar gas
+            keluar ke udara bebas.</span>
         </div>
         <div class="flex items-start gap-2.5">
           <span
             class="w-5 h-5 rounded-full bg-[#EA580C] text-white flex items-center justify-center font-bold text-[11px] shrink-0">2</span>
-          <span class="leading-relaxed"><strong>Matikan Kompor & Lepas Regulator Gas:</strong> Jangan nyalakan saklar lampu atau korek api.</span>
+          <span class="leading-relaxed"><strong>Matikan Kompor & Lepas Regulator Gas:</strong> Jangan nyalakan saklar
+            lampu atau korek api.</span>
         </div>
         <div class="flex items-start gap-2.5">
           <span
             class="w-5 h-5 rounded-full bg-[#EA580C] text-white flex items-center justify-center font-bold text-[11px] shrink-0">3</span>
-          <span class="leading-relaxed"><strong>Evakuasi Semua Orang:</strong> Segera bawa keluarga dan karyawan keluar ruangan ke tempat terbuka.</span>
+          <span class="leading-relaxed"><strong>Evakuasi Semua Orang:</strong> Segera bawa keluarga dan karyawan keluar
+            ruangan ke tempat terbuka.</span>
         </div>
       </div>
 
@@ -879,7 +891,8 @@
         <div class="flex items-center justify-between mb-1.5">
           <span class="text-xs font-extrabold text-[#16A34A] uppercase tracking-wider">Kontak WhatsApp Tanggap
             Darurat:</span>
-          <span class="px-2.5 py-0.5 rounded-full text-[10px] bg-[#DCFCE7] text-[#16A34A] border border-[#16A34A]/30 font-bold"
+          <span
+            class="px-2.5 py-0.5 rounded-full text-[10px] bg-[#DCFCE7] text-[#16A34A] border border-[#16A34A]/30 font-bold"
             id="wa-contacts-count-badge">Kontak Terdaftar</span>
         </div>
         <p class="text-xs text-[#475569] mb-3" id="wa-msg-preview">
@@ -938,7 +951,8 @@
     class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
     <div class="w-full max-w-lg bg-white p-6 rounded-3xl border border-slate-200 shadow-2xl relative">
       <div class="flex items-center justify-between pb-4 border-b border-slate-200 mb-5">
-        <h3 class="text-lg font-bold text-[#0F172A] font-display tracking-wider">Panduan Mengaktifkan Hardware ESP32</h3>
+        <h3 class="text-lg font-bold text-[#0F172A] font-display tracking-wider">Panduan Mengaktifkan Hardware ESP32
+        </h3>
         <button onclick="toggleOfflineGuide()"
           class="text-[#475569] hover:text-[#0F172A] text-xl font-bold">&times;</button>
       </div>
@@ -946,22 +960,26 @@
       <div class="space-y-3.5 text-xs text-[#475569] max-h-[60vh] overflow-y-auto pr-1">
         <div class="p-3.5 rounded-xl bg-[#F9FAFB] border border-slate-200">
           <strong class="text-[#0284C7] block mb-1">1. Sambungkan Catu Daya Perangkat</strong>
-          <p class="text-[#475569]">Hubungkan kabel Micro-USB ke papan ESP32 dan adaptor 5V. Pastikan lampu LED indikator menyala.</p>
+          <p class="text-[#475569]">Hubungkan kabel Micro-USB ke papan ESP32 dan adaptor 5V. Pastikan lampu LED
+            indikator menyala.</p>
         </div>
 
         <div class="p-3.5 rounded-xl bg-[#F9FAFB] border border-slate-200">
           <strong class="text-[#0284C7] block mb-1">2. Hubungkan HP/Laptop ke WiFi Alat</strong>
-          <p class="text-[#475569]">Cari SSID WiFi bernama "Setup_CarbonSense" lalu hubungkan untuk membuka halaman pengaturan otomatis.</p>
+          <p class="text-[#475569]">Cari SSID WiFi bernama "Setup_CarbonSense" lalu hubungkan untuk membuka halaman
+            pengaturan otomatis.</p>
         </div>
 
         <div class="p-3.5 rounded-xl bg-[#F9FAFB] border border-slate-200">
           <strong class="text-[#0284C7] block mb-1">3. Konfigurasikan WiFi Rumah</strong>
-          <p class="text-[#475569]">Pilih WiFi tempat Anda dan masukkan kata sandi. Alat akan terhubung secara otomatis.</p>
+          <p class="text-[#475569]">Pilih WiFi tempat Anda dan masukkan kata sandi. Alat akan terhubung secara otomatis.
+          </p>
         </div>
 
         <div class="p-3.5 rounded-xl bg-[#F9FAFB] border border-slate-200">
           <strong class="text-[#0284C7] block mb-1">4. Pemanasan Sensor Awal (1-2 Menit)</strong>
-          <p class="text-[#475569]">Biarkan sensor memanaskan elemen pendeteksi selama 60 detik hingga pembacaan stabil.</p>
+          <p class="text-[#475569]">Biarkan sensor memanaskan elemen pendeteksi selama 60 detik hingga pembacaan stabil.
+          </p>
         </div>
       </div>
 
@@ -1059,15 +1077,30 @@
       const prof = window.MockStore.getProfile();
       document.getElementById('ai-vulnerability-label').textContent = `Lokasi: ${prof.lokasi || 'Ruang Terpantau'}`;
 
+      const connStatusCard = document.getElementById('telemetry-temp');
+      const levelStatusCard = document.getElementById('telemetry-voc');
+
       if (status === 'Offline') {
         connDot.className = 'w-2 h-2 rounded-full bg-slate-400';
         connText.textContent = 'ESP32 Offline (Terputus)';
         statusBadge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-slate-200 text-[#475569] border border-slate-300';
         statusBadge.textContent = 'Hardware Offline';
+        if (connStatusCard) {
+          connStatusCard.textContent = 'Offline';
+          connStatusCard.className = 'text-2xl font-bold text-[#DC2626] font-mono';
+        }
+        if (levelStatusCard) {
+          levelStatusCard.textContent = 'Mati';
+          levelStatusCard.className = 'text-2xl font-bold text-[#475569] font-mono';
+        }
         return;
       } else {
         connDot.className = 'w-2 h-2 rounded-full bg-[#16A34A] animate-pulse';
         connText.textContent = 'ESP32 Online • Ping 24ms';
+        if (connStatusCard) {
+          connStatusCard.textContent = 'Online';
+          connStatusCard.className = 'text-2xl font-bold text-[#16A34A] font-mono';
+        }
       }
 
       const ppmValEl = document.getElementById('telemetry-ppm-val');
@@ -1076,16 +1109,28 @@
         if (ppmValEl) ppmValEl.className = 'text-7xl font-display text-[#16A34A] tracking-wider my-2';
         statusBadge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-[#DCFCE7] text-[#16A34A] border border-[#16A34A]/30';
         statusBadge.textContent = 'Aman & Stabil';
+        if (levelStatusCard) {
+          levelStatusCard.textContent = 'Aman';
+          levelStatusCard.className = 'text-2xl font-bold text-[#16A34A] font-mono';
+        }
         hazardTopBanner.classList.add('hidden');
       } else if (ppm < 1000) {
         if (ppmValEl) ppmValEl.className = 'text-7xl font-display text-[#EA580C] tracking-wider my-2';
         statusBadge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-[#FFEDD5] text-[#EA580C] border border-[#EA580C]/40';
         statusBadge.textContent = 'Waspada (Buka Ventilasi)';
+        if (levelStatusCard) {
+          levelStatusCard.textContent = 'Waspada';
+          levelStatusCard.className = 'text-2xl font-bold text-[#EA580C] font-mono';
+        }
         hazardTopBanner.classList.add('hidden');
       } else {
         if (ppmValEl) ppmValEl.className = 'text-7xl font-display text-[#DC2626] tracking-wider my-2';
         statusBadge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-[#FEE2E2] text-[#DC2626] border border-[#DC2626]/40 animate-pulse';
         statusBadge.textContent = 'BAHAYA DARURAT!';
+        if (levelStatusCard) {
+          levelStatusCard.textContent = 'Bahaya';
+          levelStatusCard.className = 'text-2xl font-bold text-[#DC2626] font-mono';
+        }
         if (!window.MockStore || !window.MockStore.isSimpleMode()) {
           hazardTopBanner.classList.remove('hidden');
         }
@@ -1225,7 +1270,8 @@
         tr.innerHTML = `
           <td class="py-3 px-4 font-mono text-[11px] text-[#475569]">${item.formattedDate || ''} ${item.formattedTime || ''}</td>
           <td class="py-3 px-4 font-bold ${item.ppm >= 1000 ? 'text-[#DC2626]' : item.ppm >= 800 ? 'text-[#EA580C]' : 'text-[#16A34A]'}">${item.ppm} PPM</td>
-          <td class="py-3 px-4 text-[#475569]">${item.temp || 27.2}°C / ${item.humidity || 58}%</td>
+          <td class="py-3 px-4 font-mono text-[#475569]">1000 PPM</td>
+          <td class="py-3 px-4 font-bold text-[#16A34A]">Online</td>
           <td class="py-3 px-4">${badge}</td>
           <td class="py-3 px-4 text-[#475569] text-[11px]">${item.note || 'Perekaman stabil'}</td>
         `;
