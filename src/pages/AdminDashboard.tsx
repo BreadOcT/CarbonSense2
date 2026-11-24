@@ -417,38 +417,38 @@ export default function AdminDashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-[#F0F9FF] text-[#0F172A] font-sans p-4 sm:p-8 md:p-12 relative">
+    <div className="min-h-screen bg-[#F0F9FF] text-[#0F172A] font-sans p-3 sm:p-8 md:p-12 relative">
       <div className="max-w-6xl mx-auto">
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-10 bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-sm">
           <div>
             <span className="text-[10px] font-mono uppercase tracking-widest text-[#0284C7] font-bold">
               PANEL ADMINISTRATOR
             </span>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] mt-0.5">
+            <h1 className="text-xl sm:text-3xl font-extrabold text-[#0F172A] mt-0.5">
               Admin Dashboard CarbonSense
             </h1>
             <p className="text-xs text-[#475569]">
               Manajemen Perangkat IoT ESP32, Penautan Pengguna, &amp; Kode Firmware
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="grid grid-cols-2 sm:flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
             <button
               onClick={() => setShowAddModal(true)}
-              className="px-4 py-2.5 bg-[#0284C7] hover:bg-[#0369A1] text-white rounded-xl text-xs font-extrabold transition-all cursor-pointer flex items-center gap-2 shadow-md shadow-[#0284C7]/25"
+              className="px-3.5 sm:px-4 py-2.5 bg-[#0284C7] hover:bg-[#0369A1] text-white rounded-xl text-xs font-extrabold transition-all cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 shadow-md shadow-[#0284C7]/25"
             >
-              <Plus className="w-4 h-4" /> Tambah Device Baru
+              <Plus className="w-4 h-4 shrink-0" /> <span>Tambah Device</span>
             </button>
             <button
               onClick={handleLogout}
-              className="px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border border-slate-300 bg-white hover:border-[#DC2626] text-[#475569] hover:text-[#DC2626] cursor-pointer"
+              className="px-3.5 sm:px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 sm:gap-2 border border-slate-300 bg-white hover:border-[#DC2626] text-[#475569] hover:text-[#DC2626] cursor-pointer"
             >
-              <ArrowLeft className="w-4 h-4" /> Keluar
+              <ArrowLeft className="w-4 h-4 shrink-0" /> <span>Keluar</span>
             </button>
           </div>
         </header>
 
         {/* Dynamic Metric Cards */}
-        <div className="grid md:grid-cols-3 gap-6 mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 mb-6 sm:mb-10">
           <motion.div
             whileHover={{ scale: 1.02, y: -4 }}
             whileTap={{ scale: 0.98 }}
@@ -517,8 +517,8 @@ export default function AdminDashboard() {
               transition={{ duration: 0.25 }}
               className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-md"
             >
-              <div className="p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <h2 className="text-base font-extrabold text-[#0F172A]">
+              <div className="p-4 sm:p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+                <h2 className="text-sm sm:text-base font-extrabold text-[#0F172A]">
                   Daftar Pengguna Terdaftar &amp; Perangkatnya
                 </h2>
                 <div className="relative w-full sm:w-72">
@@ -527,7 +527,7 @@ export default function AdminDashboard() {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-9 py-2 bg-[#F9FAFB] border border-slate-300 rounded-xl focus:outline-none focus:border-[#0284C7] focus:bg-white transition-colors text-xs text-[#0F172A]"
+                    className="w-full pl-10 pr-9 py-2.5 sm:py-2 bg-[#F9FAFB] border border-slate-300 rounded-xl focus:outline-none focus:border-[#0284C7] focus:bg-white transition-colors text-base sm:text-xs text-[#0F172A]"
                     placeholder="Cari pengguna, email, device..."
                   />
                   {searchQuery && (
@@ -540,7 +540,45 @@ export default function AdminDashboard() {
                   )}
                 </div>
               </div>
-              <div className="overflow-x-auto">
+              {/* Mobile Cards for Users */}
+              <div className="md:hidden p-3 space-y-2.5">
+                {displayedUsers.map((u, i) => {
+                  const userDevices = devices.filter(d => d.userEmail === u.email);
+                  return (
+                    <div key={i} className="p-3.5 rounded-2xl bg-[#F9FAFB] border border-slate-200 space-y-2">
+                      <div>
+                        <p className="font-bold text-sm text-[#0F172A]">{u.username}</p>
+                        <p className="text-xs font-mono text-[#475569] break-all">{u.email}</p>
+                      </div>
+                      <div className="pt-2 border-t border-slate-200/80">
+                        {userDevices.length === 0 ? (
+                          <span className="text-xs text-slate-400 italic">Tidak ada perangkat</span>
+                        ) : (
+                          <div className="flex flex-wrap gap-1.5">
+                            {userDevices.map(d => (
+                              <span
+                                key={d.id}
+                                className="px-2 py-0.5 bg-[#E0F2FE] border border-[#0284C7]/30 text-[#0284C7] rounded-lg text-[11px] font-mono font-bold"
+                              >
+                                {d.id} ({d.status})
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+                {displayedUsers.length === 0 && (
+                  <p className="text-center py-8 text-xs text-[#475569]">
+                    {users.length === 0
+                      ? 'Belum ada pengguna terdaftar.'
+                      : 'Tidak ada pengguna yang cocok dengan pencarian.'}
+                  </p>
+                )}
+              </div>
+              {/* Desktop Table for Users */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left text-xs">
                   <thead className="text-[#475569] bg-[#F9FAFB] border-b border-slate-200 uppercase font-bold">
                     <tr>
@@ -597,8 +635,8 @@ export default function AdminDashboard() {
               transition={{ duration: 0.25 }}
               className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-md"
             >
-              <div className="p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <h2 className="text-base font-extrabold text-[#0F172A]">
+              <div className="p-4 sm:p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+                <h2 className="text-sm sm:text-base font-extrabold text-[#0F172A]">
                   {currentView === 'warning_devices'
                     ? 'Daftar Perangkat Status Bahaya'
                     : 'Daftar Perangkat Terdaftar'}
@@ -609,7 +647,7 @@ export default function AdminDashboard() {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-9 py-2 bg-[#F9FAFB] border border-slate-300 rounded-xl focus:outline-none focus:border-[#0284C7] focus:bg-white transition-colors text-xs text-[#0F172A]"
+                    className="w-full pl-10 pr-9 py-2.5 sm:py-2 bg-[#F9FAFB] border border-slate-300 rounded-xl focus:outline-none focus:border-[#0284C7] focus:bg-white transition-colors text-base sm:text-xs text-[#0F172A]"
                     placeholder="Cari device ID, pengguna, status..."
                   />
                   {searchQuery && (
@@ -622,7 +660,117 @@ export default function AdminDashboard() {
                   )}
                 </div>
               </div>
-              <div className="overflow-x-auto">
+              {/* Mobile Cards for Devices */}
+              <div className="md:hidden p-3 space-y-3">
+                {displayedDevices.map((dev, i) => {
+                  const st = getDeviceStatus(dev);
+                  return (
+                    <div key={i} className="p-3.5 rounded-2xl bg-[#F9FAFB] border border-slate-200 space-y-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono font-bold text-sm text-[#0284C7]">{dev.id}</span>
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
+                            st === 'Online'
+                              ? 'bg-[#DCFCE7] text-[#16A34A] border-[#86EFAC]'
+                              : st === 'Warning'
+                              ? 'bg-[#FEE2E2] text-[#DC2626] border-[#FCA5A5]'
+                              : st === 'Menunggu Bind'
+                              ? 'bg-[#FFEDD5] text-[#EA580C] border-[#FDBA74]'
+                              : 'bg-slate-100 text-[#475569] border-slate-300'
+                          }`}
+                        >
+                          {st}
+                        </span>
+                      </div>
+                      <div className="text-xs space-y-1">
+                        <div className="flex justify-between gap-2">
+                          <span className="text-[#475569]">Pengguna:</span>
+                          <span className="font-medium text-[#0F172A] text-right break-all">
+                            {dev.userEmail || <span className="text-slate-400 italic">Belum Terdaftar</span>}
+                          </span>
+                        </div>
+                        <div className="flex justify-between gap-2">
+                          <span className="text-[#475569]">PPM Terakhir:</span>
+                          <span className="font-bold font-mono text-[#0F172A]">{getDevicePPM(dev)}</span>
+                        </div>
+                        <div className="flex justify-between gap-2">
+                          <span className="text-[#475569]">Aktivitas:</span>
+                          <span className="text-[#475569]">{dev.lastActive}</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center justify-end gap-1.5 pt-2 border-t border-slate-200">
+                        {(!dev.userEmail || dev.status === 'Menunggu Bind') && (
+                          <>
+                            <button
+                              onClick={() => {
+                                setSelectedDevice(dev);
+                                setBindUserEmail(dev.userEmail || '');
+                                setShowBindModal(true);
+                              }}
+                              className="p-2 rounded-xl bg-[#E0F2FE] hover:bg-[#BAE6FD] text-[#0284C7] border border-[#0284C7]/20 cursor-pointer"
+                              title="Tautkan Pengguna"
+                            >
+                              <UserPlus className="w-4 h-4" />
+                            </button>
+                            {!dev.userEmail && (
+                              <button
+                                onClick={() => {
+                                  setSelectedDevice(dev);
+                                  setShowQRModal(true);
+                                }}
+                                className="p-2 rounded-xl bg-[#E0F2FE] hover:bg-[#BAE6FD] text-[#0284C7] border border-[#0284C7]/20 cursor-pointer"
+                                title="Tampilkan QR Code"
+                              >
+                                <QrCode className="w-4 h-4" />
+                              </button>
+                            )}
+                          </>
+                        )}
+                        <button
+                          onClick={() => {
+                            setSelectedDevice(dev);
+                            setShowSourceModal(true);
+                          }}
+                          className="p-2 rounded-xl bg-white hover:bg-slate-100 text-[#0F172A] border border-slate-300 cursor-pointer"
+                          title="Lihat Source Code"
+                        >
+                          <Code className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditDeviceId(dev.id);
+                            setNewEditDeviceId(dev.id);
+                            setEditUserEmail(dev.userEmail || '');
+                            setEditStatus(getDeviceStatus(dev));
+                            setEditPpm(getDevicePPM(dev));
+                            setShowEditModal(true);
+                          }}
+                          className="p-2 rounded-xl bg-white hover:bg-[#E0F2FE] text-[#0284C7] border border-slate-300 cursor-pointer"
+                          title="Edit Perangkat"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteDevice(dev.id)}
+                          className="p-2 rounded-xl bg-[#FEF2F2] hover:bg-[#FEE2E2] text-[#DC2626] border border-[#FECACA] cursor-pointer"
+                          title="Hapus Perangkat"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+                {displayedDevices.length === 0 && (
+                  <p className="text-center py-8 text-xs text-[#475569]">
+                    {devices.length === 0
+                      ? 'Tidak ada perangkat terdaftar.'
+                      : 'Tidak ada perangkat yang cocok dengan pencarian.'}
+                  </p>
+                )}
+              </div>
+              {/* Desktop Table for Devices */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left text-xs">
                   <thead className="text-[#475569] bg-[#F9FAFB] border-b border-slate-200 uppercase font-bold">
                     <tr>

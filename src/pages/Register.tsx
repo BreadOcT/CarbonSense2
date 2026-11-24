@@ -111,10 +111,10 @@ export default function Register() {
     <div className="min-h-screen flex flex-col justify-between bg-[#F0F9FF] text-[#0F172A] font-sans">
       {/* Top Navbar */}
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2">
+          <Link to="/" className="flex items-center gap-2 sm:gap-2.5 min-w-0">
             <span
-              className="flex h-9 w-9 items-center justify-center rounded-xl shadow-md"
+              className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl shadow-md shrink-0"
               style={{ background: 'linear-gradient(135deg, #0284C7, #0369A1)' }}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -123,24 +123,25 @@ export default function Register() {
                 <circle cx="12" cy="12" r="3.2" fill="#FFFFFF" />
               </svg>
             </span>
-            <div>
-              <span className="font-black text-base tracking-tight block leading-none text-[#0F172A]">CARBONSENSE</span>
-              <span className="text-[10px] text-[#0284C7] font-mono tracking-widest uppercase font-bold">PEMANTAU UDARA &amp; GAS</span>
+            <div className="min-w-0">
+              <span className="font-black text-sm sm:text-base tracking-tight block leading-none text-[#0F172A]">CARBONSENSE</span>
+              <span className="hidden sm:block text-[10px] text-[#0284C7] font-mono tracking-widest uppercase font-bold">PEMANTAU UDARA &amp; GAS</span>
             </div>
           </Link>
           <Link
             to="/login"
-            className="text-xs px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:border-[#0284C7] text-[#475569] hover:text-[#0284C7] transition-all flex items-center gap-1.5 font-semibold"
+            className="text-xs px-3 sm:px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:border-[#0284C7] text-[#475569] hover:text-[#0284C7] transition-all flex items-center gap-1.5 font-semibold shrink-0"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            Sudah Punya Akun? Masuk
+            <span className="hidden sm:inline">Sudah Punya Akun? Masuk</span>
+            <span className="sm:hidden">Masuk</span>
           </Link>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 my-6">
-        <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-slate-200 shadow-xl">
+      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 my-2 sm:my-6">
+        <div className="max-w-md w-full bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 border border-slate-200 shadow-xl">
           {qrDevice ? (
             <div className="mb-6 p-5 rounded-2xl border border-[#BAE6FD] bg-[#F0F9FF] flex flex-col items-center gap-3 text-center">
               <div className="w-12 h-12 rounded-xl flex items-center justify-center border border-[#0284C7]/30 bg-[#E0F2FE] text-[#0284C7]">
@@ -187,7 +188,7 @@ export default function Register() {
                 onChange={(e) => setUsername(e.target.value)}
                 required
                 placeholder="Contoh: Ibu Sari / Warung Makan Berkah"
-                className="w-full px-4 py-3 rounded-xl bg-[#F9FAFB] border border-slate-300 text-sm text-[#0F172A] focus:outline-none focus:border-[#0284C7] focus:bg-white transition-colors"
+                className="w-full px-4 py-3 rounded-xl bg-[#F9FAFB] border border-slate-300 text-base sm:text-sm text-[#0F172A] focus:outline-none focus:border-[#0284C7] focus:bg-white transition-colors"
               />
             </div>
 
@@ -199,7 +200,7 @@ export default function Register() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="nama@email.com"
-                className="w-full px-4 py-3 rounded-xl bg-[#F9FAFB] border border-slate-300 text-sm text-[#0F172A] focus:outline-none focus:border-[#0284C7] focus:bg-white transition-colors"
+                className="w-full px-4 py-3 rounded-xl bg-[#F9FAFB] border border-slate-300 text-base sm:text-sm text-[#0F172A] focus:outline-none focus:border-[#0284C7] focus:bg-white transition-colors"
               />
             </div>
 
@@ -212,12 +213,12 @@ export default function Register() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="••••••••"
-                  className="w-full pl-4 pr-11 py-3 rounded-xl bg-[#F9FAFB] border border-slate-300 text-sm text-[#0F172A] focus:outline-none focus:border-[#0284C7] focus:bg-white transition-colors"
+                  className="w-full pl-4 pr-11 py-3 rounded-xl bg-[#F9FAFB] border border-slate-300 text-base sm:text-sm text-[#0F172A] focus:outline-none focus:border-[#0284C7] focus:bg-white transition-colors"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#475569] hover:text-[#0F172A] cursor-pointer"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#475569] hover:text-[#0F172A] cursor-pointer p-1"
                   aria-label="Tampilkan kata sandi"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -226,10 +227,10 @@ export default function Register() {
             </div>
 
             {/* UI Simple Mode Toggle */}
-            <div className="p-4 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD]">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD]">
               <label htmlFor="reg-simple-mode-toggle" className="flex items-center justify-between cursor-pointer gap-3">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="text-xs font-bold text-[#0F172A]">Mode Tampilan Sederhana</span>
                     <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-[#E0F2FE] text-[#0284C7] border border-[#0284C7]/30">
                       Mudah Dibaca

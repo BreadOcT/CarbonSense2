@@ -325,9 +325,9 @@ function HeroDashboard() {
     cursor: 'default'
   }} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
       {/* header */}
-      <div className="mb-5 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <span className="relative flex h-2.5 w-2.5">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className="relative flex h-2.5 w-2.5 shrink-0">
             <span className="animate-ping absolute h-2.5 w-2.5 rounded-full" style={{
             background: '#16A34A',
             opacity: 0.6
@@ -336,11 +336,11 @@ function HeroDashboard() {
             background: '#16A34A'
           }} />
           </span>
-          <span className="text-xs font-medium uppercase tracking-[0.18em] text-[var(--cs-text-dim)]">
+          <span className="text-[11px] sm:text-xs font-medium uppercase tracking-[0.14em] sm:tracking-[0.18em] text-[var(--cs-text-dim)] truncate">
             Pemantauan Langsung · Zona B-04
           </span>
         </div>
-        <span className="text-[10px] uppercase tracking-[0.2em] text-[var(--cs-text-dim)]">
+        <span className="text-[10px] uppercase tracking-[0.16em] sm:tracking-[0.2em] text-[var(--cs-text-dim)] shrink-0">
           Segarkan 15d
         </span>
       </div>
@@ -433,7 +433,7 @@ function HeroDashboard() {
       </div>
 
       {/* mini stat row */}
-      <div className="mt-4 grid grid-cols-3 gap-3">
+      <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
         {[{
         k: 'CO (Aman)',
         v: '34 ppm',
@@ -747,9 +747,9 @@ function FeedMockVisual() {
     background: 'var(--cs-surface)'
   }}>
       {/* Header */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="relative flex h-2 w-2">
+          <span className="relative flex h-2 w-2 shrink-0">
             <span className="animate-ping absolute h-2 w-2 rounded-full" style={{
             background: 'var(--cs-danger)',
             opacity: 0.6
@@ -758,13 +758,13 @@ function FeedMockVisual() {
             background: 'var(--cs-danger)'
           }} />
           </span>
-          <span className="text-xs font-semibold uppercase tracking-[0.2em]" style={{
+          <span className="text-xs font-semibold uppercase tracking-[0.16em] sm:tracking-[0.2em]" style={{
           color: 'var(--cs-amber)'
         }}>
             Aliran Langsung
           </span>
         </div>
-        <span className="text-xs text-[var(--cs-text-dim)]" style={{
+        <span className="text-[11px] sm:text-xs text-[var(--cs-text-dim)] truncate max-w-full" style={{
         fontFamily: 'monospace'
       }}>
           Firebase / cs-sensors / zone-b
@@ -909,7 +909,7 @@ function AlertMockVisual() {
       </div>
 
       {/* Action buttons */}
-      <div className="mt-3 flex gap-2">
+      <div className="mt-3 flex flex-col sm:flex-row gap-2">
         <span className="flex-1 rounded-lg border px-3 py-2 text-center text-xs font-semibold" style={{
         borderColor: 'var(--cs-amber)',
         color: 'var(--cs-amber)'
@@ -1058,7 +1058,7 @@ function HowItWorksSection({
                   transition: 'grid-template-rows 400ms cubic-bezier(0.4,0,0.2,1)'
                 }}>
                       <div className="overflow-hidden">
-                        <div className="px-5 pb-5 pt-1 pl-[4.5rem]">
+                        <div className="px-4 sm:px-5 pb-5 pt-1 sm:pl-[4.5rem]">
                           <p className="text-sm leading-relaxed text-[var(--cs-text-dim)]">
                             {s.body}
                           </p>
@@ -1175,14 +1175,10 @@ function TestimonialsSection({
     }}>
         {TESTIMONIALS.map((item, i) => {
         const props = getCardProps(i);
-        return <div key={item.id} onClick={() => setCenter(i)} className="flex flex-col rounded-2xl border p-6" style={{
+        return <div key={item.id} onClick={() => setCenter(i)} className={`flex flex-col rounded-2xl border p-5 sm:p-6 transition-all duration-500 ${props.isCenter ? 'md:scale-100 opacity-100' : 'md:scale-95 opacity-90 md:opacity-75'}`} style={{
           background: 'var(--cs-surface)',
           borderColor: props.borderGlow ? 'var(--cs-amber)' : 'var(--cs-border)',
           boxShadow: props.borderGlow ? '0 20px 40px -20px var(--cs-amber-glow), inset -3px 0 0 var(--cs-amber)' : '0 12px 30px -15px rgba(15, 23, 42, 0.08)',
-          transform: `scale(${props.scale})`,
-          opacity: props.opacity,
-          filter: props.blur > 0 ? `blur(${props.blur}px)` : 'none',
-          transition: 'transform 500ms cubic-bezier(0.4,0,0.2,1), opacity 500ms cubic-bezier(0.4,0,0.2,1), box-shadow 500ms ease, filter 500ms ease, border-color 500ms ease',
           cursor: props.isCenter ? 'default' : 'pointer',
           zIndex: props.zIndex
         }}>
@@ -1347,7 +1343,7 @@ function LiveCtaDashboard() {
       }} />
       </svg>
 
-      <div className="mt-3 grid grid-cols-2 gap-3">
+      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
         <div className="rounded-lg border p-2.5" style={{
         background: '#FEF2F2',
         borderColor: '#FECACA'
@@ -1625,7 +1621,7 @@ export function CarbonSenseLanding() {
       </header>
 
       {/* ============ HERO ============ */}
-      <section id="home" className="relative overflow-hidden px-5 pb-20 pt-32 sm:px-8 sm:pt-40" style={{
+      <section id="home" className="relative overflow-hidden px-4 pb-14 pt-24 sm:px-8 sm:pb-20 sm:pt-40" style={{
       zIndex: 1
     }}>
         {/* soft light sky background */}
@@ -1633,17 +1629,17 @@ export function CarbonSenseLanding() {
         background: 'radial-gradient(circle at 50% 12%, rgba(2, 132, 199, 0.12), transparent 55%), radial-gradient(circle at 80% 40%, rgba(234, 88, 12, 0.06), transparent 45%), radial-gradient(circle at 18% 60%, rgba(22, 163, 74, 0.07), transparent 50%)'
       }} />
         <div ref={hero.ref} className={`cs-reveal relative mx-auto max-w-5xl text-center ${hero.visible ? 'is-visible' : ''}`}>
-          <h1 className="leading-[0.86]" style={{
+          <h1 className="leading-[0.94] sm:leading-[0.86]" style={{
           fontFamily: 'var(--font-display)'
         }}>
-            <span className="block text-[15vw] tracking-tight text-[var(--cs-text)] sm:text-[80px] lg:text-[96px]" style={{
+            <span className="block text-[13vw] tracking-tight text-[var(--cs-text)] sm:text-[80px] lg:text-[96px]" style={{
             opacity: hero.visible ? 1 : 0,
             transform: hero.visible ? 'translateY(0)' : 'translateY(28px)',
             transition: 'opacity 0.7s ease 80ms, transform 0.7s ease 80ms'
           }}>
               DETEKSI KARBON
             </span>
-            <span className="block text-[15vw] tracking-tight sm:text-[80px] lg:text-[96px]" style={{
+            <span className="block text-[13vw] tracking-tight sm:text-[80px] lg:text-[96px]" style={{
             color: 'var(--cs-amber)',
             opacity: hero.visible ? 1 : 0,
             transform: hero.visible ? 'translateY(0)' : 'translateY(28px)',
@@ -1866,7 +1862,7 @@ export function CarbonSenseLanding() {
                     <ArrowRight size={15} />
                   </a>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="grid grid-cols-3 sm:flex items-center gap-2.5 sm:gap-4 w-full sm:w-auto">
                   {[{
                   k: 'Waktu Aktif',
                   v: '99.98%'
@@ -1876,7 +1872,7 @@ export function CarbonSenseLanding() {
                 }, {
                   k: 'Cakupan',
                   v: '24/7'
-                }].map(stat => <div key={stat.k} className="rounded-xl border px-4 py-3 text-center" style={{
+                }].map(stat => <div key={stat.k} className="rounded-xl border px-2.5 sm:px-4 py-3 text-center" style={{
                   background: '#FFFFFF',
                   borderColor: 'var(--cs-border)'
                 }}>
@@ -1975,11 +1971,11 @@ export function CarbonSenseLanding() {
       </section>
 
       {/* ============ CTA BANNER ============ */}
-      <section className="px-5 py-20 sm:px-8 sm:py-24" style={{
+      <section className="px-4 py-14 sm:px-8 sm:py-24" style={{
       zIndex: 1,
       position: 'relative'
     }}>
-        <div ref={cta.ref} className={`cs-reveal relative mx-auto max-w-6xl overflow-hidden rounded-3xl border p-8 sm:p-12 ${cta.visible ? 'is-visible' : ''}`} style={{
+        <div ref={cta.ref} className={`cs-reveal relative mx-auto max-w-6xl overflow-hidden rounded-2xl sm:rounded-3xl border p-5 sm:p-12 ${cta.visible ? 'is-visible' : ''}`} style={{
         background: '#FFFFFF',
         borderColor: 'var(--cs-border)',
         boxShadow: '0 24px 60px -20px rgba(2, 132, 199, 0.12)'

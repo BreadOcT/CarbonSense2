@@ -147,10 +147,10 @@ export default function SelectDevice() {
     <div className="min-h-screen flex flex-col justify-between bg-[#F0F9FF] text-[#0F172A] font-sans">
       {/* Top Navbar */}
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2">
+          <Link to="/" className="flex items-center gap-2 sm:gap-2.5 min-w-0">
             <span
-              className="flex h-9 w-9 items-center justify-center rounded-xl shadow-md"
+              className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl shadow-md shrink-0"
               style={{ background: 'linear-gradient(135deg, #0284C7, #0369A1)' }}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -159,25 +159,26 @@ export default function SelectDevice() {
                 <circle cx="12" cy="12" r="3.2" fill="#FFFFFF" />
               </svg>
             </span>
-            <div>
-              <span className="font-black text-base tracking-tight block leading-none text-[#0F172A]">CARBONSENSE</span>
-              <span className="text-[10px] text-[#0284C7] font-mono tracking-widest uppercase font-bold">PILIH ALAT PEMANTAU</span>
+            <div className="min-w-0">
+              <span className="font-black text-sm sm:text-base tracking-tight block leading-none text-[#0F172A]">CARBONSENSE</span>
+              <span className="hidden sm:block text-[10px] text-[#0284C7] font-mono tracking-widest uppercase font-bold">PILIH ALAT PEMANTAU</span>
             </div>
           </Link>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             <button
               type="button"
               onClick={toggleSimpleMode}
-              className={`text-xs px-3 py-2 rounded-xl border transition-all flex items-center gap-1.5 font-bold cursor-pointer ${
+              className={`text-[11px] sm:text-xs px-2.5 sm:px-3 py-2 rounded-xl border transition-all flex items-center gap-1 font-bold cursor-pointer ${
                 isSimpleMode
                   ? 'border-[#0284C7] bg-[#E0F2FE] text-[#0284C7]'
                   : 'border-slate-300 bg-white text-[#475569] hover:border-[#0284C7]'
               }`}
               title="Ubah Mode Tampilan"
             >
-              <span>Mode Sederhana:</span>
-              <span className="font-extrabold">{isSimpleMode ? 'AKTIF' : 'NONAKTIF'}</span>
+              <span className="hidden sm:inline">Mode Sederhana:</span>
+              <span className="sm:hidden">Simpel:</span>
+              <span className="font-extrabold">{isSimpleMode ? 'ON' : 'OFF'}</span>
             </button>
             <button
               type="button"
@@ -191,7 +192,7 @@ export default function SelectDevice() {
                 localStorage.removeItem('cs_purchase_status');
                 navigate('/login');
               }}
-              className="text-xs px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:border-[#DC2626] text-[#475569] hover:text-[#DC2626] transition-all font-semibold cursor-pointer"
+              className="text-[11px] sm:text-xs px-2.5 sm:px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:border-[#DC2626] text-[#475569] hover:text-[#DC2626] transition-all font-semibold cursor-pointer"
             >
               Keluar
             </button>
@@ -225,7 +226,7 @@ export default function SelectDevice() {
                 </p>
               </div>
 
-              <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-lg mb-6">
+              <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200 shadow-lg mb-6">
                 {devices.length === 0 ? (
                   <div className="py-8 text-center space-y-4">
                     <div className="w-14 h-14 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] flex items-center justify-center mx-auto text-[#0284C7]">
@@ -233,7 +234,7 @@ export default function SelectDevice() {
                     </div>
                     <div>
                       <h3 className="text-base font-extrabold text-[#0F172A]">Belum Ada Alat Terhubung</h3>
-                      <p className="text-xs text-[#475569] mt-1">
+                      <p className="text-xs text-[#475569] mt-1 break-all">
                         Akun <strong>{email}</strong> belum memiliki alat pemantau yang ditautkan.
                       </p>
                     </div>
@@ -269,23 +270,23 @@ export default function SelectDevice() {
                         <div
                           key={dev.id}
                           onClick={() => toggleDevice(dev.id)}
-                          className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between gap-4 ${
+                          className={`p-4 sm:p-5 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between gap-3 sm:gap-4 ${
                             isSelected
                               ? 'border-[#0284C7] bg-[#F0F9FF] shadow-sm'
                               : 'border-slate-200 bg-[#F9FAFB] hover:bg-white'
                           }`}
                         >
-                          <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                             <div
-                              className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
+                              className={`w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0 ${
                                 isSelected ? 'bg-[#0284C7] text-white' : 'bg-slate-200 text-[#475569]'
                               }`}
                             >
-                              <Home className="w-6 h-6" />
+                              <Home className="w-5 h-5 sm:w-6 sm:h-6" />
                             </div>
-                            <div>
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <h3 className="text-lg font-extrabold text-[#0F172A]">{roomLabel}</h3>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                                <h3 className="text-base sm:text-lg font-extrabold text-[#0F172A] break-words">{roomLabel}</h3>
                                 {configured ? (
                                   <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#DCFCE7] text-[#16A34A] border border-[#86EFAC]">
                                     Ruangan Terkonfigurasi
@@ -296,10 +297,10 @@ export default function SelectDevice() {
                                   </span>
                                 )}
                               </div>
-                              <p className="text-xs text-[#475569] mt-0.5 font-mono">Kode Alat: {dev.id}</p>
+                              <p className="text-xs text-[#475569] mt-0.5 font-mono truncate">Kode Alat: {dev.id}</p>
                               <div className="flex items-center gap-1.5 mt-1.5">
                                 <span
-                                  className={`w-2.5 h-2.5 rounded-full ${
+                                  className={`w-2.5 h-2.5 rounded-full shrink-0 ${
                                     isOffline ? 'bg-[#DC2626]' : 'bg-[#16A34A]'
                                   }`}
                                 />
@@ -331,14 +332,14 @@ export default function SelectDevice() {
                 <button
                   type="button"
                   onClick={handleContinue}
-                  className="w-full py-5 rounded-2xl bg-[#0284C7] hover:bg-[#0369A1] text-white font-black text-base transition-all shadow-lg shadow-[#0284C7]/25 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+                  className="w-full py-4 sm:py-5 rounded-2xl bg-[#0284C7] hover:bg-[#0369A1] text-white font-black text-base transition-all shadow-lg shadow-[#0284C7]/25 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
                 >
                   <span>Mulai Pantau Ruangan Ini</span>
                   <ChevronRight className="w-5 h-5" />
                 </button>
               )}
 
-              <div className="mt-4 text-center flex items-center justify-center gap-4">
+              <div className="mt-4 text-center flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
                 <button
                   type="button"
                   onClick={() => setShowBindModal(true)}
@@ -370,25 +371,25 @@ export default function SelectDevice() {
               </div>
 
               {/* User Greeting Card */}
-              <div className="bg-white rounded-3xl p-5 mb-5 flex items-center justify-between border border-slate-200 shadow-md">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-11 h-11 rounded-2xl bg-[#E0F2FE] border border-[#0284C7]/30 flex items-center justify-center text-[#0284C7] font-extrabold text-sm">
+              <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 mb-5 flex items-center justify-between gap-3 border border-slate-200 shadow-md">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-[#E0F2FE] border border-[#0284C7]/30 flex items-center justify-center text-[#0284C7] font-extrabold text-sm shrink-0">
                     <User className="w-5 h-5" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-[11px] text-[#475569]">Selamat Datang,</p>
-                    <h2 className="text-base font-extrabold text-[#0F172A]">{username || 'Pengguna'}</h2>
-                    <p className="text-[11px] text-[#475569] font-mono">{email}</p>
+                    <h2 className="text-sm sm:text-base font-extrabold text-[#0F172A] truncate">{username || 'Pengguna'}</h2>
+                    <p className="text-[11px] text-[#475569] font-mono truncate">{email}</p>
                   </div>
                 </div>
-                <span className="px-3 py-1 rounded-lg bg-[#DCFCE7] border border-[#16A34A]/30 text-[#16A34A] text-[10px] font-mono font-bold uppercase tracking-wider">
-                  Akun Aktif
+                <span className="px-2.5 sm:px-3 py-1 rounded-lg bg-[#DCFCE7] border border-[#16A34A]/30 text-[#16A34A] text-[10px] font-mono font-bold uppercase tracking-wider shrink-0">
+                  Aktif
                 </span>
               </div>
 
               {/* Device List Card */}
-              <div className="bg-white rounded-3xl p-6 mb-6 border border-slate-200 shadow-lg">
-                <div className="flex items-center justify-between mb-4">
+              <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 mb-6 border border-slate-200 shadow-lg">
+                <div className="flex items-center justify-between gap-2 flex-wrap mb-4">
                   <div className="flex items-center gap-2">
                     <Cpu className="w-4 h-4 text-[#0284C7]" />
                     <h3 className="text-xs font-bold uppercase tracking-wider text-[#0284C7]">
@@ -468,7 +469,7 @@ export default function SelectDevice() {
                                   </span>
                                 )}
                               </div>
-                              <div className="flex items-center gap-3 mt-1">
+                              <div className="flex items-center gap-x-3 gap-y-1 flex-wrap mt-1">
                                 <p className="text-[11px] text-[#475569]">Status Alat: {dev.status}</p>
                                 {configured && (
                                   <Link
@@ -489,7 +490,7 @@ export default function SelectDevice() {
                               }`}
                             />
                             <span
-                              className={`text-[11px] font-bold ${
+                              className={`text-[11px] font-bold hidden sm:inline ${
                                 isOffline ? 'text-[#DC2626]' : 'text-[#16A34A]'
                               }`}
                             >

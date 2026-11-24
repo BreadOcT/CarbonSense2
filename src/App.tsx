@@ -11,13 +11,11 @@ import SelectDevice from './pages/SelectDevice';
 import Dashboard from './pages/Dashboard';
 import UserProfile from './pages/UserProfile';
 
-// Auth Guards (Business Flow)
+// Auth Guards (Business Flow: Login/Register -> Select Device -> 1x Per-Device Onboarding -> Dashboard)
 function UserGuard({ children }: { children: React.ReactNode }) {
   const userEmail = localStorage.getItem('cs_user_email');
-  const hasOnboarded = userEmail ? localStorage.getItem(`cs_onboarding_completed_${userEmail}`) === 'true' : false;
   
   if (!userEmail) return <Navigate to="/login" replace />;
-  if (!hasOnboarded) return <Navigate to="/onboarding" replace />;
   
   return <>{children}</>;
 }

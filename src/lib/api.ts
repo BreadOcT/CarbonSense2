@@ -123,6 +123,13 @@ export const api = {
       const body = await res.json();
       if (!res.ok) throw new Error(body.error || 'Gagal mengirim telemetri.');
       return body;
+    },
+
+    async getHistory(id: string, limit = 5000): Promise<{ timestamp: string; value: number; status?: string }[]> {
+      const res = await fetch(`${API_BASE_URL}/api/devices/${encodeURIComponent(id)}/history?limit=${limit}`);
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || 'Gagal memuat riwayat telemetri.');
+      return body;
     }
   },
   users: {

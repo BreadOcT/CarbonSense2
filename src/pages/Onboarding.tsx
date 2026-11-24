@@ -369,10 +369,10 @@ export default function Onboarding() {
     <div className="min-h-screen flex flex-col justify-between bg-[#F0F9FF] text-[#0F172A] font-sans">
       {/* Top Navbar */}
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
             <span
-              className="flex h-9 w-9 items-center justify-center rounded-xl shadow-md"
+              className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl shadow-md shrink-0"
               style={{ background: 'linear-gradient(135deg, #0284C7, #0369A1)' }}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -381,18 +381,19 @@ export default function Onboarding() {
                 <circle cx="12" cy="12" r="3.2" fill="#FFFFFF" />
               </svg>
             </span>
-            <div>
-              <span className="font-black text-base tracking-tight block leading-none text-[#0F172A]">CARBONSENSE</span>
-              <span className="text-[10px] text-[#0284C7] font-mono tracking-widest uppercase font-bold">PENGATURAN AWAL RUANGAN</span>
+            <div className="min-w-0">
+              <span className="font-black text-sm sm:text-base tracking-tight block leading-none text-[#0F172A]">CARBONSENSE</span>
+              <span className="hidden sm:block text-[10px] text-[#0284C7] font-mono tracking-widest uppercase font-bold">PENGATURAN AWAL RUANGAN</span>
             </div>
           </div>
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             {onboardingCompleted && (
               <button
                 onClick={() => navigate('/select-device')}
-                className="text-xs px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:border-[#0284C7] text-[#475569] hover:text-[#0284C7] transition-all font-semibold cursor-pointer"
+                className="text-[11px] sm:text-xs px-2.5 sm:px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:border-[#0284C7] text-[#475569] hover:text-[#0284C7] transition-all font-semibold cursor-pointer"
               >
-                Lewati ke Pilih Alat
+                <span className="hidden sm:inline">Lewati ke Pilih Alat</span>
+                <span className="sm:hidden">Lewati</span>
               </button>
             )}
             <button
@@ -406,39 +407,40 @@ export default function Onboarding() {
                 localStorage.removeItem('cs_purchase_status');
                 navigate('/login');
               }}
-              className="text-xs px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:border-[#DC2626] text-[#475569] hover:text-[#DC2626] transition-all font-semibold cursor-pointer"
+              className="text-[11px] sm:text-xs px-2.5 sm:px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:border-[#DC2626] text-[#475569] hover:text-[#DC2626] transition-all font-semibold cursor-pointer"
             >
-              Keluar Sesi
+              <span className="hidden sm:inline">Keluar Sesi</span>
+              <span className="sm:hidden">Keluar</span>
             </button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 my-4">
+      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 my-2 sm:my-4">
         <div className="max-w-xl w-full">
           {/* Header Intro */}
-          <div className="text-center mb-6">
-            <div className="w-14 h-14 rounded-2xl bg-[#E0F2FE] border border-[#0284C7]/30 flex items-center justify-center mx-auto mb-3 text-[#0284C7] shadow-sm">
-              <BrainCircuit className="w-7 h-7" />
+          <div className="text-center mb-5 sm:mb-6">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#E0F2FE] border border-[#0284C7]/30 flex items-center justify-center mx-auto mb-3 text-[#0284C7] shadow-sm">
+              <BrainCircuit className="w-6 h-6 sm:w-7 sm:h-7" />
             </div>
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#E0F2FE] border border-[#0284C7]/30 text-[#0284C7] text-xs font-bold mb-2">
-              <Cpu className="w-3.5 h-3.5" />
-              <span>Pengaturan Ruangan untuk Alat: <strong className="font-mono">{targetDeviceId}</strong></span>
+            <div className="inline-flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 px-3 py-1 rounded-full bg-[#E0F2FE] border border-[#0284C7]/30 text-[#0284C7] text-[11px] sm:text-xs font-bold mb-2 max-w-full">
+              <Cpu className="w-3.5 h-3.5 shrink-0" />
+              <span>Alat: <strong className="font-mono">{targetDeviceId}</strong></span>
               {pendingQueue.length > 1 && (
-                <span className="ml-1 px-2 py-0.5 rounded-full bg-[#0284C7] text-white text-[10px]">
-                  Masih ada {pendingQueue.length - 1} alat berikutnya
+                <span className="px-2 py-0.5 rounded-full bg-[#0284C7] text-white text-[10px]">
+                  +{pendingQueue.length - 1} alat lagi
                 </span>
               )}
             </div>
-            <h1 className="text-2xl font-extrabold text-[#0F172A]">Kenali Kondisi Ruangan Alat Ini</h1>
-            <p className="text-xs text-[#475569] mt-1">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-[#0F172A]">Kenali Kondisi Ruangan Alat Ini</h1>
+            <p className="text-xs text-[#475569] mt-1 leading-relaxed">
               Pengaturan ini hanya dilakukan <strong>1 kali</strong> untuk alat <strong className="font-mono text-[#0F172A]">{targetDeviceId}</strong> dan dapat diubah kapan saja di menu Pengaturan.
             </p>
           </div>
 
           {/* Progress Bar */}
-          <div className="mb-6">
+          <div className="mb-5 sm:mb-6">
             <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
@@ -446,14 +448,14 @@ export default function Onboarding() {
                 className="h-full bg-[#0284C7] transition-all duration-300"
               />
             </div>
-            <div className="flex justify-between mt-2 text-[11px] font-mono text-[#475569] uppercase tracking-wider font-semibold">
-              <span>{isSummaryPage ? 'Ringkasan Pengaturan Ruangan' : `Langkah ${currentStep + 1} dari ${steps.length}`}</span>
+            <div className="flex justify-between mt-2 text-[10px] sm:text-[11px] font-mono text-[#475569] uppercase tracking-wider font-semibold">
+              <span>{isSummaryPage ? 'Ringkasan Ruangan' : `Langkah ${currentStep + 1} dari ${steps.length}`}</span>
               <span>{progress}% Selesai</span>
             </div>
           </div>
 
           {/* Step Card */}
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xl min-h-[380px] flex flex-col justify-between">
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 border border-slate-200 shadow-xl min-h-[360px] flex flex-col justify-between">
             <AnimatePresence mode="wait">
               {isFinishing ? (
                 <motion.div
@@ -529,7 +531,7 @@ export default function Onboarding() {
                   </div>
 
                   {/* Saved Room Options Pills */}
-                  <div className="grid grid-cols-2 gap-2.5 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
                     {[
                       { label: 'Lokasi Alat', val: answers.find(a => a?.id === 'lokasi')?.value || 'Dapur / Tempat Masak' },
                       { label: 'Pertukaran Udara', val: answers.find(a => a?.id === 'sirkulasi')?.value || 'Jendela Sering Dibuka' },
@@ -552,7 +554,7 @@ export default function Onboarding() {
                     </span>
                     <div className="space-y-1.5">
                       {contacts.map((c, idx) => (
-                        <div key={idx} className="flex items-center justify-between text-xs py-1 border-b border-[#BBF7D0]/60 last:border-0">
+                        <div key={idx} className="flex flex-wrap items-center justify-between gap-1 text-xs py-1 border-b border-[#BBF7D0]/60 last:border-0">
                           <span className="font-bold text-[#0F172A]">{c.name || `Kontak ${idx + 1}`}</span>
                           <span className="font-mono text-[#16A34A] font-semibold">{c.phone}</span>
                         </div>
@@ -560,23 +562,23 @@ export default function Onboarding() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+                  <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-slate-200">
                     <button
                       type="button"
                       onClick={handleBack}
-                      className="text-xs font-bold text-[#475569] hover:text-[#0F172A] flex items-center gap-1.5 cursor-pointer"
+                      className="py-2.5 sm:py-0 text-xs font-bold text-[#475569] hover:text-[#0F172A] flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <ArrowLeft className="w-4 h-4" /> Ubah Jawaban
                     </button>
                     <button
                       type="button"
                       onClick={handleFinish}
-                      className="px-6 py-3 rounded-xl bg-[#0284C7] hover:bg-[#0369A1] text-white font-extrabold text-xs transition-all shadow-lg shadow-[#0284C7]/25 flex items-center gap-2 cursor-pointer"
+                      className="px-6 py-3.5 sm:py-3 rounded-xl bg-[#0284C7] hover:bg-[#0369A1] text-white font-extrabold text-xs transition-all shadow-lg shadow-[#0284C7]/25 flex items-center justify-center gap-2 cursor-pointer"
                     >
                       {pendingQueue.filter(id => id !== targetDeviceId && localStorage.getItem(`cs_device_onboarding_completed_${id}`) !== 'true').length > 0
                         ? 'Simpan & Atur Alat Berikutnya'
                         : 'Simpan & Masuk ke Dashboard'}{' '}
-                      <ArrowRight className="w-4 h-4" />
+                      <ArrowRight className="w-4 h-4 shrink-0" />
                     </button>
                   </div>
                 </motion.div>
@@ -626,7 +628,7 @@ export default function Onboarding() {
                               value={contact.name}
                               onChange={(e) => handleContactChange(idx, 'name', e.target.value)}
                               placeholder="Contoh: Bpk. Budi"
-                              className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-xs text-[#0F172A] focus:outline-none focus:border-[#0284C7]"
+                              className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-base sm:text-xs text-[#0F172A] focus:outline-none focus:border-[#0284C7]"
                             />
                           </div>
                           <div>
@@ -638,7 +640,7 @@ export default function Onboarding() {
                               value={contact.phone}
                               onChange={(e) => handleContactChange(idx, 'phone', e.target.value)}
                               placeholder="+6281234567890"
-                              className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-xs font-mono text-[#0F172A] focus:outline-none focus:border-[#0284C7]"
+                              className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-base sm:text-xs font-mono text-[#0F172A] focus:outline-none focus:border-[#0284C7]"
                             />
                           </div>
                         </div>
@@ -657,18 +659,18 @@ export default function Onboarding() {
                     </p>
                   </div>
 
-                  <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+                  <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-slate-200">
                     <button
                       type="button"
                       onClick={handleBack}
-                      className="text-xs font-bold text-[#475569] hover:text-[#0F172A] flex items-center gap-1.5 cursor-pointer"
+                      className="py-2.5 sm:py-0 text-xs font-bold text-[#475569] hover:text-[#0F172A] flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <ArrowLeft className="w-4 h-4" /> Kembali
                     </button>
                     <button
                       type="button"
                       onClick={handleSaveContactsStep}
-                      className="px-6 py-3 rounded-xl bg-[#0284C7] hover:bg-[#0369A1] text-white font-extrabold text-xs transition-all shadow-lg shadow-[#0284C7]/25 flex items-center gap-2 cursor-pointer"
+                      className="px-6 py-3.5 sm:py-3 rounded-xl bg-[#0284C7] hover:bg-[#0369A1] text-white font-extrabold text-xs transition-all shadow-lg shadow-[#0284C7]/25 flex items-center justify-center gap-2 cursor-pointer"
                     >
                       Lihat Ringkasan <ArrowRight className="w-4 h-4" />
                     </button>
@@ -698,17 +700,17 @@ export default function Onboarding() {
                           type="button"
                           key={opt}
                           onClick={() => handleSelectOption(opt)}
-                          className={`w-full p-4 rounded-2xl border text-left transition-all flex items-center justify-between cursor-pointer ${
+                          className={`w-full p-3.5 sm:p-4 rounded-2xl border text-left transition-all flex items-center justify-between gap-3 cursor-pointer ${
                             isSelected
                               ? 'bg-[#E0F2FE] border-[#0284C7] text-[#0284C7] shadow-sm'
                               : 'bg-[#F9FAFB] border-slate-200 text-[#0F172A] hover:border-[#0284C7]/50 hover:bg-white'
                           }`}
                         >
-                          <span className="font-bold text-sm">
+                          <span className="font-bold text-sm leading-snug">
                             {opt === 'Lainnya' ? 'Lainnya (Tulis Sendiri)...' : opt}
                           </span>
                           <span
-                            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
                               isSelected ? 'border-[#0284C7] bg-[#0284C7]' : 'border-slate-300'
                             }`}
                           >
@@ -734,7 +736,7 @@ export default function Onboarding() {
                             setCustomTextValue(prev => ({ ...prev, [currentStepObj.id]: e.target.value }))
                           }
                           placeholder={currentStepObj.customPlaceholder || 'Ketik jawaban Anda...'}
-                          className="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm text-[#0F172A] focus:outline-none focus:border-[#0284C7]"
+                          className="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-base sm:text-sm text-[#0F172A] focus:outline-none focus:border-[#0284C7]"
                           autoFocus
                         />
                         <button

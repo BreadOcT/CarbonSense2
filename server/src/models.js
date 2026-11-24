@@ -54,3 +54,32 @@ export const Device = sequelize.define('Device', {
     defaultValue: 'Belum Aktif'
   }
 });
+
+// Persistent Telemetry History Log Model
+export const TelemetryLog = sequelize.define('TelemetryLog', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
+  },
+  deviceId: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  ppm: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  status: {
+    type: DataTypes.STRING,
+    defaultValue: 'Online'
+  },
+  recordedAt: {
+    type: DataTypes.BIGINT,
+    allowNull: false
+  }
+}, {
+  indexes: [
+    { fields: ['deviceId', 'recordedAt'] }
+  ]
+});

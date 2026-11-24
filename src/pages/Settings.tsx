@@ -4,7 +4,7 @@ import {
   ArrowLeft, Save, LogOut, Wind, Brain, Sparkles, Bed, Laptop, Home, User, Users,
   Minimize2, Maximize2, Flame, Activity, ShieldCheck, ShieldAlert,
   HelpCircle, UserX, Cigarette, Car, Lock, RotateCw, ExternalLink, ShieldOff,
-  Plus, Trash2, Phone, Send, Cpu
+  Plus, Trash2, Phone, Cpu
 } from 'lucide-react';
 import { auth, db } from '../lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
@@ -251,15 +251,6 @@ export default function Settings() {
     setEmergencyContacts(prev => prev.filter((_, i) => i !== idx));
   };
 
-  const handleTestWhatsApp = (contact: EmergencyContact) => {
-    const cleanPhone = (contact.phone || '').replace(/[^0-9]/g, '');
-    if (!cleanPhone) return;
-    const msg = encodeURIComponent(
-      `Halo ${contact.name || 'Kontak Darurat'}, ini adalah pesan uji coba dari Sistem Pemantau Gas CarbonSense di ruangan (${answers.lokasi || 'Ruangan Utama'}). Nomor Anda telah terdaftar sebagai penerima peringatan darurat kebocoran gas.`
-    );
-    window.open(`https://wa.me/${cleanPhone}?text=${msg}`, '_blank', 'noopener,noreferrer');
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const finalLokasi = showCustomLokasi && customLokasi.trim() ? customLokasi.trim() : answers.lokasi;
@@ -328,20 +319,20 @@ export default function Settings() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F0F9FF] text-[#0F172A] font-sans pt-24 pb-12 px-4 sm:px-6 relative">
+    <div className="min-h-screen bg-[#F0F9FF] text-[#0F172A] font-sans pt-20 sm:pt-24 pb-10 sm:pb-12 px-3 sm:px-6 relative">
       {/* Navigation Header */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="max-w-6xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <Link
               to="/dashboard"
-              className="p-2 hover:bg-slate-100 rounded-xl transition-colors text-[#475569] hover:text-[#0284C7] group"
+              className="p-1.5 sm:p-2 hover:bg-slate-100 rounded-xl transition-colors text-[#475569] hover:text-[#0284C7] group shrink-0"
               title="Kembali ke Dashboard"
             >
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
             </Link>
             <span
-              className="flex h-9 w-9 items-center justify-center rounded-xl shadow-md"
+              className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl shadow-md shrink-0"
               style={{ background: 'linear-gradient(135deg, #0284C7, #0369A1)' }}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -350,19 +341,20 @@ export default function Settings() {
                 <circle cx="12" cy="12" r="3.2" fill="#FFFFFF" />
               </svg>
             </span>
-            <div className="flex flex-col leading-none text-left">
-              <span className="text-base font-black tracking-tight text-[#0F172A]">CARBONSENSE</span>
-              <span className="text-[10px] uppercase tracking-widest text-[#0284C7] font-mono font-bold">
+            <div className="flex flex-col leading-none text-left min-w-0">
+              <span className="text-sm sm:text-base font-black tracking-tight text-[#0F172A]">CARBONSENSE</span>
+              <span className="hidden sm:block text-[10px] uppercase tracking-widest text-[#0284C7] font-mono font-bold truncate">
                 PENGATURAN RUANGAN &amp; KONTAK DARURAT
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             <Link
               to="/dashboard"
-              className="text-xs px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:border-[#0284C7] text-[#475569] hover:text-[#0284C7] transition-all font-semibold"
+              className="text-xs px-3 sm:px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:border-[#0284C7] text-[#475569] hover:text-[#0284C7] transition-all font-semibold"
             >
-              &lt;- Kembali ke Dashboard
+              <span className="hidden sm:inline">&lt;- Kembali ke Dashboard</span>
+              <span className="sm:hidden">Dashboard</span>
             </Link>
             <button
               type="button"
@@ -380,12 +372,12 @@ export default function Settings() {
       </nav>
 
       <div className="max-w-6xl mx-auto">
-        <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+        <header className="mb-6 sm:mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-sm">
           <div>
             <span className="text-[10px] font-mono uppercase tracking-widest text-[#0284C7] font-bold">
               KONFIGURASI PER PERANGKAT
             </span>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] mt-0.5">
+            <h1 className="text-xl sm:text-3xl font-extrabold text-[#0F172A] mt-0.5">
               Pengaturan Kondisi Ruangan &amp; Kontak Darurat
             </h1>
             <p className="text-xs sm:text-sm text-[#475569] mt-1">
@@ -394,7 +386,7 @@ export default function Settings() {
           </div>
 
           {availableDevices.length > 0 && (
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 bg-[#F0F9FF] p-3.5 rounded-2xl border border-[#BAE6FD] shrink-0">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 bg-[#F0F9FF] p-3 sm:p-3.5 rounded-2xl border border-[#BAE6FD] shrink-0">
               <div className="flex items-center gap-2 text-xs font-bold text-[#0284C7]">
                 <Cpu className="w-4 h-4" />
                 <span>Pilih Alat:</span>
@@ -406,7 +398,7 @@ export default function Settings() {
                   setSelectedDeviceId(nextId);
                   setSearchParams({ deviceId: nextId });
                 }}
-                className="px-3.5 py-2 rounded-xl bg-white border border-[#0284C7]/40 text-xs font-mono font-bold text-[#0F172A] focus:outline-none focus:border-[#0284C7] cursor-pointer"
+                className="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-white border border-[#0284C7]/40 text-xs font-mono font-bold text-[#0F172A] focus:outline-none focus:border-[#0284C7] cursor-pointer"
               >
                 {availableDevices.map(devId => (
                   <option key={devId} value={devId}>
@@ -418,11 +410,11 @@ export default function Settings() {
           )}
         </header>
 
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8 items-start">
           {/* Left Column: Form Cards */}
-          <div className="lg:col-span-8 space-y-6">
+          <div className="lg:col-span-8 space-y-4 sm:space-y-6">
             {/* 1. Lokasi */}
-            <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-sm">
+            <div className="p-4 sm:p-6 bg-white border border-slate-200 rounded-2xl sm:rounded-3xl shadow-sm">
               <h3 className="text-xs font-bold uppercase tracking-wider mb-4 text-[#0284C7]">
                 1. Lokasi Pemasangan Alat
               </h3>
@@ -470,14 +462,14 @@ export default function Settings() {
                       setAnswers(prev => ({ ...prev, lokasi: e.target.value }));
                     }}
                     placeholder="Contoh: Area Kasir / Gudang Belakang"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-xs text-[#0F172A] focus:outline-none focus:border-[#0284C7]"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-base sm:text-xs text-[#0F172A] focus:outline-none focus:border-[#0284C7]"
                   />
                 </div>
               )}
             </div>
 
             {/* 2. Sirkulasi */}
-            <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-sm">
+            <div className="p-4 sm:p-6 bg-white border border-slate-200 rounded-2xl sm:rounded-3xl shadow-sm">
               <h3 className="text-xs font-bold uppercase tracking-wider mb-4 text-[#0284C7]">
                 2. Kondisi Pertukaran Udara (Ventilasi)
               </h3>
@@ -616,18 +608,18 @@ export default function Settings() {
                 </div>
               )}
 
-              <div className="mt-4 pt-3 border-t border-slate-200 flex gap-2">
+              <div className="mt-4 pt-3 border-t border-slate-200 flex flex-col sm:flex-row gap-2">
                 <input
                   type="text"
                   value={customPolutanInput}
                   onChange={(e) => setCustomPolutanInput(e.target.value)}
                   placeholder="Tambah sumber asap/gas lainnya (contoh: Oven / Genset)..."
-                  className="flex-1 px-3.5 py-2.5 rounded-xl bg-[#F9FAFB] border border-slate-300 text-xs text-[#0F172A] focus:outline-none focus:border-[#0284C7] focus:bg-white"
+                  className="flex-1 px-3.5 py-2.5 rounded-xl bg-[#F9FAFB] border border-slate-300 text-base sm:text-xs text-[#0F172A] focus:outline-none focus:border-[#0284C7] focus:bg-white"
                 />
                 <button
                   type="button"
                   onClick={handleAddCustomPolutan}
-                  className="px-4 py-2.5 rounded-xl bg-[#E0F2FE] hover:bg-[#BAE6FD] text-[#0284C7] font-bold text-xs transition-colors cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl bg-[#E0F2FE] hover:bg-[#BAE6FD] text-[#0284C7] font-bold text-xs transition-colors cursor-pointer shrink-0"
                 >
                   + Tambah
                 </button>
@@ -635,7 +627,7 @@ export default function Settings() {
             </div>
 
             {/* 6. Detektor Lain */}
-            <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-sm">
+            <div className="p-4 sm:p-6 bg-white border border-slate-200 rounded-2xl sm:rounded-3xl shadow-sm">
               <h3 className="text-xs font-bold uppercase tracking-wider mb-4 text-[#0284C7]">
                 6. Kesiapan Alat Pemadam (APAR) atau Alarm Asap Lain
               </h3>
@@ -663,15 +655,15 @@ export default function Settings() {
             </div>
 
             {/* 7. Daftar Kontak WhatsApp untuk Peringatan Bahaya */}
-            <div className="p-6 bg-white border-2 border-[#16A34A]/30 rounded-3xl shadow-sm">
-              <div className="flex items-center justify-between mb-2">
+            <div className="p-4 sm:p-6 bg-white border-2 border-[#16A34A]/30 rounded-2xl sm:rounded-3xl shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-[#16A34A]" />
+                  <Phone className="w-4 h-4 text-[#16A34A] shrink-0" />
                   <h3 className="text-xs font-bold uppercase tracking-wider text-[#16A34A]">
-                    7. Daftar Kontak WhatsApp untuk Peringatan Bahaya
+                    7. Daftar Kontak WhatsApp Darurat
                   </h3>
                 </div>
-                <span className="px-2.5 py-0.5 rounded-full bg-[#DCFCE7] text-[#16A34A] text-[10px] font-bold">
+                <span className="px-2.5 py-0.5 rounded-full bg-[#DCFCE7] text-[#16A34A] text-[10px] font-bold shrink-0">
                   {emergencyContacts.length} Kontak
                 </span>
               </div>
@@ -681,24 +673,17 @@ export default function Settings() {
 
               <div className="space-y-3">
                 {emergencyContacts.map((contact, idx) => (
-                  <div key={idx} className="p-4 rounded-2xl bg-[#F9FAFB] border border-slate-200 space-y-3">
-                    <div className="flex items-center justify-between">
+                  <div key={idx} className="p-3.5 sm:p-4 rounded-2xl bg-[#F9FAFB] border border-slate-200 space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="text-[10px] font-mono uppercase tracking-wider text-[#0284C7] font-bold">
                         Kontak Darurat #{idx + 1}
                       </span>
                       <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleTestWhatsApp(contact)}
-                          className="px-2.5 py-1 rounded-lg bg-[#DCFCE7] hover:bg-[#BBF7D0] text-[#16A34A] text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-colors"
-                        >
-                          <Send className="w-3 h-3" /> Uji WA
-                        </button>
                         {emergencyContacts.length > 1 && (
                           <button
                             type="button"
                             onClick={() => handleRemoveContact(idx)}
-                            className="px-2.5 py-1 rounded-lg bg-[#FEF2F2] hover:bg-[#FEE2E2] text-[#DC2626] text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-colors"
+                            className="px-2.5 py-1.5 rounded-lg bg-[#FEF2F2] hover:bg-[#FEE2E2] text-[#DC2626] text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-colors"
                           >
                             <Trash2 className="w-3 h-3" /> Hapus
                           </button>
@@ -715,7 +700,7 @@ export default function Settings() {
                           value={contact.name}
                           onChange={(e) => handleContactChange(idx, 'name', e.target.value)}
                           placeholder="Contoh: Ibu Sari"
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-xs text-[#0F172A] focus:outline-none focus:border-[#0284C7]"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-base sm:text-xs text-[#0F172A] focus:outline-none focus:border-[#0284C7]"
                         />
                       </div>
                       <div>
@@ -727,7 +712,7 @@ export default function Settings() {
                           value={contact.phone}
                           onChange={(e) => handleContactChange(idx, 'phone', e.target.value)}
                           placeholder="+6281234567890"
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-xs font-mono text-[#0F172A] focus:outline-none focus:border-[#0284C7]"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-base sm:text-xs font-mono text-[#0F172A] focus:outline-none focus:border-[#0284C7]"
                         />
                       </div>
                     </div>
@@ -745,15 +730,15 @@ export default function Settings() {
             </div>
 
             {/* Submit Bar */}
-            <div className="pt-2 flex items-center gap-4">
+            <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
               <button
                 type="submit"
-                className="px-8 py-4 bg-[#0284C7] hover:bg-[#0369A1] text-white font-extrabold rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-[#0284C7]/25 active:scale-95 text-sm"
+                className="w-full sm:w-auto px-8 py-4 bg-[#0284C7] hover:bg-[#0369A1] text-white font-extrabold rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-[#0284C7]/25 active:scale-95 text-sm"
               >
                 <Save className="w-5 h-5" /> Simpan Semua Pengaturan
               </button>
               {saved && (
-                <span className="text-xs font-bold text-[#16A34A]">
+                <span className="text-xs font-bold text-[#16A34A] text-center sm:text-left">
                   ✓ Pengaturan Ruangan &amp; Kontak Berhasil Disimpan!
                 </span>
               )}
@@ -762,7 +747,7 @@ export default function Settings() {
 
           {/* Right Column: Live Summary Panel (Sticky) */}
           <div className="lg:col-span-4 lg:sticky lg:top-24">
-            <div className="p-6 bg-white border border-slate-200 rounded-3xl space-y-5 shadow-lg">
+            <div className="p-4 sm:p-6 bg-white border border-slate-200 rounded-2xl sm:rounded-3xl space-y-5 shadow-lg">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-[#E0F2FE] border border-[#0284C7]/30 flex items-center justify-center text-[#0284C7]">
                   <Brain className="w-5 h-5" />

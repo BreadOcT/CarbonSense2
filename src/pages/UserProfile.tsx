@@ -134,17 +134,17 @@ export default function UserProfile() {
     <div className="min-h-screen flex flex-col justify-between bg-[#F0F9FF] text-[#0F172A] font-sans">
       {/* Navigation Header */}
       <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="max-w-4xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <Link
               to="/dashboard"
-              className="p-2 hover:bg-slate-100 rounded-xl transition-colors text-[#475569] hover:text-[#0284C7] group"
+              className="p-1.5 sm:p-2 hover:bg-slate-100 rounded-xl transition-colors text-[#475569] hover:text-[#0284C7] group shrink-0"
               title="Kembali ke Dashboard"
             >
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
             </Link>
             <span
-              className="flex h-9 w-9 items-center justify-center rounded-xl shadow-md"
+              className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl shadow-md shrink-0"
               style={{ background: 'linear-gradient(135deg, #0284C7, #0369A1)' }}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -153,43 +153,44 @@ export default function UserProfile() {
                 <circle cx="12" cy="12" r="3.2" fill="#FFFFFF" />
               </svg>
             </span>
-            <div className="flex flex-col leading-none text-left">
-              <span className="text-base font-black tracking-tight text-[#0F172A]">CARBONSENSE</span>
-              <span className="text-[10px] uppercase tracking-widest text-[#0284C7] font-mono font-bold">
+            <div className="flex flex-col leading-none text-left min-w-0">
+              <span className="text-sm sm:text-base font-black tracking-tight text-[#0F172A]">CARBONSENSE</span>
+              <span className="hidden sm:block text-[10px] uppercase tracking-widest text-[#0284C7] font-mono font-bold">
                 PROFIL PENGGUNA
               </span>
             </div>
           </div>
           <Link
             to="/dashboard"
-            className="text-xs px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:border-[#0284C7] text-[#475569] hover:text-[#0284C7] transition-all font-semibold"
+            className="text-xs px-3 sm:px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:border-[#0284C7] text-[#475569] hover:text-[#0284C7] transition-all font-semibold shrink-0"
           >
-            &lt;- Kembali ke Dashboard
+            <span className="hidden sm:inline">&lt;- Kembali ke Dashboard</span>
+            <span className="sm:hidden">Dashboard</span>
           </Link>
         </div>
       </nav>
 
       {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 my-4">
+      <main className="flex-1 flex items-center justify-center p-3 sm:p-6 my-2 sm:my-4">
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           className="max-w-3xl w-full"
         >
-          <div className="mb-6">
-            <h1 className="text-2xl font-extrabold text-[#0F172A]">Pengaturan Akun &amp; Keamanan</h1>
+          <div className="mb-5 sm:mb-6">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-[#0F172A]">Pengaturan Akun &amp; Keamanan</h1>
             <p className="text-xs text-[#475569] mt-1">
               Kelola identitas akun Anda, ubah kata sandi, atau keluar dari sesi aktif.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6">
             {/* Left Column */}
-            <div className="md:col-span-7 space-y-6">
+            <div className="md:col-span-7 space-y-4 sm:space-y-6">
               {/* Form Edit Profile */}
               <form
                 onSubmit={handleUpdateProfile}
-                className="p-6 bg-white border border-slate-200 rounded-3xl shadow-md"
+                className="p-4 sm:p-6 bg-white border border-slate-200 rounded-2xl sm:rounded-3xl shadow-md"
               >
                 <div className="flex items-center gap-2.5 mb-5">
                   <User className="w-5 h-5 text-[#0284C7]" />
@@ -215,9 +216,9 @@ export default function UserProfile() {
                     <label className="block text-[11px] text-[#475569] font-semibold uppercase mb-1.5">
                       Email Akun (Tetap)
                     </label>
-                    <div className="flex items-center gap-3 border border-slate-200 bg-slate-100 px-4 py-3 rounded-xl">
-                      <Mail className="w-4 h-4 text-[#475569]" />
-                      <span className="text-sm font-mono text-[#475569]">{email}</span>
+                    <div className="flex items-center gap-3 border border-slate-200 bg-slate-100 px-4 py-3 rounded-xl min-w-0">
+                      <Mail className="w-4 h-4 text-[#475569] shrink-0" />
+                      <span className="text-sm font-mono text-[#475569] truncate">{email}</span>
                     </div>
                   </div>
 
@@ -230,7 +231,7 @@ export default function UserProfile() {
                         type="text"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
-                        className="w-full bg-[#F9FAFB] border border-slate-300 focus:border-[#0284C7] focus:bg-white px-4 py-3 pl-11 rounded-xl text-sm font-bold text-[#0F172A] focus:outline-none transition-all"
+                        className="w-full bg-[#F9FAFB] border border-slate-300 focus:border-[#0284C7] focus:bg-white px-4 py-3 pl-11 rounded-xl text-base sm:text-sm font-bold text-[#0F172A] focus:outline-none transition-all"
                         placeholder="Ubah nama profil..."
                       />
                       <User className="w-4 h-4 text-[#475569] absolute left-4 top-1/2 -translate-y-1/2" />
@@ -248,10 +249,10 @@ export default function UserProfile() {
               </form>
 
               {/* Emergency Contacts Summary Card */}
-              <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-md">
-                <div className="flex items-center justify-between mb-3">
+              <div className="p-4 sm:p-6 bg-white border border-slate-200 rounded-2xl sm:rounded-3xl shadow-md">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                   <div className="flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-[#16A34A]" />
+                    <Phone className="w-4 h-4 text-[#16A34A] shrink-0" />
                     <h3 className="text-xs font-bold uppercase tracking-wider text-[#16A34A]">
                       Daftar Kontak Darurat WhatsApp
                     </h3>
@@ -273,7 +274,7 @@ export default function UserProfile() {
                     {emergencyContacts.map((c, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center justify-between p-2.5 rounded-xl bg-[#F0FDF4] border border-[#BBF7D0] text-xs"
+                        className="flex flex-wrap items-center justify-between gap-1 p-2.5 rounded-xl bg-[#F0FDF4] border border-[#BBF7D0] text-xs"
                       >
                         <span className="font-bold text-[#0F172A]">{c.name || `Kontak #${idx + 1}`}</span>
                         <span className="font-mono text-[#16A34A] font-semibold">{c.phone}</span>
@@ -284,7 +285,7 @@ export default function UserProfile() {
               </div>
 
               {/* Logout Card */}
-              <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-md">
+              <div className="p-4 sm:p-6 bg-white border border-slate-200 rounded-2xl sm:rounded-3xl shadow-md">
                 <div className="flex items-center gap-2.5 mb-2">
                   <Shield className="w-4 h-4 text-[#475569]" />
                   <h3 className="text-xs font-bold uppercase tracking-wider text-[#475569]">
@@ -310,7 +311,7 @@ export default function UserProfile() {
             <div className="md:col-span-5">
               <form
                 onSubmit={handleChangePassword}
-                className="p-6 bg-white border border-slate-200 rounded-3xl shadow-md h-full flex flex-col justify-between"
+                className="p-4 sm:p-6 bg-white border border-slate-200 rounded-2xl sm:rounded-3xl shadow-md h-full flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center gap-2.5 mb-5">
@@ -342,7 +343,7 @@ export default function UserProfile() {
                           type="password"
                           value={oldPassword}
                           onChange={(e) => setOldPassword(e.target.value)}
-                          className="w-full bg-[#F9FAFB] border border-slate-300 focus:border-[#0284C7] focus:bg-white px-4 py-3 pl-11 rounded-xl text-xs font-bold text-[#0F172A] focus:outline-none transition-all"
+                          className="w-full bg-[#F9FAFB] border border-slate-300 focus:border-[#0284C7] focus:bg-white px-4 py-3 pl-11 rounded-xl text-base sm:text-xs font-bold text-[#0F172A] focus:outline-none transition-all"
                           placeholder="Masukkan sandi lama..."
                         />
                         <Lock className="w-4 h-4 text-[#475569] absolute left-4 top-1/2 -translate-y-1/2" />
@@ -358,7 +359,7 @@ export default function UserProfile() {
                           type="password"
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
-                          className="w-full bg-[#F9FAFB] border border-slate-300 focus:border-[#0284C7] focus:bg-white px-4 py-3 pl-11 rounded-xl text-xs font-bold text-[#0F172A] focus:outline-none transition-all"
+                          className="w-full bg-[#F9FAFB] border border-slate-300 focus:border-[#0284C7] focus:bg-white px-4 py-3 pl-11 rounded-xl text-base sm:text-xs font-bold text-[#0F172A] focus:outline-none transition-all"
                           placeholder="Minimal 5 karakter..."
                         />
                         <Key className="w-4 h-4 text-[#475569] absolute left-4 top-1/2 -translate-y-1/2" />
@@ -374,7 +375,7 @@ export default function UserProfile() {
                           type="password"
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="w-full bg-[#F9FAFB] border border-slate-300 focus:border-[#0284C7] focus:bg-white px-4 py-3 pl-11 rounded-xl text-xs font-bold text-[#0F172A] focus:outline-none transition-all"
+                          className="w-full bg-[#F9FAFB] border border-slate-300 focus:border-[#0284C7] focus:bg-white px-4 py-3 pl-11 rounded-xl text-base sm:text-xs font-bold text-[#0F172A] focus:outline-none transition-all"
                           placeholder="Ketik ulang sandi baru..."
                         />
                         <Check className="w-4 h-4 text-[#475569] absolute left-4 top-1/2 -translate-y-1/2" />

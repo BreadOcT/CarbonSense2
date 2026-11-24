@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import { initDb } from './db.js';
-import { User, Device } from './models.js';
+import { User, Device, TelemetryLog } from './models.js';
 
 dotenv.config();
 
@@ -308,6 +308,33 @@ app.post('/api/devices/telemetry', async (req, res) => {
 
     await device.save();
 
+    // Persist historical PPM reading to the database (TelemetryLog table)
+    const numericPpm = ppm !== undefined && ppm !== '--' ? Number(ppm) : NaN;
+    if (!isNaN(numericPpm) && status !== 'Offline') {
+      try {
+        const nowTs = Date.now();
+        const lastLog = await TelemetryLog.findOne({
+          where: { deviceId: id },
+          order: [['recordedAt', 'DESC']]
+        });
+        const isDuplicateBurst =
+          lastLog &&
+          nowTs - Number(lastLog.recordedAt) < 2000 &&
+          Number(lastLog.ppm) === Math.round(numericPpm);
+
+        if (!isDuplicateBurst) {
+          await TelemetryLog.create({
+            deviceId: id,
+            ppm: Math.round(numericPpm),
+            status: status || device.status || 'Online',
+            recordedAt: nowTs
+          });
+        }
+      } catch (logErr) {
+        console.error('Failed to persist telemetry log to database:', logErr.message);
+      }
+    }
+
     // Sync to Firebase RTDB via REST API so that front-end receives it in real-time!
     if (!skipFirebaseSync) {
       try {
@@ -377,6 +404,31 @@ app.post('/api/devices/telemetry', async (req, res) => {
   }
 });
 
+// Get Persistent Telemetry History for a Device
+app.get('/api/devices/:id/history', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const limit = Math.min(parseInt(req.query.limit, 10) || 5000, 10000);
+
+    const logs = await TelemetryLog.findAll({
+      where: { deviceId: id },
+      order: [['recordedAt', 'DESC']],
+      limit
+    });
+
+    const formatted = logs.reverse().map(l => ({
+      timestamp: String(l.recordedAt),
+      value: Number(l.ppm),
+      status: l.status
+    }));
+
+    res.json(formatted);
+  } catch (error) {
+    console.error('Get device history error:', error);
+    res.status(500).json({ error: 'Gagal memuat riwayat telemetri perangkat.' });
+  }
+});
+
 // Update Device Details (Admin helper)
 app.put('/api/devices/:id', async (req, res) => {
   try {
@@ -390,6 +442,7 @@ app.put('/api/devices/:id', async (req, res) => {
         return res.status(400).json({ error: 'Device ID baru sudah digunakan.' });
       }
       await Device.update({ id: newId }, { where: { id } });
+      await TelemetryLog.update({ deviceId: newId }, { where: { deviceId: id } });
       updatedId = newId;
     }
 
@@ -461,6 +514,22 @@ ATURAN STRUKTUR JAWABAN (WAJIB):
 - Detektor Tambahan: ${profile?.detektor_lain || 'Tidak Ada'}
 
 Berikan ringkasan analisis profil ruangan saya yang ramah, alami, dan tidak kaku dalam bahasa Indonesia.`;
+    } else if (type === 'dashboard_advice') {
+      systemPrompt = `Anda adalah CarbonSense AI Assistant, pakar keselamatan kualitas udara dalam ruangan.
+Tugas Anda adalah memberikan analisis kondisi udara singkat (maksimal 2-3 kalimat, maks 50 kata) berdasarkan data sensor dan profil ruangan pengguna dalam bahasa Indonesia yang ramah dan mudah dipahami orang awam.
+JANGAN gunakan kalimat pembuka seperti "Halo" atau "Tentu". Langsung berikan analisis singkat dan 1 saran praktis.
+
+DATA RUANGAN & SENSOR SAAT INI:
+- Lokasi: ${profile?.lokasi || 'Ruangan Utama'}
+- Luas Ruangan: ${profile?.luas_ruang || 'Sedang'}
+- Sirkulasi: ${profile?.sirkulasi || 'Jendela sering dibuka'}
+- Sumber Gas/Asap Terdekat: ${profile?.polutan?.join(', ') || 'Tidak Ada'}
+- Status Koneksi: ${isOffline ? 'OFFLINE' : 'ONLINE'}
+- Kadar Gas CO Saat Ini: ${isOffline ? 'OFFLINE' : `${carbonLevel ?? 0} PPM`} (Aman <= 700, Waspada 701-1200, Bahaya > 1200)`;
+
+      userMessage = isOffline
+        ? 'Alat sedang offline. Berikan 2 kalimat singkat untuk mengingatkan pengguna menyalakan alat dan mengecek WiFi.'
+        : `Berikan analisis singkat kondisi udara saat ini (${carbonLevel ?? 0} PPM) dan 1 saran pencegahan khusus untuk ruangan ${profile?.lokasi || 'ini'}.`;
     } else {
       systemPrompt = `Anda adalah CarbonSense AI Assistant, kecerdasan buatan terintegrasi untuk pendeteksian gas karbon monoksida (CO) dan kualitas udara dalam ruangan.
 Tugas Anda adalah memantau, mendiagnosis, memberikan rekomendasi pencegahan, keselamatan, serta instruksi evakuasi darurat dalam bahasa Indonesia yang ringkas, ramah, dan solutif.
@@ -503,13 +572,25 @@ ATURAN STRUKTUR RESPON Q&A:
 
     let messages = [{ role: 'system', content: systemPrompt }];
 
-    if (chatHistory && Array.isArray(chatHistory) && chatHistory.length > 0) {
-      chatHistory.slice(-10).forEach(msg => {
-        messages.push({
-          role: msg.sender === 'user' ? 'user' : 'assistant',
-          content: msg.text
-        });
-      });
+    if (type !== 'profile_summary' && type !== 'dashboard_advice' && chatHistory && Array.isArray(chatHistory) && chatHistory.length > 0) {
+      // Clean history: ensure first non-system message is from 'user' (DeepSeek requires valid role alternation)
+      const cleanedHistory = [];
+      let seenUser = false;
+      for (const msg of chatHistory.slice(-10)) {
+        const role = msg.sender === 'user' ? 'user' : 'assistant';
+        if (!seenUser && role === 'assistant') continue;
+        seenUser = true;
+        if (cleanedHistory.length > 0 && cleanedHistory[cleanedHistory.length - 1].role === role) {
+          cleanedHistory[cleanedHistory.length - 1].content += '\n' + (msg.text || '');
+        } else {
+          cleanedHistory.push({ role, content: msg.text || '' });
+        }
+      }
+      if (cleanedHistory.length > 0) {
+        messages.push(...cleanedHistory);
+      } else {
+        messages.push({ role: 'user', content: userMessage });
+      }
     } else {
       messages.push({ role: 'user', content: userMessage });
     }
@@ -530,6 +611,16 @@ ATURAN STRUKTUR RESPON Q&A:
 
     if (!response.ok) {
       const errorText = await response.text();
+      if (response.status === 401) {
+        return res.status(401).json({
+          error: 'API Key DeepSeek di server/.env tidak valid atau kadaluarsa (HTTP 401). Harap perbarui VITE_DEEPSEEK_API_KEY.'
+        });
+      }
+      if (response.status === 402) {
+        return res.status(402).json({
+          error: 'Saldo / kuota DeepSeek API habis (HTTP 402). Harap isi ulang saldo di platform.deepseek.com.'
+        });
+      }
       throw new Error(`DeepSeek API error: ${response.status} - ${errorText}`);
     }
 

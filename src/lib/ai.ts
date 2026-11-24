@@ -50,6 +50,7 @@ export async function generateChatResponse(
   const currentPpm = isOffline ? null : (carbonLevel || 450);
 
   // Always attempt to get a recommendation from DeepSeek AI
+  let aiErrorReason = '';
   try {
     // Dynamic import to avoid circular references at runtime
     const { api } = await import('./api');
@@ -63,8 +64,11 @@ export async function generateChatResponse(
     return response;
   } catch (err: any) {
     console.error('Failed to get real DeepSeek recommendation:', err);
+    aiErrorReason = err?.message || 'Koneksi ke server AI gagal';
     // Fallback to rules below if the API key is not configured or fails
   }
+
+  const fallbackNotice = `\n\n_(Mode Cadangan — DeepSeek AI belum aktif: ${aiErrorReason})_`;
 
   // Local Rule-Based Responses for Offline or Low/Normal PPM
   const lokasi = profile?.lokasi || "Ruangan";
@@ -105,26 +109,26 @@ e. **Bind Device**: Daftarkan ID perangkat Anda (misal: CS-DAPUR-01) pada menu "
 
   if (lowCaseText.includes("status") || lowCaseText.includes("kualitas") || lowCaseText.includes("bagaimana") || lowCaseText.includes("ppm")) {
     if (currentPpm !== null && currentPpm <= 700) {
-      return `Kadar karbon di **${lokasi}** saat ini **${currentPpm} ppm** (Aman). Sirkulasi ${sirkulasi} dan ukuran ruangan ${luas} dalam kondisi stabil.`;
+      return `Kadar karbon di **${lokasi}** saat ini **${currentPpm} ppm** (Aman). Sirkulasi ${sirkulasi} dan ukuran ruangan ${luas} dalam kondisi stabil.${fallbackNotice}`;
     } else {
-      return `Kadar karbon di **${lokasi}** saat ini **${currentPpm} ppm** (Waspada). Segera buka jendela untuk meningkatkan sirkulasi ${sirkulasi} dan mengurangi pengaruh emisi ${polutan}.`;
+      return `Kadar karbon di **${lokasi}** saat ini **${currentPpm} ppm** (Waspada). Segera buka jendela untuk meningkatkan sirkulasi ${sirkulasi} dan mengurangi pengaruh emisi ${polutan}.${fallbackNotice}`;
     }
   } else if (lowCaseText.includes("rentan") || lowCaseText.includes("bayi") || lowCaseText.includes("lansia") || lowCaseText.includes("asma")) {
     if (rentan !== "Tidak Ada" && rentan !== "Tidak ada" && rentan !== "") {
-      return `Terdaftar kelompok rentan: **${rentan}**. Paparan CO di atas 700 ppm sangat berbahaya bagi kelompok ini. Prioritaskan evakuasi cepat jika alarm aktif.`;
+      return `Terdaftar kelompok rentan: **${rentan}**. Paparan CO di atas 700 ppm sangat berbahaya bagi kelompok ini. Prioritaskan evakuasi cepat jika alarm aktif.${fallbackNotice}`;
     } else {
-      return `Tidak ada kelompok rentan terdaftar. Namun, kadar CO di atas 1000 ppm tetap berbahaya bagi pernapasan jika terpapar terus-menerus.`;
+      return `Tidak ada kelompok rentan terdaftar. Namun, kadar CO di atas 1000 ppm tetap berbahaya bagi pernapasan jika terpapar terus-menerus.${fallbackNotice}`;
     }
   } else if (lowCaseText.includes("evakuasi") || lowCaseText.includes("tindakan") || lowCaseText.includes("bocor") || lowCaseText.includes("bencana")) {
     return `Prosedur keselamatan darurat di **${lokasi}**:
 a. **Evakuasi**: Segera pindahkan ${rentan !== 'Tidak Ada' && rentan !== 'Tidak ada' && rentan !== '' ? `${rentan} dan seluruh penghuni` : 'seluruh penghuni'} ke luar ruangan.
 b. **Sirkulasi**: Buka semua pintu/jendela lebar-lebar. Matikan AC.
 c. **Sumber Gas**: Matikan kompor atau sumber emisi gas terdekat (${polutan}).
-d. **Keamanan**: Andalkan monitor ini dan tunggu hingga kadar CO di bawah 700 PPM sebelum masuk kembali.`;
+d. **Keamanan**: Andalkan monitor ini dan tunggu hingga kadar CO di bawah 700 PPM sebelum masuk kembali.${fallbackNotice}`;
   } else if (lowCaseText.includes("luas") || lowCaseText.includes("ventilasi") || lowCaseText.includes("dimensi")) {
-    return `Konfigurasi **${lokasi}**: Ukuran **${luas}**, sirkulasi **${sirkulasi}**, kapasitas **${kapasitas}** orang. Ruangan kecil tertutup mempercepat akumulasi karbon.`;
+    return `Konfigurasi **${lokasi}**: Ukuran **${luas}**, sirkulasi **${sirkulasi}**, kapasitas **${kapasitas}** orang. Ruangan kecil tertutup mempercepat akumulasi karbon.${fallbackNotice}`;
   }
 
   // General fallback
-  return `Kadar CO saat ini **${currentPpm} ppm** di **${lokasi}** (${luas}, sirkulasi: ${sirkulasi}). Silakan tanyakan status udara, kelompok rentan, atau prosedur evakuasi secara spesifik.`;
+  return `Kadar CO saat ini **${currentPpm} ppm** di **${lokasi}** (${luas}, sirkulasi: ${sirkulasi}). Silakan tanyakan status udara, kelompok rentan, atau prosedur evakuasi secara spesifik.${fallbackNotice}`;
 }

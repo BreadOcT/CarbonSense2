@@ -43,32 +43,33 @@ export default function AdminLogin() {
     <div className="min-h-screen flex flex-col justify-between bg-[#F0F9FF] text-[#0F172A] font-sans">
       {/* Navigation Header */}
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center border border-[#0284C7]/30 bg-[#E0F2FE] text-[#0284C7]">
-              <ShieldAlert className="w-5 h-5" />
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2">
+          <Link to="/" className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center border border-[#0284C7]/30 bg-[#E0F2FE] text-[#0284C7] shrink-0">
+              <ShieldAlert className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <span className="font-black tracking-tight text-base text-[#0F172A] block leading-none">
+            <div className="min-w-0">
+              <span className="font-black tracking-tight text-sm sm:text-base text-[#0F172A] block leading-none truncate">
                 CARBONSENSE ADMIN
               </span>
-              <span className="text-[10px] text-[#0284C7] font-mono uppercase tracking-widest font-bold">
+              <span className="hidden sm:block text-[10px] text-[#0284C7] font-mono uppercase tracking-widest font-bold">
                 PORTAL MANAJEMEN PERANGKAT
               </span>
             </div>
           </Link>
           <Link
             to="/"
-            className="text-xs px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:border-[#0284C7] text-[#475569] hover:text-[#0284C7] transition-colors font-semibold flex items-center gap-1.5"
+            className="text-xs px-3 sm:px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:border-[#0284C7] text-[#475569] hover:text-[#0284C7] transition-colors font-semibold flex items-center gap-1.5 shrink-0"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            Kembali ke Beranda
+            <span className="hidden sm:inline">Kembali ke Beranda</span>
+            <span className="sm:hidden">Beranda</span>
           </Link>
         </div>
       </header>
 
-      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 my-6">
-        <div className="w-full max-w-md p-8 bg-white border border-slate-200 rounded-3xl shadow-xl">
+      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 my-2 sm:my-6">
+        <div className="w-full max-w-md p-5 sm:p-8 bg-white border border-slate-200 rounded-2xl sm:rounded-3xl shadow-xl">
           <div className="text-center mb-6">
             <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-[#0284C7]/30 bg-[#E0F2FE] text-[#0284C7]">
               <ShieldAlert className="w-7 h-7" />
@@ -92,7 +93,7 @@ export default function AdminLogin() {
                 type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-[#F9FAFB] border border-slate-300 text-sm text-[#0F172A] focus:outline-none focus:border-[#0284C7] focus:bg-white transition-colors"
+                className="w-full px-4 py-3 rounded-xl bg-[#F9FAFB] border border-slate-300 text-base sm:text-sm text-[#0F172A] focus:outline-none focus:border-[#0284C7] focus:bg-white transition-colors"
                 placeholder="admin@carbonsense.id"
               />
             </div>
@@ -104,7 +105,7 @@ export default function AdminLogin() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-[#F9FAFB] border border-slate-300 text-sm text-[#0F172A] focus:outline-none focus:border-[#0284C7] focus:bg-white transition-colors"
+                className="w-full px-4 py-3 rounded-xl bg-[#F9FAFB] border border-slate-300 text-base sm:text-sm text-[#0F172A] focus:outline-none focus:border-[#0284C7] focus:bg-white transition-colors"
                 placeholder="••••••••"
               />
             </div>
